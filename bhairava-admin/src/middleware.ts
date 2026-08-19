@@ -25,7 +25,9 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/api/auth/refresh") ||
     pathname.startsWith("/api/interests") ||
     pathname.startsWith("/api/files") ||
-    pathname === "/favicon.ico"
+    pathname === "/favicon.ico" ||
+    // Static public assets (favicon.png, manifest.webmanifest, icons, svgs, etc.)
+    /\.[a-z0-9]+$/i.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -55,7 +57,8 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+  // Every non-public route (all app pages + /api/admin) requires an admin session.
+  if (!isPublic) {
     if (!valid || !isAdmin) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -67,9 +70,10 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Signed-in admins should skip the auth pages.
   if (isPublic && valid && isAdmin) {
     const url = req.nextUrl.clone();
-    url.pathname = "/admin/dashboard";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
