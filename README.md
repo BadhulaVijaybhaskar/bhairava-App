@@ -8,6 +8,20 @@
 
 Same Postgres / Prisma schema (`bhairava-app/prisma`). Separate Next.js apps so each can become its own mobile shell later (Capacitor / RN).
 
+## Quick setup (local Postgres)
+
+One-command bootstrap: installs/starts a local PostgreSQL, provisions the
+`bhairava` role/database, writes each app's `.env`, installs dependencies,
+generates the Prisma client, syncs the schema, and seeds demo data.
+
+```bash
+bash scripts/cloud-install.sh   # idempotent, safe to re-run
+npm run dev:all                 # start all three portals
+```
+
+`scripts/cloud-start.sh` just brings Postgres online (used on every boot in
+Cloud Agent environments). Both scripts are idempotent.
+
 ## Run
 
 ```bash
