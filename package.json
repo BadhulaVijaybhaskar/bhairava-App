@@ -1,0 +1,15 @@
+{
+  "name": "bhairava-workspace",
+  "private": true,
+  "description": "Three hosts → three future mobile apps: Admin :3000 · Agent :3001 · Customer :3002",
+  "scripts": {
+    "dev:admin": "npm run dev --prefix bhairava-app",
+    "dev:agent": "npm run dev --prefix bhairava-agent",
+    "dev:customer": "npm run dev --prefix bhairava-customer",
+    "dev:all": "npx concurrently -n admin,agent,customer -c blue,green,magenta \"npm run dev:admin\" \"npm run dev:agent\" \"npm run dev:customer\"",
+    "db:generate": "npm run db:generate --prefix bhairava-app && node scripts/sync-prisma-client.cjs"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4"
+  }
+}

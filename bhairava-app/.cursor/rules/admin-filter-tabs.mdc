@@ -1,0 +1,15 @@
+---
+description: AdminFilterTabs selected state — white on brand (legacy; prefer ListSearchBar on any list)
+globs: src/components/admin-filter-tabs.tsx
+alwaysApply: false
+---
+
+# Admin filter tabs (legacy)
+
+Any list page in the app should use `ListSearchBar` (see `list-pages` rule), not `AdminFilterTabs`.
+
+If `AdminFilterTabs` is still used elsewhere:
+
+1. Import from `@/components/admin-filter-tabs`.
+2. Do **not** rely on Tailwind `text-white` alone on `<Link>` for the selected state.
+3. Selected styling lives in `globals.css`: `.filter-tab-active` = white text on brand blue.

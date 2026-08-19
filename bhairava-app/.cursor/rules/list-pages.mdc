@@ -1,0 +1,57 @@
+---
+description: App-wide list pages — search bar + filter button, table/list layout (not admin-only)
+globs: src/app/**/*.tsx,src/components/**/*.tsx
+alwaysApply: true
+---
+
+# List page pattern (entire app)
+
+Applies to **every** index/list screen in the product — admin, agent, customer, or any future portal — not only `/admin`.
+
+Examples: customers, projects, plots, bookings, payments, agents, notifications, and any new list.
+
+Use this UI — not filter tab chips, not a Search button form, not a card grid.
+
+## Toolbar
+
+1. Primary action top-right only (`New …` / `Add …`) — no page title / subtitle on the list.
+2. Use shared `ListSearchBar` from `@/components/ui` (wrap in `<Suspense fallback={<ListSearchBarFallback />}>`).
+3. Search field: magnifying glass left, placeholder `Search {entity}`, rounded-xl, light border, white bg.
+4. Matching square filter button (funnel icon) to the right — dropdown for status/filters. Empty `key: ""` = All (omit query param).
+5. Multi-dimension filters: pass `filterGroups` instead of `filters`.
+6. Pass the correct `basePath` for that route (e.g. `/admin/plots`, `/agent/bookings`).
+
+```tsx
+<Suspense fallback={<ListSearchBarFallback />}>
+  <ListSearchBar
+    basePath="/admin/plots"
+    placeholder="Search plots"
+    initialQ={q}
+    filterGroups={groups}
+  />
+</Suspense>
+```
+
+## Results
+
+- No outer `surface` / card wrapper around the whole list.
+- Desktop: `data-table` with avatar/initials + status pill on the primary column.
+- Mobile: simple row list (`px-3 py-2.5`).
+- Empty: `EmptyState` with match vs empty-copy based on `q` / filter.
+
+## No separator lines (any list)
+
+**Never** put horizontal divider lines between list rows — anywhere in the app (index lists, dashboard lists, nested plot lists, detail field rows that act like lists).
+
+- ❌ `divide-y`, `divide-border`, per-row `border-b` / `border-t`
+- ❌ `data-table` body row borders (`.data-table td` must stay borderless)
+- ✅ Separate rows with padding only (`py-2.5` / table cell padding)
+- ✅ A single header underline under `thead` / section title is OK; not between items
+
+## Do not
+
+- ❌ `AdminFilterTabs` / segmented filter chips on list pages
+- ❌ `surface` + text “Search” button
+- ❌ Card grids for list inventories
+- ❌ PageHeader title on list indexes (detail pages can keep headers)
+- ❌ Line separators between list items

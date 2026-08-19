@@ -1,0 +1,17 @@
+{
+  "name": "Bhairava — Land Sales OS",
+  "short_name": "Bhairava",
+  "description": "Astranova's internal land sales operating system: plot inventory, customers, bookings and collections.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f7fc",
+  "theme_color": "#0b1b3a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

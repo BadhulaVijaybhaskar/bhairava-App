@@ -1,0 +1,39 @@
+---
+description: World-class premium SaaS UI/UX standard for all Bhairava admin screens
+alwaysApply: true
+---
+
+# Premium product UI/UX (Bhairava Admin)
+
+Act as senior product/UI/UX + design-systems + frontend engineer. This is a **premium SaaS product**, not a generic AI dashboard.
+
+## First rule
+- Work with the existing app. Preserve working business logic.
+- Audit before redesign. Reuse/extend shared components — never invent `Button2` / parallel systems.
+- Every new screen must inherit the same tokens, components, density, and responsive patterns.
+
+## Product bar
+Linear / Stripe / Vercel / Notion quality principles: hierarchy, compact density, low noise, polished states, predictable nav, strong tables/forms, responsive reorganization (not shrink-to-fit).
+
+## Hard avoids
+- Giant hero headers, oversized KPI cards, purple/neon gradients, excess glass, decorative charts, cards-in-cards, huge empty margins, 5 row action buttons, generic AI-dashboard look.
+
+## Density & structure
+- Prefer compact groups, inline metadata, drawers/menus, chips, sticky table headers.
+- Page structure: title → primary action → filters → metrics → main content.
+- Desktop: dense but breathable. Tablet: collapse columns. Mobile: cards/drawers/single-column forms — redesign, don’t squeeze.
+
+## Design system source of truth
+- Tokens + utilities: `src/app/globals.css`
+- Primitives: `src/components/ui/*` (`PageHeader`, `Button`, `Field`, `Panel`, etc.)
+- Prefer these over one-off Tailwind piles.
+
+## Surfaces & popovers
+- Prefer solid surfaces + borders over heavy `backdrop-filter` (clips fixed/portaled UI).
+- Calendars/menus that escape cards must use portals to `document.body`.
+
+## Quality gate (every screen)
+Hierarchy clear? Primary action obvious? Consistent spacing (4/8/12/16/20/24/32)? Works at 320 / 768 / 1024 / 1280 / 1440? States (hover/focus/disabled/empty/loading/error)? Functionality preserved?
+
+## When adding features later
+Inspect existing system first → reuse → extend. Product-wide improvements beat page-local hacks.
