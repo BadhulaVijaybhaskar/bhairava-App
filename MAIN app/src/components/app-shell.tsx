@@ -33,6 +33,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { notifications } from "@/lib/mock-data";
 import { BrandLogo } from "@/components/brand";
 import { cn } from "@/lib/utils";
@@ -316,8 +317,16 @@ function TopBar() {
 
 function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return (
-    <nav className="glass fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden">
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <nav className="mobile-bottom-nav grid grid-cols-5 gap-1 px-2 pt-1.5 lg:hidden" aria-label="Primary">
       {tabItems.map((item) => {
         const active = !menuOpen && isActive(pathname, item.to);
         return (
@@ -325,7 +334,7 @@ function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolea
             key={item.to}
             to={item.to}
             className={cn(
-              "flex min-h-[44px] flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] font-medium transition-colors",
+              "flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-lg py-1 text-[10px] font-medium transition-colors",
               active ? "text-primary" : "text-muted-foreground",
             )}
           >
@@ -335,17 +344,19 @@ function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolea
         );
       })}
       <button
+        type="button"
         onClick={onMore}
         aria-label="More"
         className={cn(
-          "flex min-h-[44px] flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] font-medium transition-colors",
+          "flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-lg py-1 text-[10px] font-medium transition-colors",
           menuOpen ? "text-primary" : "text-muted-foreground",
         )}
       >
         <Menu className="h-5 w-5" strokeWidth={menuOpen ? 2.2 : 1.8} />
         <span className="truncate">More</span>
       </button>
-    </nav>
+    </nav>,
+    document.body,
   );
 }
 
@@ -358,6 +369,11 @@ const fabActions: NavItem[] = [
 
 function MobileFab() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -368,17 +384,19 @@ function MobileFab() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {open && (
         <button
           type="button"
           aria-label="Dismiss create menu"
-          className="fixed inset-0 z-40 bg-foreground/20 lg:hidden"
+          className="fixed inset-0 z-[1000] bg-foreground/20 lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
-      <div className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-end gap-2 lg:hidden">
+      <div className="mobile-fab flex flex-col items-end gap-2 lg:hidden">
         {open && (
           <div className="rise flex w-48 flex-col gap-1.5 rounded-2xl bg-surface-lowest p-2 shadow-float">
             {fabActions.map((item) => (
@@ -407,7 +425,8 @@ function MobileFab() {
           {open ? <X className="h-6 w-6" strokeWidth={2.2} /> : <Plus className="h-7 w-7" strokeWidth={2.4} />}
         </button>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
@@ -415,15 +434,17 @@ export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boo
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       <Sidebar />
       <MobileMenu open={open} onClose={() => setOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main
           className={cn(
-            "min-w-0 flex-1 pb-24 lg:pb-0",
-            bleed ? "" : "px-4 pt-2 pb-24 sm:px-6 lg:pb-12",
+            "min-w-0 flex-1 lg:pb-12",
+            bleed
+              ? "pb-[var(--mobile-content-pad-bottom)] lg:pb-0"
+              : "px-4 pt-2 pb-[var(--mobile-content-pad-bottom)] sm:px-6",
           )}
         >
           {children}

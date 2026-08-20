@@ -84,6 +84,10 @@
 
 :root {
   --radius: 0.5rem;
+  /* Mobile chrome — shared shell, FAB, and page padding all read these */
+  --mobile-nav-height: 4.25rem;
+  --mobile-nav-offset: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  --mobile-content-pad-bottom: calc(var(--mobile-nav-offset) + 1rem);
 
   /* Luminous surface ladder */
   --surface: oklch(0.982 0.008 262);
@@ -209,6 +213,36 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+
+  /* Viewport-fixed mobile chrome — portaled to document.body; never nest under transforms */
+  .mobile-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
+    min-height: var(--mobile-nav-height);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* Solid surface — avoid backdrop-filter on fixed chrome (Safari containing-block bugs) */
+    background-color: var(--surface-lowest);
+    border-top: 1px solid color-mix(in oklab, var(--outline-variant) 35%, transparent);
+  }
+
+  .mobile-fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(var(--mobile-nav-offset) + 16px);
+    z-index: 1001;
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-bottom-nav,
+    .mobile-fab {
+      display: none !important;
+    }
   }
 
   h1,

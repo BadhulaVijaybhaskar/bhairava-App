@@ -359,7 +359,7 @@ export function Wizard({
       </div>
 
       {/* mobile action bar — docked above the tab bar */}
-      <div className="glass fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 flex items-center gap-3 px-4 py-3 lg:hidden">
+      <div className="fixed inset-x-0 bottom-[var(--mobile-nav-offset)] z-30 flex items-center gap-3 border-t border-outline-variant/60 bg-background/85 px-4 py-3 backdrop-blur lg:hidden">
         <button
           type="button"
           disabled={i === 0}
