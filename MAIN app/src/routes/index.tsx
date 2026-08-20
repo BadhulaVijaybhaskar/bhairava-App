@@ -86,19 +86,19 @@ function QuickActionTile({
   return (
     <Link
       to={to}
-      className="rise flex aspect-square flex-col items-center justify-center gap-2.5 rounded-2xl border border-outline-variant/40 bg-surface-lowest px-2 text-center transition-transform active:scale-[0.97] sm:gap-3"
+      className="rise flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-outline-variant/40 bg-surface-lowest px-1.5 py-3 text-center transition-transform active:scale-[0.97] sm:min-h-[104px] sm:gap-2.5 sm:px-2"
       style={{ animationDelay: `${index * 40}ms` }}
     >
       <span className="relative inline-flex">
-        <Icon className="h-7 w-7 text-primary sm:h-8 sm:w-8" strokeWidth={1.55} />
+        <Icon className="h-6 w-6 text-primary sm:h-7 sm:w-7" strokeWidth={1.55} />
         {badge === "clock" && (
           <Clock3
-            className="absolute -right-1.5 -bottom-1 h-3.5 w-3.5 rounded-full bg-surface-lowest text-primary sm:h-4 sm:w-4"
+            className="absolute -right-1.5 -bottom-1 h-3 w-3 rounded-full bg-surface-lowest text-primary sm:h-3.5 sm:w-3.5"
             strokeWidth={2.2}
           />
         )}
       </span>
-      <span className="max-w-[9ch] text-[12px] leading-tight font-medium text-foreground sm:max-w-none sm:text-[13px]">
+      <span className="text-[10px] leading-tight font-medium text-foreground sm:text-[12px]">
         {label}
       </span>
     </Link>
@@ -189,7 +189,7 @@ function Dashboard() {
 
       <section className="space-y-2.5">
         <p className="text-[13px] font-semibold text-foreground">Quick actions</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
           {quickActions.map((action, i) => (
             <QuickActionTile key={action.label} {...action} index={i} />
           ))}
