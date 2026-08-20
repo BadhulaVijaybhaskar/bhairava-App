@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Allow Cloudflare quick-tunnel hosts so the dashboard can be opened on mobile.
+  vite: {
+    server: {
+      allowedHosts: [".trycloudflare.com", "localhost", "127.0.0.1"],
+    },
+  },
 });
