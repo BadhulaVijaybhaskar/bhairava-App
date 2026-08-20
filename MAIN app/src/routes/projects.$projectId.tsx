@@ -1,19 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Panel, RecordHeader, SectionTitle, Timeline } from "@/components/kit";
-import {
-  bookings,
-  byId,
-  customers,
-  documents,
-  formatINR,
-  plots,
-  projects,
-  salesTrend,
-} from "@/lib/mock-data";
+import { byId, documents, formatINR, projects, salesTrend } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 import { ProjectEditor } from "@/components/record-editors";
 
@@ -24,9 +23,15 @@ export const Route = createFileRoute("/projects/$projectId")({
     return {
       meta: [
         { title: `${title} — Bhairava` },
-        { name: "description", content: `Record details, plots, customers and documents for ${project?.name ?? "this project"}.` },
+        {
+          name: "description",
+          content: `Record details, plots, customers and documents for ${project?.name ?? "this project"}.`,
+        },
         { property: "og:title", content: `${title} — Bhairava` },
-        { property: "og:description", content: `Record details, plots, customers and documents for ${project?.name ?? "this project"}.` },
+        {
+          property: "og:description",
+          content: `Record details, plots, customers and documents for ${project?.name ?? "this project"}.`,
+        },
       ],
     };
   },
@@ -45,7 +50,7 @@ type Tab = (typeof tabs)[number];
 
 function ProjectRecord() {
   const { projectId } = Route.useParams();
-  const { projects: projectList } = useData();
+  const { projects: projectList, plots, bookings, customers } = useData();
   const project = byId(projectList, projectId);
   const [tab, setTab] = useState<Tab>("Overview");
 
@@ -66,18 +71,31 @@ function ProjectRecord() {
   }
 
   const projectPlots = plots.filter((p) => p.projectId === project.id);
-  const projectCustomers = customers.filter((c) => c.plots.some((pid) => byId(plots, pid)?.projectId === project.id));
+  const projectCustomers = customers.filter((c) =>
+    c.plots.some((pid) => byId(plots, pid)?.projectId === project.id),
+  );
   const projectBookings = bookings.filter((b) => b.projectId === project.id);
   const projectDocuments = documents.filter((d) => d.projectId === project.id);
 
   const trend = salesTrend.map((s, i) => ({
     month: s.month,
-    absorption: Math.min(100, Math.round(((project.soldPlots * (i + 1)) / salesTrend.length / project.totalPlots) * 100)),
+    absorption: Math.min(
+      100,
+      Math.round(((project.soldPlots * (i + 1)) / salesTrend.length / project.totalPlots) * 100),
+    ),
   }));
 
   const activity = [
-    { time: "2h ago", title: "Payment received", detail: `${projectCustomers[0]?.name ?? "Customer"} · installment` },
-    { time: "1d ago", title: "Plot registered", detail: `${projectPlots.find((p) => p.status === "registered")?.number ?? "—"}` },
+    {
+      time: "2h ago",
+      title: "Payment received",
+      detail: `${projectCustomers[0]?.name ?? "Customer"} · installment`,
+    },
+    {
+      time: "1d ago",
+      title: "Plot registered",
+      detail: `${projectPlots.find((p) => p.status === "registered")?.number ?? "—"}`,
+    },
     { time: "3d ago", title: "New booking confirmed", detail: `${projectBookings[0]?.id ?? "—"}` },
     { time: "6d ago", title: "Layout approval updated", detail: project.approvals.join(", ") },
   ];
@@ -89,16 +107,23 @@ function ProjectRecord() {
         title={project.name}
         subtitle={
           <div className="flex flex-wrap items-center gap-2">
-            <span>{project.location}, {project.city}</span>
+            <span>
+              {project.location}, {project.city}
+            </span>
             <Chip>{project.status}</Chip>
             {project.approvals.map((a) => (
-              <Chip key={a} tone="info">{a}</Chip>
+              <Chip key={a} tone="info">
+                {a}
+              </Chip>
             ))}
           </div>
         }
         facts={[
           { label: "Total plots", value: project.totalPlots },
-          { label: "Sold", value: `${project.soldPlots} (${Math.round((project.soldPlots / project.totalPlots) * 100)}%)` },
+          {
+            label: "Sold",
+            value: `${project.soldPlots} (${Math.round((project.soldPlots / project.totalPlots) * 100)}%)`,
+          },
           { label: "Value", value: formatINR(project.valueCr * 1e7, { compact: true }) },
           { label: "Collected", value: formatINR(project.collectedCr * 1e7, { compact: true }) },
           { label: "Launch date", value: project.launchDate },
@@ -106,13 +131,27 @@ function ProjectRecord() {
         ]}
         actions={
           <>
-          <ProjectEditor project={project} />
-          <Link
-            to="/plots/layout"
-            className="gradient-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Open live layout <ArrowUpRight className="h-4 w-4" />
-          </Link>
+            <ProjectEditor project={project} />
+            <Link
+              to="/onboarding/plot"
+              search={{ projectId: project.id }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-surface-c px-3 py-2 text-sm font-medium"
+            >
+              Add plot
+            </Link>
+            <Link
+              to="/onboarding/visit"
+              search={{ projectId: project.id }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-surface-c px-3 py-2 text-sm font-medium"
+            >
+              Site visit
+            </Link>
+            <Link
+              to="/plots/layout"
+              className="gradient-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Open live layout <ArrowUpRight className="h-4 w-4" />
+            </Link>
           </>
         }
       />
@@ -123,7 +162,9 @@ function ProjectRecord() {
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              tab === t ? "bg-surface-lowest text-foreground shadow-ambient" : "text-muted-foreground hover:bg-surface-c"
+              tab === t
+                ? "bg-surface-lowest text-foreground shadow-ambient"
+                : "text-muted-foreground hover:bg-surface-c"
             }`}
           >
             {t}
@@ -145,7 +186,11 @@ function ProjectRecord() {
                         <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="var(--outline-variant)" strokeOpacity={0.18} vertical={false} />
+                    <CartesianGrid
+                      stroke="var(--outline-variant)"
+                      strokeOpacity={0.18}
+                      vertical={false}
+                    />
                     <XAxis dataKey="month" {...chartAxis} />
                     <YAxis {...chartAxis} />
                     <Tooltip
@@ -157,7 +202,13 @@ function ProjectRecord() {
                         fontSize: 12,
                       }}
                     />
-                    <Area type="monotone" dataKey="absorption" stroke="var(--primary)" strokeWidth={2} fill="url(#absorption)" />
+                    <Area
+                      type="monotone"
+                      dataKey="absorption"
+                      stroke="var(--primary)"
+                      strokeWidth={2}
+                      fill="url(#absorption)"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -171,7 +222,14 @@ function ProjectRecord() {
 
         {tab === "Plots" && (
           <div>
-            <div className="flex items-center justify-end pb-3">
+            <div className="flex items-center justify-end gap-3 pb-3">
+              <Link
+                to="/onboarding/plot"
+                search={{ projectId: project.id }}
+                className="text-sm font-medium text-primary"
+              >
+                Add plot
+              </Link>
               <Link to="/plots/layout" className="text-sm font-medium text-primary">
                 Open live plot layout →
               </Link>
@@ -179,8 +237,16 @@ function ProjectRecord() {
             <DataTable
               rows={projectPlots}
               columns={[
-                { key: "number", header: "Plot", cell: (r) => <span className="numeric">{r.number}</span> },
-                { key: "area", header: "Area (sq.yd)", cell: (r) => <span className="numeric">{r.areaSqYd}</span> },
+                {
+                  key: "number",
+                  header: "Plot",
+                  cell: (r) => <span className="numeric">{r.number}</span>,
+                },
+                {
+                  key: "area",
+                  header: "Area (sq.yd)",
+                  cell: (r) => <span className="numeric">{r.areaSqYd}</span>,
+                },
                 { key: "facing", header: "Facing", cell: (r) => r.facing },
                 {
                   key: "price",
@@ -201,13 +267,19 @@ function ProjectRecord() {
             params={(r) => ({ customerId: r.id })}
             columns={[
               { key: "name", header: "Customer", cell: (r) => r.name },
-              { key: "phone", header: "Phone", cell: (r) => <span className="numeric">{r.phone}</span> },
+              {
+                key: "phone",
+                header: "Phone",
+                cell: (r) => <span className="numeric">{r.phone}</span>,
+              },
               { key: "stage", header: "Stage", cell: (r) => <Chip>{r.stage}</Chip> },
               {
                 key: "value",
                 header: "Value",
                 align: "right",
-                cell: (r) => <span className="numeric">{formatINR(r.totalValue, { compact: true })}</span>,
+                cell: (r) => (
+                  <span className="numeric">{formatINR(r.totalValue, { compact: true })}</span>
+                ),
               },
             ]}
           />
@@ -219,13 +291,23 @@ function ProjectRecord() {
             linkTo="/bookings/$bookingId"
             params={(r) => ({ bookingId: r.id })}
             columns={[
-              { key: "id", header: "Booking", cell: (r) => <span className="numeric">{r.id}</span> },
-              { key: "cust", header: "Customer", cell: (r) => byId(customers, r.customerId)?.name ?? "—" },
+              {
+                key: "id",
+                header: "Booking",
+                cell: (r) => <span className="numeric">{r.id}</span>,
+              },
+              {
+                key: "cust",
+                header: "Customer",
+                cell: (r) => byId(customers, r.customerId)?.name ?? "—",
+              },
               {
                 key: "amount",
                 header: "Amount",
                 align: "right",
-                cell: (r) => <span className="numeric">{formatINR(r.amount, { compact: true })}</span>,
+                cell: (r) => (
+                  <span className="numeric">{formatINR(r.amount, { compact: true })}</span>
+                ),
               },
               { key: "stage", header: "Stage", cell: (r) => <Chip>{r.stage}</Chip> },
             ]}
@@ -238,7 +320,11 @@ function ProjectRecord() {
             columns={[
               { key: "name", header: "Document", cell: (r) => r.name },
               { key: "type", header: "Type", cell: (r) => r.type },
-              { key: "modified", header: "Modified", cell: (r) => <span className="numeric">{r.modified}</span> },
+              {
+                key: "modified",
+                header: "Modified",
+                cell: (r) => <span className="numeric">{r.modified}</span>,
+              },
               { key: "verified", header: "Status", cell: (r) => <Chip>{r.verified}</Chip> },
             ]}
           />

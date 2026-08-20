@@ -2,15 +2,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Panel, SectionTitle, Timeline } from "@/components/kit";
-import { agents, bookings, byId, customers, documents, formatINR, payments, plots, projects } from "@/lib/mock-data";
+import { byId, documents, formatINR, payments } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/bookings/$bookingId")({
   head: ({ params }) => ({
     meta: [
       { title: `Booking ${params.bookingId} — Bhairava` },
-      { name: "description", content: "Booking financials, linked records, payment schedule and documents." },
+      {
+        name: "description",
+        content: "Booking financials, linked records, payment schedule and documents.",
+      },
       { property: "og:title", content: `Booking ${params.bookingId} — Bhairava` },
-      { property: "og:description", content: "Booking financials, linked records, payment schedule and documents." },
+      {
+        property: "og:description",
+        content: "Booking financials, linked records, payment schedule and documents.",
+      },
     ],
   }),
   component: BookingDetail,
@@ -18,6 +25,7 @@ export const Route = createFileRoute("/bookings/$bookingId")({
 
 function BookingDetail() {
   const { bookingId } = Route.useParams();
+  const { bookings, customers, plots, projects, agents } = useData();
   const booking = byId(bookings, bookingId);
 
   if (!booking) {
@@ -38,8 +46,12 @@ function BookingDetail() {
   const plot = byId(plots, booking.plotId);
   const project = byId(projects, booking.projectId);
   const agent = byId(agents, booking.agentId);
-  const bookingPayments = payments.filter((p) => p.bookingId === booking.id).sort((a, b) => (a.date < b.date ? -1 : 1));
-  const bookingDocs = documents.filter((d) => d.customerId === booking.customerId && d.plotId === booking.plotId);
+  const bookingPayments = payments
+    .filter((p) => p.bookingId === booking.id)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  const bookingDocs = documents.filter(
+    (d) => d.customerId === booking.customerId && d.plotId === booking.plotId,
+  );
 
   const plotValue = booking.amount;
   const discount = Math.round(plotValue * 0.02);
@@ -62,7 +74,11 @@ function BookingDetail() {
   });
 
   const timeline = [
-    { time: booking.date, title: "Booking registered", detail: booking.stage === "Registered" ? "Sale deed executed" : "" },
+    {
+      time: booking.date,
+      title: "Booking registered",
+      detail: booking.stage === "Registered" ? "Sale deed executed" : "",
+    },
     { time: booking.date, title: `Agreement stage: ${booking.stage}` },
     { time: booking.date, title: "Booking created", detail: `By ${agent?.name ?? "agent"}` },
   ];
@@ -70,7 +86,10 @@ function BookingDetail() {
   return (
     <AppShell>
       <div className="pt-8 pb-2">
-        <Link to="/bookings" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+        <Link
+          to="/bookings"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> Bookings
         </Link>
       </div>
@@ -97,19 +116,33 @@ function BookingDetail() {
               <Row label="Plot value" value={formatINR(plotValue, { compact: true })} />
               <Row label="Discount" value={`-${formatINR(discount, { compact: true })}`} muted />
               <Row label="Taxes" value={formatINR(taxes, { compact: true })} muted />
-              <Row label="Registration charges" value={formatINR(registration, { compact: true })} muted />
+              <Row
+                label="Registration charges"
+                value={formatINR(registration, { compact: true })}
+                muted
+              />
               <Row label="Total payable" value={formatINR(total, { compact: true })} strong />
               <Row label="Paid till date" value={formatINR(booking.paid, { compact: true })} />
-              <Row label="Balance due" value={formatINR(Math.max(0, balance), { compact: true })} strong />
+              <Row
+                label="Balance due"
+                value={formatINR(Math.max(0, balance), { compact: true })}
+                strong
+              />
             </div>
           </Panel>
         </div>
 
         <div className="grid gap-4 lg:col-span-4">
           <Panel className="p-5">
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">Customer</p>
+            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              Customer
+            </p>
             {customer ? (
-              <Link to="/customers/$customerId" params={{ customerId: customer.id }} className="pt-1.5 block text-sm font-medium hover:text-primary">
+              <Link
+                to="/customers/$customerId"
+                params={{ customerId: customer.id }}
+                className="pt-1.5 block text-sm font-medium hover:text-primary"
+              >
                 {customer.name}
               </Link>
             ) : (
@@ -117,12 +150,16 @@ function BookingDetail() {
             )}
           </Panel>
           <Panel className="p-5">
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">Plot / Project</p>
+            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              Plot / Project
+            </p>
             <p className="pt-1.5 text-sm font-medium">{plot?.number ?? "—"}</p>
             <p className="text-xs text-muted-foreground">{project?.name}</p>
           </Panel>
           <Panel className="p-5">
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">Agent</p>
+            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              Agent
+            </p>
             <p className="pt-1.5 text-sm font-medium">{agent?.name ?? "—"}</p>
             <p className="text-xs text-muted-foreground">{agent?.region}</p>
           </Panel>
@@ -136,10 +173,29 @@ function BookingDetail() {
             <DataTable
               rows={schedule}
               columns={[
-                { key: "label", header: "Instalment", cell: (r) => <span className="text-sm">{r.label}</span> },
-                { key: "due", header: "Due date", cell: (r) => <span className="numeric text-xs text-muted-foreground">{r.due}</span> },
+                {
+                  key: "label",
+                  header: "Instalment",
+                  cell: (r) => <span className="text-sm">{r.label}</span>,
+                },
+                {
+                  key: "due",
+                  header: "Due date",
+                  cell: (r) => (
+                    <span className="numeric text-xs text-muted-foreground">{r.due}</span>
+                  ),
+                },
                 { key: "state", header: "State", cell: (r) => <Chip>{r.state}</Chip> },
-                { key: "amount", header: "Amount", align: "right", cell: (r) => <span className="numeric text-sm font-medium">{formatINR(r.amount, { compact: true })}</span> },
+                {
+                  key: "amount",
+                  header: "Amount",
+                  align: "right",
+                  cell: (r) => (
+                    <span className="numeric text-sm font-medium">
+                      {formatINR(r.amount, { compact: true })}
+                    </span>
+                  ),
+                },
               ]}
             />
           </div>
@@ -151,11 +207,34 @@ function BookingDetail() {
               linkTo="/payments/$paymentId"
               params={(r) => ({ paymentId: r.id })}
               columns={[
-                { key: "id", header: "Payment", cell: (r) => <span className="numeric text-xs">{r.id}</span> },
-                { key: "mode", header: "Mode", cell: (r) => <span className="text-xs text-muted-foreground">{r.mode}</span> },
+                {
+                  key: "id",
+                  header: "Payment",
+                  cell: (r) => <span className="numeric text-xs">{r.id}</span>,
+                },
+                {
+                  key: "mode",
+                  header: "Mode",
+                  cell: (r) => <span className="text-xs text-muted-foreground">{r.mode}</span>,
+                },
                 { key: "status", header: "Status", cell: (r) => <Chip>{r.status}</Chip> },
-                { key: "date", header: "Date", cell: (r) => <span className="numeric text-xs text-muted-foreground">{r.date}</span> },
-                { key: "amount", header: "Amount", align: "right", cell: (r) => <span className="numeric text-sm font-medium">{formatINR(r.amount, { compact: true })}</span> },
+                {
+                  key: "date",
+                  header: "Date",
+                  cell: (r) => (
+                    <span className="numeric text-xs text-muted-foreground">{r.date}</span>
+                  ),
+                },
+                {
+                  key: "amount",
+                  header: "Amount",
+                  align: "right",
+                  cell: (r) => (
+                    <span className="numeric text-sm font-medium">
+                      {formatINR(r.amount, { compact: true })}
+                    </span>
+                  ),
+                },
               ]}
             />
           </div>
@@ -163,7 +242,11 @@ function BookingDetail() {
           <div>
             <SectionTitle>Documents</SectionTitle>
             <Panel className="divide-y divide-transparent p-0">
-              {bookingDocs.length === 0 && <p className="px-5 py-8 text-center text-sm text-muted-foreground">No documents on file.</p>}
+              {bookingDocs.length === 0 && (
+                <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  No documents on file.
+                </p>
+              )}
               {bookingDocs.map((d) => (
                 <div key={d.id} className="flex items-center justify-between px-5 py-3.5">
                   <div>
@@ -188,11 +271,23 @@ function BookingDetail() {
   );
 }
 
-function Row({ label, value, muted, strong }: { label: string; value: string; muted?: boolean; strong?: boolean }) {
+function Row({
+  label,
+  value,
+  muted,
+  strong,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+  strong?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`numeric text-sm ${strong ? "text-lg font-semibold" : muted ? "text-muted-foreground" : "font-medium"}`}>
+      <span
+        className={`numeric text-sm ${strong ? "text-lg font-semibold" : muted ? "text-muted-foreground" : "font-medium"}`}
+      >
         {value}
       </span>
     </div>

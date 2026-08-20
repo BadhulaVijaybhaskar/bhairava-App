@@ -9,9 +9,15 @@ export const Route = createFileRoute("/customers/")({
   head: () => ({
     meta: [
       { title: "Customers — Bhairava" },
-      { name: "description", content: "Search and manage every customer relationship across Bhairava projects." },
+      {
+        name: "description",
+        content: "Search and manage every customer relationship across Bhairava projects.",
+      },
       { property: "og:title", content: "Customers — Bhairava" },
-      { property: "og:description", content: "Search and manage every customer relationship across Bhairava projects." },
+      {
+        property: "og:description",
+        content: "Search and manage every customer relationship across Bhairava projects.",
+      },
     ],
   }),
   component: CustomersIndex,
@@ -38,7 +44,9 @@ function CustomersIndex() {
       if (active !== "All" && c.stage !== active) return false;
       if (
         query &&
-        !`${c.name} ${c.email} ${c.phone} ${c.city} ${c.source}`.toLowerCase().includes(query.toLowerCase())
+        !`${c.name} ${c.email} ${c.phone} ${c.city} ${c.source}`
+          .toLowerCase()
+          .includes(query.toLowerCase())
       )
         return false;
       return true;
@@ -51,7 +59,12 @@ function CustomersIndex() {
         eyebrow="Relationships"
         title="Customers"
         description="Every lead and buyer across the pipeline, from first touch to registration."
-        actions={<NewRecordButton to="/onboarding/customer">New customer</NewRecordButton>}
+        actions={
+          <>
+            <NewRecordButton to="/onboarding/customer">New customer</NewRecordButton>
+            <NewRecordButton to="/onboarding/visit">Book visit</NewRecordButton>
+          </>
+        }
       />
 
       <FilterBar
@@ -61,7 +74,11 @@ function CustomersIndex() {
         query={query}
         onQuery={setQuery}
         placeholder="Search customers…"
-        right={<span className="numeric px-2 text-xs text-muted-foreground">{filtered.length} of {customers.length}</span>}
+        right={
+          <span className="numeric px-2 text-xs text-muted-foreground">
+            {filtered.length} of {customers.length}
+          </span>
+        }
       />
 
       <DataTable<Customer>
@@ -84,24 +101,49 @@ function CustomersIndex() {
               </div>
             ),
           },
-          { key: "phone", header: "Phone", cell: (c) => <span className="numeric text-xs">{c.phone}</span> },
-          { key: "city", header: "City", cell: (c) => <span className="text-xs text-muted-foreground">{c.city}</span> },
-          { key: "source", header: "Source", cell: (c) => <span className="text-xs text-muted-foreground">{c.source}</span> },
+          {
+            key: "phone",
+            header: "Phone",
+            cell: (c) => <span className="numeric text-xs">{c.phone}</span>,
+          },
+          {
+            key: "city",
+            header: "City",
+            cell: (c) => <span className="text-xs text-muted-foreground">{c.city}</span>,
+          },
+          {
+            key: "source",
+            header: "Source",
+            cell: (c) => <span className="text-xs text-muted-foreground">{c.source}</span>,
+          },
           { key: "stage", header: "Stage", cell: (c) => <Chip>{c.stage}</Chip> },
           {
             key: "agent",
             header: "Agent",
-            cell: (c) => <span className="text-xs text-muted-foreground">{byId(agents, c.agentId)?.name ?? "—"}</span>,
+            cell: (c) => (
+              <span className="text-xs text-muted-foreground">
+                {byId(agents, c.agentId)?.name ?? "—"}
+              </span>
+            ),
           },
-          { key: "plots", header: "Plots", align: "right", cell: (c) => <span className="numeric text-xs">{c.plots.length}</span> },
+          {
+            key: "plots",
+            header: "Plots",
+            align: "right",
+            cell: (c) => <span className="numeric text-xs">{c.plots.length}</span>,
+          },
           {
             key: "value",
             header: "Value / Paid",
             align: "right",
             cell: (c) => (
               <div className="text-right">
-                <p className="numeric text-xs font-medium">{formatINR(c.totalValue, { compact: true })}</p>
-                <p className="numeric text-[11px] text-muted-foreground">{formatINR(c.paid, { compact: true })} paid</p>
+                <p className="numeric text-xs font-medium">
+                  {formatINR(c.totalValue, { compact: true })}
+                </p>
+                <p className="numeric text-[11px] text-muted-foreground">
+                  {formatINR(c.paid, { compact: true })} paid
+                </p>
               </div>
             ),
           },

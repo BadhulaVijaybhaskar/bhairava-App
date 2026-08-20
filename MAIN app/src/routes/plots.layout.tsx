@@ -4,7 +4,8 @@ import { X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Btn, Chip } from "@/components/kit";
 import { PlotCanvas, statusFill, statusLabel } from "@/components/plot-canvas";
-import { byId, customers, agents, formatINR, plots, projects, type Plot, type PlotStatus } from "@/lib/mock-data";
+import { byId, formatINR, type Plot, type PlotStatus } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/plots/layout")({
   head: () => ({
@@ -12,10 +13,14 @@ export const Route = createFileRoute("/plots/layout")({
       { title: "Live Plot Layout — Bhairava" },
       {
         name: "description",
-        content: "Interactive live layout map of all plots across projects with status, pricing and contextual actions.",
+        content:
+          "Interactive live layout map of all plots across projects with status, pricing and contextual actions.",
       },
       { property: "og:title", content: "Live Plot Layout — Bhairava" },
-      { property: "og:description", content: "Interactive live layout map of all plots across projects." },
+      {
+        property: "og:description",
+        content: "Interactive live layout map of all plots across projects.",
+      },
     ],
   }),
   component: PlotsLayoutPage,
@@ -24,6 +29,7 @@ export const Route = createFileRoute("/plots/layout")({
 const ALL_STATUSES = Object.keys(statusFill) as PlotStatus[];
 
 function PlotsLayoutPage() {
+  const { plots, projects, customers, agents } = useData();
   const [projectId, setProjectId] = useState<string>("PRJ-01");
   const [hidden, setHidden] = useState<Set<PlotStatus>>(new Set());
   const [showNumbers, setShowNumbers] = useState(true);
@@ -31,7 +37,7 @@ function PlotsLayoutPage() {
 
   const scoped = useMemo(
     () => (projectId === "all" ? plots : plots.filter((p) => p.projectId === projectId)),
-    [projectId],
+    [projectId, plots],
   );
 
   const selected = byId(plots, selectedId);
@@ -65,7 +71,6 @@ function PlotsLayoutPage() {
       <div className="flex flex-col gap-4 p-4 pb-24 lg:h-[calc(100vh-4rem)] lg:flex-row lg:pb-4">
         {/* left control rail */}
         <aside className="order-2 grid w-full shrink-0 gap-4 sm:grid-cols-2 lg:order-1 lg:flex lg:w-64 lg:flex-col lg:overflow-y-auto">
-
           <div className="panel p-4">
             <p className="pb-2 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
               Project
@@ -95,7 +100,10 @@ function PlotsLayoutPage() {
                   className="flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-low"
                 >
                   <span className="flex items-center gap-2 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: statusFill[s] }} />
+                    <span
+                      className="h-2.5 w-2.5 rounded-sm"
+                      style={{ background: statusFill[s] }}
+                    />
                     {statusLabel[s]}
                   </span>
                   <span className="flex items-center gap-2">
@@ -135,7 +143,6 @@ function PlotsLayoutPage() {
 
         {/* centre canvas */}
         <div className="order-1 h-[52vh] min-w-0 flex-1 lg:order-2 lg:h-auto">
-
           <PlotCanvas
             plots={scoped}
             selectedId={selectedId}
@@ -185,7 +192,9 @@ function PlotsLayoutPage() {
                   <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                     Price / sq.yd
                   </p>
-                  <p className="numeric pt-1 text-sm font-medium">{formatINR(selected.pricePerSqYd)}</p>
+                  <p className="numeric pt-1 text-sm font-medium">
+                    {formatINR(selected.pricePerSqYd)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">

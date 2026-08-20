@@ -37,7 +37,15 @@ export const PROJECT_TYPES = [
   "Commercial plots",
 ] as const;
 
-export const PROJECT_STATUSES = ["Draft", "Pre-launch", "Active", "On hold", "Sold out"] as const;
+export const PROJECT_STATUSES = ["Pre-launch", "Active", "On hold", "Inactive"] as const;
+export const PROJECT_STATUS_ALL = [
+  "Draft",
+  "Pre-launch",
+  "Active",
+  "On hold",
+  "Sold out",
+  "Inactive",
+] as const;
 
 export const AREA_UNITS = ["Acres", "Sq Yards", "Sq Ft", "Hectares"] as const;
 
@@ -100,10 +108,38 @@ export const defaultPricing = (): PricingRules => ({
 });
 
 export const PLOT_TYPE_PRESETS: Omit<PlotType, "id">[] = [
-  { name: "Type A", areaSqYd: 100, lengthFt: 45, widthFt: 20, facingAllowed: ["East", "West"], category: "Standard" },
-  { name: "Type B", areaSqYd: 150, lengthFt: 45, widthFt: 30, facingAllowed: [...FACINGS], category: "Standard" },
-  { name: "Type C", areaSqYd: 200, lengthFt: 60, widthFt: 30, facingAllowed: [...FACINGS], category: "Premium" },
-  { name: "Type D", areaSqYd: 267, lengthFt: 60, widthFt: 40, facingAllowed: ["North", "East"], category: "Premium" },
+  {
+    name: "Type A",
+    areaSqYd: 100,
+    lengthFt: 45,
+    widthFt: 20,
+    facingAllowed: ["East", "West"],
+    category: "Standard",
+  },
+  {
+    name: "Type B",
+    areaSqYd: 150,
+    lengthFt: 45,
+    widthFt: 30,
+    facingAllowed: [...FACINGS],
+    category: "Standard",
+  },
+  {
+    name: "Type C",
+    areaSqYd: 200,
+    lengthFt: 60,
+    widthFt: 30,
+    facingAllowed: [...FACINGS],
+    category: "Premium",
+  },
+  {
+    name: "Type D",
+    areaSqYd: 267,
+    lengthFt: 60,
+    widthFt: 40,
+    facingAllowed: ["North", "East"],
+    category: "Premium",
+  },
 ];
 
 export const amenityFromName = (name: string, group: string): ProjectAmenity => ({
@@ -153,16 +189,66 @@ export interface SetupTask {
 
 export function setupTasks(project: Project): SetupTask[] {
   return [
-    { key: "basics", label: "Project information", done: !!project.name && !!project.code, tab: "Overview" },
-    { key: "location", label: "Location details", done: !!project.location && !!project.city, tab: "Overview" },
-    { key: "types", label: "Plot types defined", done: (project.plotTypes?.length ?? 0) > 0, tab: "Plot Configuration" },
-    { key: "inventory", label: "Plot inventory created", done: (project.inventory?.length ?? 0) > 0, tab: "Layout & Inventory" },
-    { key: "layout", label: "Master layout uploaded", done: !!project.layoutImage, tab: "Layout & Inventory" },
-    { key: "pricing", label: "Pricing rules set", done: (project.pricing?.baseRatePerSqYd ?? 0) > 0, tab: "Pricing" },
-    { key: "amenities", label: "Amenities selected", done: (project.amenities?.length ?? 0) > 0, tab: "Amenities" },
-    { key: "docs", label: "Approvals recorded", done: project.approvals.length > 0, tab: "Documents" },
-    { key: "team", label: "Sales team assigned", done: (project.agents?.length ?? 0) > 0, tab: "Sales Team" },
-    { key: "settings", label: "Booking rules configured", done: !!project.settings, tab: "Settings" },
+    {
+      key: "basics",
+      label: "Project information",
+      done: !!project.name && !!project.code,
+      tab: "Overview",
+    },
+    {
+      key: "location",
+      label: "Location details",
+      done: !!project.location && !!project.city,
+      tab: "Overview",
+    },
+    {
+      key: "types",
+      label: "Plot types defined",
+      done: (project.plotTypes?.length ?? 0) > 0,
+      tab: "Plot Configuration",
+    },
+    {
+      key: "inventory",
+      label: "Plot inventory created",
+      done: (project.inventory?.length ?? 0) > 0,
+      tab: "Layout & Inventory",
+    },
+    {
+      key: "layout",
+      label: "Master layout uploaded",
+      done: !!project.layoutImage,
+      tab: "Layout & Inventory",
+    },
+    {
+      key: "pricing",
+      label: "Pricing rules set",
+      done: (project.pricing?.baseRatePerSqYd ?? 0) > 0,
+      tab: "Pricing",
+    },
+    {
+      key: "amenities",
+      label: "Amenities selected",
+      done: (project.amenities?.length ?? 0) > 0,
+      tab: "Amenities",
+    },
+    {
+      key: "docs",
+      label: "Approvals recorded",
+      done: project.approvals.length > 0,
+      tab: "Documents",
+    },
+    {
+      key: "team",
+      label: "Sales team assigned",
+      done: (project.agents?.length ?? 0) > 0,
+      tab: "Sales Team",
+    },
+    {
+      key: "settings",
+      label: "Booking rules configured",
+      done: !!project.settings,
+      tab: "Settings",
+    },
   ];
 }
 
