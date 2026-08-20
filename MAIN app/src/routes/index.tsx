@@ -12,13 +12,14 @@ import {
 } from "recharts";
 import {
   AlertTriangle,
-  CalendarDays,
-  CreditCard,
-  IndianRupee,
-  LayoutGrid,
-  ListTodo,
+  Banknote,
+  BarChart3,
+  CalendarCheck2,
+  Home,
+  LineChart,
   MapPinned,
-  Receipt,
+  Clock3,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -29,12 +30,10 @@ import {
   customers,
   byId,
   formatINR,
-  payments,
   plots,
   projects,
   reservations,
   salesTrend,
-  tasks,
 } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
@@ -64,58 +63,104 @@ const chartAxis = {
   tick: { fill: "var(--muted-foreground)", fontSize: 11 },
 };
 
-type QuickAction = {
+const quickActions: { label: string; to: string; icon: LucideIcon; badge?: "clock" }[] = [
+  { label: "Today's Visits", to: "/customers", icon: CalendarCheck2 },
+  { label: "Follow-ups", to: "/notifications", icon: UserRound, badge: "clock" },
+  { label: "At Risk", to: "/reservations", icon: AlertTriangle },
+  { label: "Pending Payments", to: "/payments", icon: Banknote, badge: "clock" },
+];
+
+function QuickActionTile({
+  label,
+  to,
+  icon: Icon,
+  badge,
+  index,
+}: {
   label: string;
   to: string;
-  value: string;
-  hint?: string;
   icon: LucideIcon;
-  tone?: "default" | "warn" | "accent";
-};
-
-function QuickActionTile({ action, index }: { action: QuickAction; index: number }) {
-  const Icon = action.icon;
+  badge?: "clock";
+  index: number;
+}) {
   return (
     <Link
-      to={action.to}
-      className={cn(
-        "lift panel sheen flex min-h-[88px] flex-col justify-between gap-3 p-3.5 sm:min-h-[96px] sm:p-4",
-        action.tone === "accent" && "gradient-primary text-primary-foreground shadow-float",
-        action.tone === "warn" && "bg-warning/12",
-      )}
+      to={to}
+      className="rise flex aspect-square flex-col items-center justify-center gap-2.5 rounded-2xl border border-outline-variant/40 bg-surface-lowest px-2 text-center transition-transform active:scale-[0.97] sm:gap-3"
       style={{ animationDelay: `${index * 40}ms` }}
     >
+      <span className="relative inline-flex">
+        <Icon className="h-7 w-7 text-primary sm:h-8 sm:w-8" strokeWidth={1.55} />
+        {badge === "clock" && (
+          <Clock3
+            className="absolute -right-1.5 -bottom-1 h-3.5 w-3.5 rounded-full bg-surface-lowest text-primary sm:h-4 sm:w-4"
+            strokeWidth={2.2}
+          />
+        )}
+      </span>
+      <span className="max-w-[9ch] text-[12px] leading-tight font-medium text-foreground sm:max-w-none sm:text-[13px]">
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  hint,
+  to,
+  icon: Icon,
+  tone = "default",
+  progress,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  to: string;
+  icon: LucideIcon;
+  tone?: "default" | "danger" | "success";
+  progress?: number;
+}) {
+  return (
+    <Link
+      to={to}
+      className="panel lift flex min-h-[112px] flex-col justify-between gap-2 p-3.5 sm:p-4"
+    >
       <div className="flex items-start justify-between gap-2">
-        <p
-          className={cn(
-            "text-[10px] font-semibold tracking-[0.14em] uppercase",
-            action.tone === "accent" ? "text-primary-foreground/80" : "text-muted-foreground",
-          )}
-        >
-          {action.label}
-        </p>
+        <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
         <Icon
           className={cn(
             "h-4 w-4 shrink-0",
-            action.tone === "accent"
-              ? "text-primary-foreground/85"
-              : action.tone === "warn"
-                ? "text-warning-foreground"
-                : "text-primary",
+            tone === "danger" ? "text-destructive" : tone === "success" ? "text-primary" : "text-primary",
           )}
-          strokeWidth={1.9}
+          strokeWidth={1.8}
         />
       </div>
       <div>
-        <p className="numeric text-xl font-semibold tracking-tight sm:text-2xl">{action.value}</p>
-        {action.hint && (
+        <p
+          className={cn(
+            "numeric text-[22px] font-semibold tracking-tight sm:text-2xl",
+            tone === "danger" && "text-destructive",
+          )}
+        >
+          {value}
+        </p>
+        {typeof progress === "number" ? (
+          <div className="pt-2">
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-c">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="pt-1.5 text-[11px] text-muted-foreground">{hint}</p>
+          </div>
+        ) : (
           <p
             className={cn(
-              "pt-1 text-[11px]",
-              action.tone === "accent" ? "text-primary-foreground/75" : "text-muted-foreground",
+              "pt-1 text-[11px] font-medium",
+              tone === "danger" ? "text-destructive" : "text-primary",
             )}
           >
-            {action.hint}
+            {hint}
           </p>
         )}
       </div>
@@ -125,112 +170,64 @@ function QuickActionTile({ action, index }: { action: QuickAction; index: number
 
 function Dashboard() {
   const available = plots.filter((p) => p.status === "available").length;
-  const todayVisits = customers.filter((c) => c.stage === "Site visit").length;
-  const openFollowUps = tasks.filter((t) => !t.done).length;
-  const atRisk = reservations.filter((r) => r.state === "Expiring today" || r.state === "Expired").length;
-  const pendingPayments = payments.filter((p) => p.status === "Pending").length;
+  const availablePct = Math.round((available / plots.length) * 100);
   const recent = bookings.slice(0, 6);
-
-  const opsActions: QuickAction[] = [
-    {
-      label: "Today's Visits",
-      to: "/customers",
-      value: String(todayVisits),
-      hint: "Site visit stage",
-      icon: CalendarDays,
-    },
-    {
-      label: "Follow-ups",
-      to: "/notifications",
-      value: String(openFollowUps),
-      hint: "Open tasks",
-      icon: ListTodo,
-    },
-    {
-      label: "At Risk",
-      to: "/reservations",
-      value: String(atRisk),
-      hint: "Expiring / expired",
-      icon: AlertTriangle,
-      tone: "warn",
-    },
-    {
-      label: "Pending Payments",
-      to: "/payments",
-      value: String(pendingPayments),
-      hint: "Awaiting clearance",
-      icon: CreditCard,
-    },
-  ];
-
-  const metricActions: QuickAction[] = [
-    {
-      label: "Collected",
-      to: "/collections",
-      value: "₹18.2 Cr",
-      hint: "+21.3% vs July",
-      icon: IndianRupee,
-      tone: "accent",
-    },
-    {
-      label: "Bookings",
-      to: "/bookings",
-      value: "34",
-      hint: "This month",
-      icon: Receipt,
-    },
-    {
-      label: "Outstanding",
-      to: "/schedule",
-      value: "₹5.3 Cr",
-      hint: "Due < 30d",
-      icon: CreditCard,
-    },
-    {
-      label: "Plots Available",
-      to: "/plots",
-      value: String(available),
-      hint: `of ${plots.length}`,
-      icon: LayoutGrid,
-    },
-  ];
 
   return (
     <AppShell>
-      <div className="rise flex flex-wrap items-end justify-between gap-3 py-5 sm:py-7">
-        <div>
-          <p className="pb-1.5 text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-            Wednesday · 19 August 2026
-          </p>
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
-          <p className="max-w-xl pt-1.5 text-sm text-muted-foreground">
-            ₹18.2 Cr collected this month across {projects.filter((p) => p.status === "Active").length}{" "}
-            active projects.
-          </p>
-        </div>
+      <div className="rise flex items-center justify-between gap-3 py-4 sm:py-6">
+        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
         <Link
           to="/plots/layout"
-          className="hidden items-center gap-1.5 rounded-lg bg-surface-c px-3.5 py-2.5 text-sm font-medium text-foreground sm:inline-flex"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-surface-c px-3 py-2 text-sm font-medium text-foreground"
+          aria-label="Open live layout"
         >
           <MapPinned className="h-4 w-4 text-primary" />
-          Live layout
+          <span className="hidden sm:inline">Live layout</span>
         </Link>
       </div>
 
-      <section className="space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-          Quick actions
-        </p>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {opsActions.map((action, i) => (
-            <QuickActionTile key={action.label} action={action} index={i} />
+      <section className="space-y-2.5">
+        <p className="text-[13px] font-semibold text-foreground">Quick actions</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {quickActions.map((action, i) => (
+            <QuickActionTile key={action.label} {...action} index={i} />
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {metricActions.map((action, i) => (
-            <QuickActionTile key={action.label} action={action} index={i + opsActions.length} />
-          ))}
-        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-3 pt-4 lg:grid-cols-4">
+        <KpiCard
+          label="Collected"
+          value="₹18.2 Cr"
+          hint="+12.4%"
+          to="/collections"
+          icon={LineChart}
+        />
+        <KpiCard
+          label="Bookings"
+          value={String(bookings.length)}
+          hint="+7 this week"
+          to="/bookings"
+          icon={BarChart3}
+        />
+        <KpiCard
+          label="Outstanding"
+          value="₹5.2 Cr"
+          hint="+3.1%"
+          to="/schedule"
+          icon={BarChart3}
+          tone="danger"
+        />
+        <KpiCard
+          label="Plots Available"
+          value={`${available}/${plots.length}`}
+          hint={`(${availablePct}% available)`}
+          to="/plots"
+          icon={Home}
+          tone="success"
+          progress={availablePct}
+        />
       </section>
 
       <div className="grid gap-4 pt-5 lg:grid-cols-12">
