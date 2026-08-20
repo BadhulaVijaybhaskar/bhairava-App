@@ -287,7 +287,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 function TopBar() {
   const unread = notifications.filter((n) => n.unread).length;
   return (
-    <header className="glass sticky top-0 z-30 flex h-16 items-center gap-2 px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-outline-variant/25 bg-surface-lowest px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6">
       <Link to="/" className="shrink-0 lg:hidden">
         <BrandLogo size={30} />
       </Link>
@@ -326,7 +326,19 @@ function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolea
   if (!mounted) return null;
 
   return createPortal(
-    <nav className="mobile-bottom-nav grid grid-cols-5 gap-1 px-2 pt-1.5 lg:hidden" aria-label="Primary">
+    <nav
+      className="mobile-bottom-nav grid grid-cols-5 gap-1 px-2 pt-1.5 lg:hidden"
+      aria-label="Primary"
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        zIndex: 1000,
+        transform: "none",
+      }}
+    >
       {tabItems.map((item) => {
         const active = !menuOpen && isActive(pathname, item.to);
         return (
@@ -396,7 +408,16 @@ function MobileFab() {
           onClick={() => setOpen(false)}
         />
       )}
-      <div className="mobile-fab flex flex-col items-end gap-2 lg:hidden">
+      <div
+        className="mobile-fab flex flex-col items-end gap-2 lg:hidden"
+        style={{
+          position: "fixed",
+          right: 16,
+          bottom: "calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
+          zIndex: 1001,
+          transform: "none",
+        }}
+      >
         {open && (
           <div className="rise flex w-48 flex-col gap-1.5 rounded-2xl bg-surface-lowest p-2 shadow-float">
             {fabActions.map((item) => (
@@ -434,17 +455,15 @@ export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boo
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="app-shell flex bg-background">
       <Sidebar />
       <MobileMenu open={open} onClose={() => setOpen(false)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="app-shell-column flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main
           className={cn(
-            "min-w-0 flex-1 lg:pb-12",
-            bleed
-              ? "pb-[var(--mobile-content-pad-bottom)] lg:pb-0"
-              : "px-4 pt-2 pb-[var(--mobile-content-pad-bottom)] sm:px-6",
+            "app-shell-main min-w-0 flex-1 lg:overflow-visible lg:pb-12",
+            bleed ? "lg:pb-0" : "px-4 pt-2 sm:px-6",
           )}
         >
           {children}
