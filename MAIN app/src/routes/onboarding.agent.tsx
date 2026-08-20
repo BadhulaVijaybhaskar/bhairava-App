@@ -1,16 +1,13 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell } from "@/components/app-shell";
-import { PageHeader, Panel } from "@/components/kit";
 import {
-  Checkbox,
-  Field,
-  MultiSelect,
-  NumberInput,
-  TextInput,
-  Wizard,
+  OnboardingShell,
+  ReviewList,
+  useOnboardingDraft,
+  type FieldErrors,
   type WizardStep,
-} from "@/components/form-kit";
+} from "@/components/onboarding";
+import { Checkbox, Field, NumberInput, SelectInput, TextInput } from "@/components/form-kit";
 import { useData } from "@/lib/store";
 import { digits, isEmail, isPhone } from "@/lib/validate";
 
@@ -18,11 +15,16 @@ export const Route = createFileRoute("/onboarding/agent")({
   head: () => ({
     meta: [
       { title: "Onboard an agent — Bhairava" },
-      { name: "description", content: "Register a sales agent: identity, employee code, targets and project access." },
+      {
+        name: "description",
+        content: "Register a sales agent: identity, role, targets and project access.",
+      },
       { property: "og:title", content: "Onboard an agent — Bhairava" },
-      { property: "og:description", content: "Register a sales agent: identity, employee code, targets and project access." },
+      {
+        property: "og:description",
+        content: "Register a sales agent: identity, role, targets and project access.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AgentOnboarding,
@@ -36,30 +38,31 @@ const blank = {
   region: "West Hyderabad",
   target: 12,
   active: true,
+  assigned: "",
 };
 
 function AgentOnboarding() {
   const navigate = useNavigate();
   const { agents, projects, saveAgent, nextId } = useData();
 
-  const [f, setF] = useState(blank);
-  const [assigned, setAssigned] = useState<string[]>([]);
-  const [err, setErr] = useState<Record<string, string | undefined>>({});
+  const [f, setF, clearDraft] = useOnboardingDraft("agent", blank);
+  const [err, setErr] = useState<FieldErrors<typeof blank>>({});
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => {
     setF((p) => ({ ...p, [k]: v }));
     setErr((p) => ({ ...p, [k]: undefined }));
   };
-  const dirty = Object.entries(blank).some(([k, v]) => f[k as keyof typeof blank] !== v) || assigned.length > 0;
+  const dirty = JSON.stringify(f) !== JSON.stringify(blank);
+  const assigned = f.assigned ? f.assigned.split(",").filter(Boolean) : [];
 
-  const check = (map: Record<string, string | undefined>) => {
+  const check = (map: FieldErrors<typeof blank>) => {
     setErr((p) => ({ ...p, ...map }));
     return Object.values(map).some(Boolean) ? "Fix the highlighted fields to continue." : undefined;
   };
 
   const steps: WizardStep[] = [
     {
-      title: "Identity",
-      summary: "Agent name, contact and internal code.",
+      title: "Identity & contact",
+      summary: "Agent name, mobile and internal code.",
       validate: () =>
         check({
           name: f.name.trim() ? undefined : "Full name is required.",
@@ -68,42 +71,59 @@ function AgentOnboarding() {
         }),
       content: (
         <>
-          <Field label="Full name" required error={err["name"]}>
-            <TextInput value={f.name} onChange={(v) => set("name", v)} placeholder="Anitha Rao" invalid={!!err["name"]} />
+          <Field label="Full name" required error={err.name}>
+            <TextInput
+              value={f.name}
+              onChange={(v) => set("name", v)}
+              placeholder="Anitha Rao"
+              invalid={!!err.name}
+            />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Mobile" required error={err["phone"]} hint="10-digit number">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Mobile" required error={err.phone} hint="10-digit number">
               <TextInput
                 value={f.phone}
                 onChange={(v) => set("phone", digits(v, 10))}
                 type="tel"
                 placeholder="9000000000"
-                invalid={!!err["phone"]}
+                invalid={!!err.phone}
               />
             </Field>
-            <Field label="Email" error={err["email"]}>
-              <TextInput value={f.email} onChange={(v) => set("email", v)} type="email" placeholder="Optional" invalid={!!err["email"]} />
+            <Field label="Email" error={err.email}>
+              <TextInput
+                value={f.email}
+                onChange={(v) => set("email", v)}
+                type="email"
+                placeholder="Optional"
+                invalid={!!err.email}
+              />
             </Field>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Employee code" hint="Internal code, e.g. AG-001">
-              <TextInput value={f.employeeCode} onChange={(v) => set("employeeCode", v.toUpperCase())} placeholder="AG-001" />
-            </Field>
-            <Field label="Territory">
-              <TextInput value={f.region} onChange={(v) => set("region", v)} />
-            </Field>
-          </div>
+          <Field label="Employee code" hint="Internal code, e.g. AG-001">
+            <TextInput
+              value={f.employeeCode}
+              onChange={(v) => set("employeeCode", v.toUpperCase())}
+              placeholder="AG-001"
+            />
+          </Field>
         </>
       ),
     },
     {
-      title: "Status & targets",
-      summary: "Quarterly booking target and whether the agent is active.",
-      validate: () => check({ target: f.target > 0 ? undefined : "Set a booking target above zero." }),
+      title: "Role & assignment",
+      summary: "Territory, project access and whether they can take new bookings.",
       content: (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Booking target (quarter)" required error={err["target"]}>
-            <NumberInput value={f.target} onChange={(v) => set("target", v)} />
+        <>
+          <Field label="Territory">
+            <TextInput value={f.region} onChange={(v) => set("region", v)} />
+          </Field>
+          <Field label="Assigned project">
+            <SelectInput
+              value={f.assigned}
+              onChange={(v) => set("assigned", v)}
+              placeholder={projects.length ? "Select a project" : "No projects yet"}
+              options={projects.map((p) => ({ value: p.id, label: `${p.name} · ${p.code}` }))}
+            />
           </Field>
           <Field label="Account">
             <Checkbox
@@ -113,29 +133,35 @@ function AgentOnboarding() {
               hint="Inactive agents keep history but cannot take new bookings."
             />
           </Field>
-        </div>
+        </>
       ),
     },
     {
-      title: "Project assignment",
-      summary: "Which parcels this agent can sell.",
+      title: "Commercial / review",
+      summary: "Quarterly target, then confirm the record.",
+      validate: () =>
+        check({ target: f.target > 0 ? undefined : "Set a booking target above zero." }),
       content: (
-        <Field label="Assigned projects" hint={`${assigned.length} selected`}>
-          <MultiSelect
-            values={assigned}
-            onChange={setAssigned}
-            options={projects.map((p) => ({ value: p.id, label: p.name, hint: `${p.code} · ${p.city}` }))}
-            empty={
-              <span>
-                No projects yet.{" "}
-                <Link to="/onboarding/project" className="font-medium text-primary underline-offset-4 hover:underline">
-                  Create a project
-                </Link>{" "}
-                first, then assign it here.
-              </span>
-            }
+        <>
+          <Field label="Booking target (quarter)" required error={err.target}>
+            <NumberInput value={f.target} onChange={(v) => set("target", v)} />
+          </Field>
+          <ReviewList
+            rows={[
+              { label: "Name", value: f.name, step: 0 },
+              { label: "Mobile", value: f.phone, step: 0 },
+              { label: "Code", value: f.employeeCode || "Assigned on save", step: 0 },
+              { label: "Territory", value: f.region, step: 1 },
+              {
+                label: "Project",
+                value: projects.find((p) => p.id === f.assigned)?.name ?? "None",
+                step: 1,
+              },
+              { label: "Status", value: f.active ? "Active" : "Inactive", step: 1 },
+              { label: "Target", value: String(f.target) },
+            ]}
           />
-        </Field>
+        </>
       ),
     },
   ];
@@ -157,28 +183,22 @@ function AgentOnboarding() {
       email: f.email.trim(),
       employeeCode: f.employeeCode.trim(),
     });
+    clearDraft();
     void navigate({ to: "/agents/$agentId", params: { agentId: id } });
   };
 
   return (
-    <AppShell>
-      <PageHeader
-        eyebrow="Onboarding"
-        title="Onboard an agent"
-        description="Bring a sales agent on board with territory, targets and project access."
-      />
-      <Wizard
-        steps={steps}
-        onComplete={complete}
-        submitLabel="Create agent"
-        dirty={dirty}
-        onDiscard={() => void navigate({ to: "/agents" })}
-        aside={
-          <Panel tonal className="text-xs leading-relaxed text-muted-foreground">
-            Performance metrics start accruing from the first booking attributed to this agent.
-          </Panel>
-        }
-      />
-    </AppShell>
+    <OnboardingShell
+      title="Onboard an agent"
+      description="Bring a sales agent on board with territory, targets and project access."
+      steps={steps}
+      onComplete={complete}
+      submitLabel="Create agent"
+      dirty={dirty}
+      onDiscard={() => {
+        clearDraft();
+        void navigate({ to: "/agents" });
+      }}
+    />
   );
 }
