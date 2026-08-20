@@ -349,6 +349,68 @@ function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolea
   );
 }
 
+const fabActions: NavItem[] = [
+  { to: "/onboarding/customer", label: "New customer", icon: UserPlus },
+  { to: "/onboarding/project", label: "New project", icon: FolderPlus },
+  { to: "/onboarding/agent", label: "New agent", icon: BadgePlus },
+  { to: "/bookings", label: "Bookings", icon: Receipt },
+];
+
+function MobileFab() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      {open && (
+        <button
+          type="button"
+          aria-label="Dismiss create menu"
+          className="fixed inset-0 z-40 bg-foreground/20 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <div className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-end gap-2 lg:hidden">
+        {open && (
+          <div className="rise flex w-48 flex-col gap-1.5 rounded-2xl bg-surface-lowest p-2 shadow-float">
+            {fabActions.map((item) => (
+              <Link
+                key={item.to + item.label}
+                to={item.to}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors active:bg-surface-c"
+              >
+                <item.icon className="h-4 w-4 text-primary" strokeWidth={1.9} />
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          aria-label={open ? "Close create menu" : "Create"}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            "flex h-14 w-14 items-center justify-center rounded-full shadow-float transition-transform active:scale-95",
+            open ? "bg-surface-c text-foreground" : "gradient-primary text-primary-foreground",
+          )}
+        >
+          {open ? <X className="h-6 w-6" strokeWidth={2.2} /> : <Plus className="h-7 w-7" strokeWidth={2.4} />}
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boolean }) {
   const [open, setOpen] = useState(false);
 
@@ -367,6 +429,7 @@ export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boo
           {children}
         </main>
       </div>
+      <MobileFab />
       <BottomTabs onMore={() => setOpen((v) => !v)} menuOpen={open} />
     </div>
   );
