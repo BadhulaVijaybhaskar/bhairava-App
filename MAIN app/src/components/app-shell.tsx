@@ -33,6 +33,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { notifications } from "@/lib/mock-data";
 import { BrandLogo } from "@/components/brand";
 import { cn } from "@/lib/utils";
@@ -291,7 +292,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 function TopBar() {
   const unread = notifications.filter((n) => n.unread).length;
   return (
-    <header className="glass sticky top-0 z-30 flex h-16 items-center gap-2 px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-outline-variant/25 bg-surface-lowest px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6">
       <Link to="/" className="shrink-0 lg:hidden">
         <BrandLogo size={30} />
       </Link>
@@ -324,8 +325,28 @@ function TopBar() {
 
 function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return (
-    <nav className="glass fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden">
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <nav
+      className="mobile-bottom-nav grid grid-cols-5 gap-1 px-2 pt-1.5 lg:hidden"
+      aria-label="Primary"
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        zIndex: 1000,
+        transform: "none",
+      }}
+    >
       {tabItems.map((item) => {
         const active = !menuOpen && isActive(pathname, item.to);
         return (
@@ -333,7 +354,7 @@ function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolea
             key={item.to}
             to={item.to}
             className={cn(
-              "flex min-h-[44px] flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] font-medium transition-colors",
+              "flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-lg py-1 text-[10px] font-medium transition-colors",
               active ? "text-primary" : "text-muted-foreground",
             )}
           >
@@ -343,17 +364,100 @@ function BottomTabs({ onMore, menuOpen }: { onMore: () => void; menuOpen: boolea
         );
       })}
       <button
+        type="button"
         onClick={onMore}
         aria-label="More"
         className={cn(
-          "flex min-h-[44px] flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] font-medium transition-colors",
+          "flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-lg py-1 text-[10px] font-medium transition-colors",
           menuOpen ? "text-primary" : "text-muted-foreground",
         )}
       >
         <Menu className="h-5 w-5" strokeWidth={menuOpen ? 2.2 : 1.8} />
         <span className="truncate">More</span>
       </button>
-    </nav>
+    </nav>,
+    document.body,
+  );
+}
+
+const fabActions: NavItem[] = [
+  { to: "/onboarding/booking", label: "New booking", icon: Receipt },
+  { to: "/onboarding/customer", label: "New customer", icon: UserPlus },
+  { to: "/onboarding/visit", label: "Site visit", icon: CalendarClock },
+  { to: "/onboarding/reservation", label: "New reservation", icon: Clock },
+  { to: "/onboarding/project", label: "New project", icon: FolderPlus },
+  { to: "/onboarding/agent", label: "New agent", icon: BadgePlus },
+];
+
+function MobileFab() {
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <>
+      {open && (
+        <button
+          type="button"
+          aria-label="Dismiss create menu"
+          className="fixed inset-0 z-[1000] bg-foreground/20 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <div
+        className="mobile-fab flex flex-col items-end gap-2 lg:hidden"
+        style={{
+          position: "fixed",
+          right: 16,
+          bottom: "calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
+          zIndex: 1001,
+          transform: "none",
+        }}
+      >
+        {open && (
+          <div className="rise flex w-48 flex-col gap-1.5 rounded-2xl bg-surface-lowest p-2 shadow-float">
+            {fabActions.map((item) => (
+              <Link
+                key={item.to + item.label}
+                to={item.to}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors active:bg-surface-c"
+              >
+                <item.icon className="h-4 w-4 text-primary" strokeWidth={1.9} />
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          aria-label={open ? "Close create menu" : "Create"}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            "flex h-14 w-14 items-center justify-center rounded-full shadow-float transition-transform active:scale-95",
+            open ? "bg-surface-c text-foreground" : "gradient-primary text-primary-foreground",
+          )}
+        >
+          {open ? <X className="h-6 w-6" strokeWidth={2.2} /> : <Plus className="h-7 w-7" strokeWidth={2.4} />}
+        </button>
+      </div>
+    </>,
+    document.body,
   );
 }
 
@@ -361,20 +465,21 @@ export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boo
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="app-shell flex bg-background">
       <Sidebar />
       <MobileMenu open={open} onClose={() => setOpen(false)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="app-shell-column flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main
           className={cn(
-            "min-w-0 flex-1 pb-24 lg:pb-0",
-            bleed ? "" : "px-4 pt-2 pb-24 sm:px-6 lg:pb-12",
+            "app-shell-main min-w-0 flex-1 lg:overflow-visible lg:pb-12",
+            bleed ? "lg:pb-0" : "px-4 pt-2 sm:px-6",
           )}
         >
           {children}
         </main>
       </div>
+      <MobileFab />
       <BottomTabs onMore={() => setOpen((v) => !v)} menuOpen={open} />
     </div>
   );
