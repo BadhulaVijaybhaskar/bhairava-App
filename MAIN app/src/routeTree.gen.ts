@@ -42,6 +42,8 @@ import { Route as ReportsSalesRouteImport } from './routes/reports.sales'
 import { Route as SettingsAuditRouteImport } from './routes/settings.audit'
 import { Route as SettingsCompanyRouteImport } from './routes/settings.company'
 import { Route as SettingsUsersRouteImport } from './routes/settings.users'
+import { Route as SiteVisitsIndexRouteImport } from './routes/site-visits.index'
+import { Route as SiteVisitsNewRouteImport } from './routes/site-visits.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -208,6 +210,16 @@ const SettingsUsersRoute = SettingsUsersRouteImport.update({
   path: '/settings/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SiteVisitsIndexRoute = SiteVisitsIndexRouteImport.update({
+  id: '/site-visits/',
+  path: '/site-visits/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SiteVisitsNewRoute = SiteVisitsNewRouteImport.update({
+  id: '/site-visits/new',
+  path: '/site-visits/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -237,12 +249,14 @@ export interface FileRoutesByFullPath {
   '/settings/audit': typeof SettingsAuditRoute
   '/settings/company': typeof SettingsCompanyRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents/': typeof AgentsIndexRoute
   '/bookings/': typeof BookingsIndexRoute
   '/customers/': typeof CustomersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/site-visits/': typeof SiteVisitsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -272,12 +286,14 @@ export interface FileRoutesByTo {
   '/settings/audit': typeof SettingsAuditRoute
   '/settings/company': typeof SettingsCompanyRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents': typeof AgentsIndexRoute
   '/bookings': typeof BookingsIndexRoute
   '/customers': typeof CustomersIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/plots': typeof PlotsIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/site-visits': typeof SiteVisitsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -308,12 +324,14 @@ export interface FileRoutesById {
   '/settings/audit': typeof SettingsAuditRoute
   '/settings/company': typeof SettingsCompanyRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents/': typeof AgentsIndexRoute
   '/bookings/': typeof BookingsIndexRoute
   '/customers/': typeof CustomersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/site-visits/': typeof SiteVisitsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -345,12 +363,14 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/company'
     | '/settings/users'
+    | '/site-visits/new'
     | '/agents/'
     | '/bookings/'
     | '/customers/'
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/site-visits/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -380,12 +400,14 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/company'
     | '/settings/users'
+    | '/site-visits/new'
     | '/agents'
     | '/bookings'
     | '/customers'
     | '/payments'
     | '/plots'
     | '/projects'
+    | '/site-visits'
   id:
     | '__root__'
     | '/'
@@ -415,12 +437,14 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/company'
     | '/settings/users'
+    | '/site-visits/new'
     | '/agents/'
     | '/bookings/'
     | '/customers/'
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/site-visits/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -451,12 +475,14 @@ export interface RootRouteChildren {
   SettingsAuditRoute: typeof SettingsAuditRoute
   SettingsCompanyRoute: typeof SettingsCompanyRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
+  SiteVisitsNewRoute: typeof SiteVisitsNewRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
   BookingsIndexRoute: typeof BookingsIndexRoute
   CustomersIndexRoute: typeof CustomersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   PlotsIndexRoute: typeof PlotsIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  SiteVisitsIndexRoute: typeof SiteVisitsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -692,6 +718,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/site-visits/': {
+      id: '/site-visits/'
+      path: '/site-visits'
+      fullPath: '/site-visits/'
+      preLoaderRoute: typeof SiteVisitsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/site-visits/new': {
+      id: '/site-visits/new'
+      path: '/site-visits/new'
+      fullPath: '/site-visits/new'
+      preLoaderRoute: typeof SiteVisitsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -723,12 +763,14 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsAuditRoute: SettingsAuditRoute,
   SettingsCompanyRoute: SettingsCompanyRoute,
   SettingsUsersRoute: SettingsUsersRoute,
+  SiteVisitsNewRoute: SiteVisitsNewRoute,
   AgentsIndexRoute: AgentsIndexRoute,
   BookingsIndexRoute: BookingsIndexRoute,
   CustomersIndexRoute: CustomersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   PlotsIndexRoute: PlotsIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  SiteVisitsIndexRoute: SiteVisitsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

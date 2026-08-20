@@ -82,7 +82,9 @@ export interface Project {
   totalPlots: number;
   soldPlots: number;
   launchDate: string;
-  status: "Draft" | "Active" | "Pre-launch" | "Sold out" | "On hold";
+  status: "Draft" | "Active" | "Pre-launch" | "Sold out" | "On hold" | "Inactive";
+  /** Separate sales capability — a project can be Active AND resale-available. */
+  resaleAvailable?: boolean;
   valueCr: number;
   collectedCr: number;
   approvals: string[];
@@ -570,3 +572,49 @@ export const formatINR = (n: number, opts: { compact?: boolean } = {}) => {
 };
 
 export const byId = <T extends { id: string }>(list: T[], id?: string) => list.find((x) => x.id === id);
+
+/* ------------------------------- site visits ------------------------------ */
+
+export type SiteVisitStatus =
+  | "Scheduled"
+  | "Confirmed"
+  | "Completed"
+  | "Cancelled"
+  | "No-show"
+  | "Rescheduled";
+
+export interface SiteVisit {
+  id: string;
+  customerId: string;
+  projectId: string;
+  agentId: string;
+  date: string; // ISO yyyy-mm-dd
+  time: string; // display time e.g. "10:30 AM"
+  status: SiteVisitStatus;
+  plotInterest?: string[];
+  visitors?: number;
+  pickupRequired?: boolean;
+  pickupLocation?: string;
+  notes?: string;
+  source?: string;
+}
+
+const visitToday = new Date();
+const visitShift = (days: number) => {
+  const d = new Date(visitToday);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+export const siteVisits: SiteVisit[] = [
+  { id: "SV-001", customerId: "CUS-001", projectId: "PRJ-01", agentId: "AGT-01", date: visitShift(0), time: "10:30 AM", status: "Confirmed", plotInterest: ["BGF-118", "BGF-119"], visitors: 2, source: "Referral" },
+  { id: "SV-002", customerId: "CUS-002", projectId: "PRJ-02", agentId: "AGT-02", date: visitShift(0), time: "12:00 PM", status: "Scheduled", visitors: 1 },
+  { id: "SV-003", customerId: "CUS-003", projectId: "PRJ-01", agentId: "AGT-03", date: visitShift(0), time: "04:00 PM", status: "Scheduled", pickupRequired: true, pickupLocation: "Gachibowli" },
+  { id: "SV-004", customerId: "CUS-004", projectId: "PRJ-04", agentId: "AGT-01", date: visitShift(1), time: "11:00 AM", status: "Confirmed", visitors: 3 },
+  { id: "SV-005", customerId: "CUS-005", projectId: "PRJ-05", agentId: "AGT-04", date: visitShift(2), time: "09:30 AM", status: "Scheduled" },
+  { id: "SV-006", customerId: "CUS-006", projectId: "PRJ-02", agentId: "AGT-02", date: visitShift(3), time: "02:00 PM", status: "Rescheduled" },
+  { id: "SV-007", customerId: "CUS-007", projectId: "PRJ-03", agentId: "AGT-05", date: visitShift(-2), time: "10:00 AM", status: "Completed", plotInterest: ["MND-045"] },
+  { id: "SV-008", customerId: "CUS-008", projectId: "PRJ-01", agentId: "AGT-01", date: visitShift(-3), time: "03:30 PM", status: "Completed" },
+  { id: "SV-009", customerId: "CUS-009", projectId: "PRJ-05", agentId: "AGT-03", date: visitShift(-1), time: "01:00 PM", status: "Cancelled" },
+  { id: "SV-010", customerId: "CUS-010", projectId: "PRJ-04", agentId: "AGT-04", date: visitShift(4), time: "05:00 PM", status: "Scheduled", visitors: 2 },
+];

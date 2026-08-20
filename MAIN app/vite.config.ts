@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Allow access through the temporary public tunnel (e.g. *.trycloudflare.com) for remote preview.
+  vite: {
+    server: { allowedHosts: true },
+  },
 });

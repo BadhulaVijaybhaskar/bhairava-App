@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, FilterBar, Metric, PageHeader } from "@/components/kit";
+import { BookingCard } from "@/components/booking-card";
 import { agents, bookings, byId, customers, formatINR, plots, projects } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/bookings/")({
@@ -78,6 +79,7 @@ function BookingsIndex() {
         rows={rows}
         linkTo="/bookings/$bookingId"
         params={(r) => ({ bookingId: r.id })}
+        renderMobileCard={(r) => <BookingCard booking={r} />}
         columns={[
           {
             key: "id",

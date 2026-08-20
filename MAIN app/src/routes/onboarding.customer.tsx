@@ -200,7 +200,14 @@ function CustomerOnboarding() {
       content: (
         <>
           <Field label="Lead source">
-            <ChoiceGrid value={f.source} onChange={(v) => set("source", v)} options={sources.map((s) => ({ value: s, label: s }))} />
+            {/* Mobile: a single full-width dropdown instead of a tall stack of cards. */}
+            <div className="sm:hidden">
+              <SelectInput value={f.source} onChange={(v) => set("source", v)} options={sources.map((s) => ({ value: s, label: s }))} size="lg" />
+            </div>
+            {/* Desktop keeps the existing choice grid. */}
+            <div className="hidden sm:block">
+              <ChoiceGrid value={f.source} onChange={(v) => set("source", v)} options={sources.map((s) => ({ value: s, label: s }))} />
+            </div>
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Pipeline stage">

@@ -80,6 +80,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Sales",
     items: [
+      { to: "/site-visits", label: "Site visits", icon: CalendarClock },
       { to: "/reservations", label: "Reservations", icon: Clock },
       { to: "/bookings", label: "Bookings", icon: Receipt },
       { to: "/registrations", label: "Registrations", icon: Stamp },
@@ -286,7 +287,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 function TopBar() {
   const unread = notifications.filter((n) => n.unread).length;
   return (
-    <header className="glass sticky top-0 z-30 flex h-16 items-center gap-2 px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6">
+    <header className="glass sticky top-0 z-30 hidden h-16 items-center gap-2 px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6 lg:flex">
       <Link to="/" className="shrink-0 lg:hidden">
         <BrandLogo size={30} />
       </Link>
@@ -353,15 +354,23 @@ export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boo
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    // Mobile: lock the shell to the dynamic viewport and scroll the content region
+    // (not the page body) so the fixed bottom tab bar stays pinned and doesn't drift
+    // with the URL bar. Desktop keeps normal page scrolling via the lg: overrides.
+    <div className="flex h-dvh overflow-hidden bg-background lg:h-auto lg:min-h-screen lg:overflow-visible">
       <Sidebar />
       <MobileMenu open={open} onClose={() => setOpen(false)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <TopBar />
         <main
           className={cn(
-            "min-w-0 flex-1 pb-24 lg:pb-0",
-            bleed ? "" : "px-4 pt-2 pb-24 sm:px-6 lg:pb-12",
+            // Reserve space for the fixed bottom nav (~4.25rem) + iOS safe area + 24px so the
+            // last card is always fully scrollable above the navigation on every mobile page.
+            "min-w-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(4.25rem+env(safe-area-inset-bottom)+1.5rem)] lg:overflow-visible lg:pb-0",
+            // No global header on mobile — start content just below the top safe area.
+            bleed
+              ? "pt-[env(safe-area-inset-top)] lg:pt-0"
+              : "px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:px-6 lg:pt-2 lg:pb-12",
           )}
         >
           {children}

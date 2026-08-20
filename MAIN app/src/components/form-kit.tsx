@@ -90,10 +90,12 @@ export function SelectInput<T extends string>({
   value,
   onChange,
   options,
+  size = "md",
 }: {
   value: T;
   onChange: (v: T) => void;
   options: readonly T[] | { value: T; label: string }[];
+  size?: "md" | "lg";
 }) {
   const opts = options.map((o) => (typeof o === "string" ? { value: o, label: o } : o));
   return (
@@ -101,7 +103,7 @@ export function SelectInput<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className={cn(fieldBase, "appearance-none pr-9")}
+        className={cn(fieldBase, size === "lg" && "h-12", "appearance-none pr-9")}
       >
         {opts.map((o) => (
           <option key={o.value} value={o.value}>

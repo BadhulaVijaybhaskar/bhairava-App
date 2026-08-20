@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { PageHeader, Panel, SectionTitle } from "@/components/kit";
+import { PageHeader, Panel } from "@/components/kit";
 import {
+  Checkbox,
   ChoiceGrid,
   Field,
   ImageUpload,
@@ -11,7 +11,8 @@ import {
   SelectInput,
   TextInput,
   TextareaInput,
-  useUnsavedGuard,
+  Wizard,
+  type WizardStep,
 } from "@/components/form-kit";
 import { useData } from "@/lib/store";
 import type { Project } from "@/lib/mock-data";
@@ -24,12 +25,12 @@ export const Route = createFileRoute("/onboarding/project")({
       { title: "Add a project — Bhairava" },
       {
         name: "description",
-        content: "Capture the basics of a new plotted development and open the project workspace to configure the rest.",
+        content: "Capture the basics of a new plotted development and open the project workspace.",
       },
       { property: "og:title", content: "Add a project — Bhairava" },
       {
         property: "og:description",
-        content: "Capture the basics of a new plotted development and open the project workspace to configure the rest.",
+        content: "Capture the basics of a new plotted development and open the project workspace.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -38,10 +39,13 @@ export const Route = createFileRoute("/onboarding/project")({
   component: AddProject,
 });
 
+const STATUSES = ["Draft", "Pre-launch", "Active", "On hold", "Inactive"] as const;
+
 const blank = {
   name: "",
   code: "",
-  projectType: "Plotted development" as Project["projectType"],
+  projectType: "Plotted development" as NonNullable<Project["projectType"]>,
+  status: "Draft" as Project["status"],
   description: "",
   address: "",
   village: "",
@@ -58,6 +62,7 @@ const blank = {
   reraNumber: "",
   launchDate: new Date().toISOString().slice(0, 10),
   expectedCompletion: "",
+  resaleAvailable: false,
   manager: "",
   coverImage: undefined as string | undefined,
   layoutImage: undefined as string | undefined,
@@ -74,20 +79,195 @@ function AddProject() {
     setErr((p) => ({ ...p, [k]: undefined }));
   };
   const dirty = Object.entries(blank).some(([k, v]) => f[k as keyof typeof blank] !== v);
-  const [saving, setSaving] = useState(false);
-  useUnsavedGuard(dirty && !saving);
 
-  const create = () => {
-    const next: Record<string, string | undefined> = {
-      name: f.name.trim() ? undefined : "Project name is required.",
-      code: f.code.trim() ? undefined : "Project code is required.",
-      city: f.city.trim() ? undefined : "City is required.",
-      pincode: !f.pincode || isPincode(f.pincode) ? undefined : "Pincode must be 6 digits.",
-    };
-    setErr(next);
-    if (Object.values(next).some(Boolean)) return;
+  const check = (map: Record<string, string | undefined>) => {
+    setErr((p) => ({ ...p, ...map }));
+    return Object.values(map).some(Boolean) ? "Fix the highlighted fields to continue." : undefined;
+  };
 
-    setSaving(true);
+  const steps: WizardStep[] = [
+    {
+      title: "Identity",
+      summary: "Name, code, type and current status.",
+      validate: () =>
+        check({
+          name: f.name.trim() ? undefined : "Project name is required.",
+          code: f.code.trim() ? undefined : "Project code is required.",
+        }),
+      content: (
+        <>
+          <Field label="Project name" required error={err["name"]}>
+            <TextInput value={f.name} onChange={(v) => set("name", v)} placeholder="Green City" invalid={!!err["name"]} />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Project code" required error={err["code"]}>
+              <TextInput
+                value={f.code}
+                onChange={(v) => set("code", v.toUpperCase())}
+                placeholder="GREEN-CITY"
+                invalid={!!err["code"]}
+              />
+            </Field>
+            <Field label="Status">
+              <SelectInput value={f.status} onChange={(v) => set("status", v)} options={STATUSES} size="lg" />
+            </Field>
+          </div>
+          <Field label="Project type">
+            <div className="sm:hidden">
+              <SelectInput value={f.projectType} onChange={(v) => set("projectType", v)} options={PROJECT_TYPES} size="lg" />
+            </div>
+            <div className="hidden sm:block">
+              <ChoiceGrid
+                value={f.projectType}
+                onChange={(v) => set("projectType", v)}
+                options={PROJECT_TYPES.map((t) => ({ value: t, label: t }))}
+              />
+            </div>
+          </Field>
+        </>
+      ),
+    },
+    {
+      title: "Location",
+      summary: "Where the project sits and how it is registered.",
+      validate: () =>
+        check({
+          city: f.city.trim() ? undefined : "City is required.",
+          pincode: !f.pincode || isPincode(f.pincode) ? undefined : "Pincode must be 6 digits.",
+        }),
+      content: (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="State">
+              <TextInput value={f.state} onChange={(v) => set("state", v)} />
+            </Field>
+            <Field label="City" required error={err["city"]}>
+              <TextInput value={f.city} onChange={(v) => set("city", v)} invalid={!!err["city"]} />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Village / locality">
+              <TextInput value={f.village} onChange={(v) => set("village", v)} placeholder="Amaravati" />
+            </Field>
+            <Field label="Mandal">
+              <TextInput value={f.mandal} onChange={(v) => set("mandal", v)} />
+            </Field>
+            <Field label="District">
+              <TextInput value={f.district} onChange={(v) => set("district", v)} />
+            </Field>
+          </div>
+          <Field label="RERA / approval no.">
+            <TextInput value={f.reraNumber} onChange={(v) => set("reraNumber", v)} placeholder="P0210000XXXX" />
+          </Field>
+          <Field label="Site address">
+            <TextInput value={f.address} onChange={(v) => set("address", v)} placeholder="Survey no. 118, main road" />
+          </Field>
+          <Field label="Pincode" error={err["pincode"]}>
+            <TextInput
+              value={f.pincode}
+              onChange={(v) => set("pincode", v.replace(/\D/g, "").slice(0, 6))}
+              placeholder="522020"
+              invalid={!!err["pincode"]}
+            />
+          </Field>
+        </>
+      ),
+    },
+    {
+      title: "Inventory",
+      summary: "Plot count and area. Resale is independent of status.",
+      validate: () =>
+        check({
+          plannedPlots: f.plannedPlots >= 1 ? undefined : "Enter at least one plot.",
+          totalArea: f.totalArea > 0 ? undefined : "Enter a valid total area.",
+        }),
+      content: (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Approx. number of plots" required error={err["plannedPlots"]} hint="Refined later in inventory.">
+              <NumberInput value={f.plannedPlots} onChange={(v) => set("plannedPlots", v)} />
+            </Field>
+            <Field label="Total area" required error={err["totalArea"]}>
+              <NumberInput value={f.totalArea} onChange={(v) => set("totalArea", v)} step={0.5} />
+            </Field>
+          </div>
+          <Field label="Area unit">
+            <SelectInput value={f.areaUnit} onChange={(v) => set("areaUnit", v)} options={AREA_UNITS} />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Launch date">
+              <TextInput value={f.launchDate} onChange={(v) => set("launchDate", v)} type="date" />
+            </Field>
+            <Field label="Expected completion">
+              <TextInput value={f.expectedCompletion} onChange={(v) => set("expectedCompletion", v)} type="date" />
+            </Field>
+          </div>
+          <Checkbox
+            checked={f.resaleAvailable}
+            onChange={(v) => set("resaleAvailable", v)}
+            label="Resale available"
+            hint="Independent of project status — a live project can also accept resale."
+          />
+        </>
+      ),
+    },
+    {
+      title: "Review",
+      summary: "Assign a manager, attach media, then create the project.",
+      content: (
+        <>
+          <Field label="Project manager">
+            <TextInput value={f.manager} onChange={(v) => set("manager", v)} placeholder="Ravi Teja" />
+          </Field>
+          <Field label="Description" hint="One short paragraph for the sales team.">
+            <TextareaInput value={f.description} onChange={(v) => set("description", v)} rows={3} />
+          </Field>
+          <div className="grid gap-5 lg:grid-cols-3">
+            <Field label="Cover image" hint="Shown on the portfolio card.">
+              <ImageUpload value={f.coverImage} onChange={(v) => set("coverImage", v)} hint="JPG, PNG or WebP" />
+            </Field>
+            <Field label="Master layout" hint="Optional now.">
+              <ImageUpload value={f.layoutImage} onChange={(v) => set("layoutImage", v)} hint="Site plan image" />
+            </Field>
+            <Field label="Brochure">
+              <ImageUpload value={f.brochure} onChange={(v) => set("brochure", v)} hint="JPG, PNG or WebP" />
+            </Field>
+          </div>
+          <div className="rounded-xl bg-surface-low p-3.5">
+            <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Summary</p>
+            <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Project</dt>
+                <dd className="truncate font-medium">{f.name.trim() || "Untitled"} · {f.code.trim() || "code"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Type / status</dt>
+                <dd className="truncate font-medium">{f.projectType} · {f.status}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-muted-foreground">Location</dt>
+                <dd className="truncate font-medium">
+                  {[f.village, f.city, f.state].filter(Boolean).join(", ") || "TBD"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Inventory</dt>
+                <dd className="numeric font-medium">
+                  {f.plannedPlots} plots · {f.totalArea} {f.areaUnit}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Resale</dt>
+                <dd className="font-medium">{f.resaleAvailable ? "Available" : "Off"}</dd>
+              </div>
+            </dl>
+          </div>
+        </>
+      ),
+    },
+  ];
+
+  const complete = () => {
     const id = nextId("PRJ-", projects);
     const project: Project = {
       id,
@@ -95,10 +275,10 @@ function AddProject() {
       code: f.code.trim(),
       location: [f.village.trim(), f.mandal.trim()].filter(Boolean).join(", ") || f.city.trim(),
       city: f.city.trim(),
-      totalPlots: 0,
+      totalPlots: f.plannedPlots,
       soldPlots: 0,
       launchDate: f.launchDate,
-      status: "Draft",
+      status: f.status,
       valueCr: 0,
       collectedCr: 0,
       approvals: f.reraNumber.trim() ? ["RERA"] : [],
@@ -117,6 +297,7 @@ function AddProject() {
       expectedCompletion: f.expectedCompletion,
       projectType: f.projectType,
       highlights: [],
+      resaleAvailable: f.resaleAvailable,
       ...(f.lat ? { lat: Number(f.lat) } : {}),
       ...(f.lng ? { lng: Number(f.lng) } : {}),
       ...(f.coverImage ? { coverImage: f.coverImage } : {}),
@@ -124,7 +305,7 @@ function AddProject() {
       ...(f.brochure ? { brochure: f.brochure } : {}),
     };
     saveProject(project);
-    void navigate({ to: "/projects/setup/$projectId", params: { projectId: id } });
+    void navigate({ to: "/projects/$projectId", params: { projectId: id } });
   };
 
   return (
@@ -132,151 +313,20 @@ function AddProject() {
       <PageHeader
         eyebrow="Onboarding"
         title="Add a project"
-        description="Capture just the basics. The project saves as a draft and opens its workspace, where plots, pricing, amenities and documents are configured progressively."
+        description="Four short steps. Inventory stays editable after create."
       />
-
-      <div className="space-y-5 pb-28 md:pb-6">
-        <Panel>
-          <SectionTitle>Project information</SectionTitle>
-          <div className="grid gap-4 pt-4 sm:grid-cols-2">
-            <Field label="Project name" required error={err["name"]}>
-              <TextInput value={f.name} onChange={(v) => set("name", v)} placeholder="Green City" invalid={!!err["name"]} />
-            </Field>
-            <Field label="Project code" required error={err["code"]}>
-              <TextInput
-                value={f.code}
-                onChange={(v) => set("code", v.toUpperCase())}
-                placeholder="GREEN-CITY"
-                invalid={!!err["code"]}
-              />
-            </Field>
-          </div>
-          <div className="pt-4">
-            <Field label="Project type">
-              <ChoiceGrid
-                value={f.projectType ?? "Plotted development"}
-                onChange={(v) => set("projectType", v)}
-                options={PROJECT_TYPES.map((t) => ({ value: t, label: t }))}
-              />
-            </Field>
-          </div>
-          <div className="pt-4">
-            <Field label="Description" hint="One short paragraph for the sales team.">
-              <TextareaInput value={f.description} onChange={(v) => set("description", v)} />
-            </Field>
-          </div>
-        </Panel>
-
-        <Panel>
-          <SectionTitle>Location</SectionTitle>
-          <div className="grid gap-4 pt-4">
-            <Field label="Address">
-              <TextInput value={f.address} onChange={(v) => set("address", v)} placeholder="Survey no. 118, main road" />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Village / locality">
-                <TextInput value={f.village} onChange={(v) => set("village", v)} placeholder="Amaravati" />
-              </Field>
-              <Field label="Mandal">
-                <TextInput value={f.mandal} onChange={(v) => set("mandal", v)} />
-              </Field>
-              <Field label="District">
-                <TextInput value={f.district} onChange={(v) => set("district", v)} />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="City" required error={err["city"]}>
-                <TextInput value={f.city} onChange={(v) => set("city", v)} invalid={!!err["city"]} />
-              </Field>
-              <Field label="State">
-                <TextInput value={f.state} onChange={(v) => set("state", v)} />
-              </Field>
-              <Field label="Pincode" error={err["pincode"]}>
-                <TextInput
-                  value={f.pincode}
-                  onChange={(v) => set("pincode", v.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="522020"
-                  invalid={!!err["pincode"]}
-                />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Map latitude" hint="Auto-filled from the map picker when available.">
-                <TextInput value={f.lat} onChange={(v) => set("lat", v)} placeholder="16.5062" />
-              </Field>
-              <Field label="Map longitude">
-                <TextInput value={f.lng} onChange={(v) => set("lng", v)} placeholder="80.6480" />
-              </Field>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <SectionTitle>Basic development information</SectionTitle>
-          <div className="grid gap-4 pt-4 sm:grid-cols-3">
-            <Field label="Total area">
-              <NumberInput value={f.totalArea} onChange={(v) => set("totalArea", v)} step={0.5} />
-            </Field>
-            <Field label="Area unit">
-              <SelectInput value={f.areaUnit} onChange={(v) => set("areaUnit", v)} options={AREA_UNITS} />
-            </Field>
-            <Field label="Approx. number of plots" hint="Refined later in inventory.">
-              <NumberInput value={f.plannedPlots} onChange={(v) => set("plannedPlots", v)} />
-            </Field>
-          </div>
-          <div className="grid gap-4 pt-4 sm:grid-cols-3">
-            <Field label="RERA number">
-              <TextInput value={f.reraNumber} onChange={(v) => set("reraNumber", v)} placeholder="P0210000XXXX" />
-            </Field>
-            <Field label="Launch date">
-              <TextInput value={f.launchDate} onChange={(v) => set("launchDate", v)} type="date" />
-            </Field>
-            <Field label="Expected completion">
-              <TextInput value={f.expectedCompletion} onChange={(v) => set("expectedCompletion", v)} type="date" />
-            </Field>
-          </div>
-          <div className="pt-4">
-            <Field label="Project manager">
-              <TextInput value={f.manager} onChange={(v) => set("manager", v)} placeholder="Ravi Teja" />
-            </Field>
-          </div>
-        </Panel>
-
-        <Panel>
-          <SectionTitle>Media</SectionTitle>
-          <div className="grid gap-5 pt-4 lg:grid-cols-3">
-            <Field label="Cover image" hint="Shown on the portfolio card.">
-              <ImageUpload value={f.coverImage} onChange={(v) => set("coverImage", v)} hint="JPG, PNG or WebP" />
-            </Field>
-            <Field label="Master layout" hint="Optional now — can be uploaded in the workspace.">
-              <ImageUpload value={f.layoutImage} onChange={(v) => set("layoutImage", v)} hint="Site plan image" />
-            </Field>
-            <Field label="Brochure" hint="Marketing brochure image or scan.">
-              <ImageUpload value={f.brochure} onChange={(v) => set("brochure", v)} hint="JPG, PNG or WebP" />
-            </Field>
-          </div>
-        </Panel>
-      </div>
-
-      <div className="fixed inset-x-0 bottom-16 z-30 flex items-center gap-3 border-t border-outline-variant/60 bg-background/85 px-4 py-3 backdrop-blur md:static md:mt-2 md:border-0 md:bg-transparent md:px-0 md:pb-8 md:backdrop-blur-none">
-        <button
-          type="button"
-          onClick={() => void navigate({ to: "/projects" })}
-          className="h-11 shrink-0 rounded-xl bg-surface-low px-4 text-sm font-medium transition-colors hover:bg-surface-c"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={create}
-          className="gradient-primary lift flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-primary-foreground md:flex-none"
-        >
-          Create project <ArrowRight className="h-4 w-4" />
-        </button>
-        <p className="hidden text-xs text-muted-foreground md:block">
-          Saved as a draft — you'll land in the project workspace to complete setup.
-        </p>
-      </div>
+      <Wizard
+        steps={steps}
+        onComplete={complete}
+        submitLabel="Create Project"
+        dirty={dirty}
+        onDiscard={() => void navigate({ to: "/projects" })}
+        aside={
+          <Panel tonal className="text-xs leading-relaxed text-muted-foreground">
+            Resale is a sales capability, not a status. You can keep a project Active and still accept resale.
+          </Panel>
+        }
+      />
     </AppShell>
   );
 }

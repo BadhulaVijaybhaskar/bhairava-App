@@ -16,9 +16,11 @@ import {
   agents as seedAgents,
   customers as seedCustomers,
   projects as seedProjects,
+  siteVisits as seedSiteVisits,
   type Agent,
   type Customer,
   type Project,
+  type SiteVisit,
 } from "@/lib/mock-data";
 
 const KEY = "bhairava.admin.v1";
@@ -27,6 +29,7 @@ interface Data {
   projects: Project[];
   customers: Customer[];
   agents: Agent[];
+  siteVisits: SiteVisit[];
 }
 
 interface Ctx extends Data {
@@ -36,6 +39,8 @@ interface Ctx extends Data {
   removeCustomer: (id: string) => void;
   saveAgent: (a: Agent) => void;
   removeAgent: (id: string) => void;
+  saveSiteVisit: (v: SiteVisit) => void;
+  removeSiteVisit: (id: string) => void;
   reset: () => void;
   nextId: (prefix: string, list: { id: string }[]) => string;
 }
@@ -44,6 +49,7 @@ const seed = (): Data => ({
   projects: seedProjects,
   customers: seedCustomers,
   agents: seedAgents,
+  siteVisits: seedSiteVisits,
 });
 
 const DataContext = createContext<Ctx | null>(null);
@@ -114,6 +120,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       removeCustomer: (id) => remove("customers", id),
       saveAgent: (a) => upsert("agents", a),
       removeAgent: (id) => remove("agents", id),
+      saveSiteVisit: (v) => upsert("siteVisits", v),
+      removeSiteVisit: (id) => remove("siteVisits", id),
       reset: () => {
         try {
           localStorage.removeItem(KEY);
