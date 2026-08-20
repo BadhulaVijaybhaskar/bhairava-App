@@ -58,6 +58,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { to: "/onboarding/project", label: "New project", icon: FolderPlus },
       { to: "/onboarding/customer", label: "New customer", icon: UserPlus },
       { to: "/onboarding/agent", label: "New agent", icon: BadgePlus },
+      { to: "/onboarding/plot", label: "New plot", icon: Grid3x3 },
+      { to: "/onboarding/booking", label: "New booking", icon: Receipt },
+      { to: "/onboarding/reservation", label: "New reservation", icon: Clock },
     ],
   },
   {

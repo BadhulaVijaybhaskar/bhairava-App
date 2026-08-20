@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { Chip, DataTable, FilterBar, Metric, PageHeader } from "@/components/kit";
+import { Chip, DataTable, FilterBar, Metric, NewRecordButton, PageHeader } from "@/components/kit";
 import { BookingCard } from "@/components/booking-card";
-import { agents, bookings, byId, customers, formatINR, plots, projects } from "@/lib/mock-data";
+import { byId, formatINR } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/bookings/")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/bookings/")({
 const stageViews = ["All", "Draft", "Confirmed", "Agreement", "Registered", "Cancelled"];
 
 function BookingsIndex() {
+  const { bookings, customers, plots, projects, agents } = useData();
   const [active, setActive] = useState("All");
   const [query, setQuery] = useState("");
 
@@ -44,7 +46,7 @@ function BookingsIndex() {
         return true;
       })
       .sort((a, b) => (a.date < b.date ? 1 : -1));
-  }, [active, query]);
+  }, [bookings, customers, plots, projects, agents, active, query]);
 
   const totalAmount = bookings.reduce((a, b) => a + b.amount, 0);
   const totalPaid = bookings.reduce((a, b) => a + b.paid, 0);
@@ -56,6 +58,7 @@ function BookingsIndex() {
         eyebrow="Sales"
         title="Bookings"
         description="Every plot booking across all projects, with stage, financials and progress."
+        actions={<NewRecordButton to="/onboarding/booking">New booking</NewRecordButton>}
       />
 
       <div className="grid gap-4 pb-6 sm:grid-cols-2 lg:grid-cols-4">

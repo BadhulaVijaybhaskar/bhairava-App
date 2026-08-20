@@ -14,12 +14,18 @@ import {
 } from "react";
 import {
   agents as seedAgents,
+  bookings as seedBookings,
   customers as seedCustomers,
+  plots as seedPlots,
   projects as seedProjects,
+  reservations as seedReservations,
   siteVisits as seedSiteVisits,
   type Agent,
+  type Booking,
   type Customer,
+  type Plot,
   type Project,
+  type Reservation,
   type SiteVisit,
 } from "@/lib/mock-data";
 
@@ -30,6 +36,9 @@ interface Data {
   customers: Customer[];
   agents: Agent[];
   siteVisits: SiteVisit[];
+  plots: Plot[];
+  bookings: Booking[];
+  reservations: Reservation[];
 }
 
 interface Ctx extends Data {
@@ -41,6 +50,12 @@ interface Ctx extends Data {
   removeAgent: (id: string) => void;
   saveSiteVisit: (v: SiteVisit) => void;
   removeSiteVisit: (id: string) => void;
+  savePlot: (p: Plot) => void;
+  removePlot: (id: string) => void;
+  saveBooking: (b: Booking) => void;
+  removeBooking: (id: string) => void;
+  saveReservation: (r: Reservation) => void;
+  removeReservation: (id: string) => void;
   reset: () => void;
   nextId: (prefix: string, list: { id: string }[]) => string;
 }
@@ -50,6 +65,9 @@ const seed = (): Data => ({
   customers: seedCustomers,
   agents: seedAgents,
   siteVisits: seedSiteVisits,
+  plots: seedPlots,
+  bookings: seedBookings,
+  reservations: seedReservations,
 });
 
 const DataContext = createContext<Ctx | null>(null);
@@ -122,6 +140,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       removeAgent: (id) => remove("agents", id),
       saveSiteVisit: (v) => upsert("siteVisits", v),
       removeSiteVisit: (id) => remove("siteVisits", id),
+      savePlot: (p) => upsert("plots", p),
+      removePlot: (id) => remove("plots", id),
+      saveBooking: (b) => upsert("bookings", b),
+      removeBooking: (id) => remove("bookings", id),
+      saveReservation: (r) => upsert("reservations", r),
+      removeReservation: (id) => remove("reservations", id),
       reset: () => {
         try {
           localStorage.removeItem(KEY);

@@ -16,7 +16,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as RegistrationsRouteImport } from './routes/registrations'
 import { Route as ResaleRouteImport } from './routes/resale'
-import { Route as ReservationsRouteImport } from './routes/reservations'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as AgentsIndexRouteImport } from './routes/agents.index'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents.$agentId'
@@ -25,8 +24,11 @@ import { Route as BookingsBookingIdRouteImport } from './routes/bookings.$bookin
 import { Route as CustomersIndexRouteImport } from './routes/customers.index'
 import { Route as CustomersCustomerIdRouteImport } from './routes/customers.$customerId'
 import { Route as OnboardingAgentRouteImport } from './routes/onboarding.agent'
+import { Route as OnboardingBookingRouteImport } from './routes/onboarding.booking'
 import { Route as OnboardingCustomerRouteImport } from './routes/onboarding.customer'
+import { Route as OnboardingPlotRouteImport } from './routes/onboarding.plot'
 import { Route as OnboardingProjectRouteImport } from './routes/onboarding.project'
+import { Route as OnboardingReservationRouteImport } from './routes/onboarding.reservation'
 import { Route as PaymentsIndexRouteImport } from './routes/payments.index'
 import { Route as PaymentsPaymentIdRouteImport } from './routes/payments.$paymentId'
 import { Route as PlotsIndexRouteImport } from './routes/plots.index'
@@ -39,6 +41,7 @@ import { Route as ReportsAgentsRouteImport } from './routes/reports.agents'
 import { Route as ReportsCollectionsRouteImport } from './routes/reports.collections'
 import { Route as ReportsInventoryRouteImport } from './routes/reports.inventory'
 import { Route as ReportsSalesRouteImport } from './routes/reports.sales'
+import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
 import { Route as SettingsAuditRouteImport } from './routes/settings.audit'
 import { Route as SettingsCompanyRouteImport } from './routes/settings.company'
 import { Route as SettingsUsersRouteImport } from './routes/settings.users'
@@ -78,11 +81,6 @@ const RegistrationsRoute = RegistrationsRouteImport.update({
 const ResaleRoute = ResaleRouteImport.update({
   id: '/resale',
   path: '/resale',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReservationsRoute = ReservationsRouteImport.update({
-  id: '/reservations',
-  path: '/reservations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScheduleRoute = ScheduleRouteImport.update({
@@ -125,14 +123,29 @@ const OnboardingAgentRoute = OnboardingAgentRouteImport.update({
   path: '/onboarding/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingBookingRoute = OnboardingBookingRouteImport.update({
+  id: '/onboarding/booking',
+  path: '/onboarding/booking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingCustomerRoute = OnboardingCustomerRouteImport.update({
   id: '/onboarding/customer',
   path: '/onboarding/customer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingPlotRoute = OnboardingPlotRouteImport.update({
+  id: '/onboarding/plot',
+  path: '/onboarding/plot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingProjectRoute = OnboardingProjectRouteImport.update({
   id: '/onboarding/project',
   path: '/onboarding/project',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingReservationRoute = OnboardingReservationRouteImport.update({
+  id: '/onboarding/reservation',
+  path: '/onboarding/reservation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
@@ -195,6 +208,11 @@ const ReportsSalesRoute = ReportsSalesRouteImport.update({
   path: '/reports/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReservationsIndexRoute = ReservationsIndexRouteImport.update({
+  id: '/reservations/',
+  path: '/reservations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsAuditRoute = SettingsAuditRouteImport.update({
   id: '/settings/audit',
   path: '/settings/audit',
@@ -229,14 +247,16 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/registrations': typeof RegistrationsRoute
   '/resale': typeof ResaleRoute
-  '/reservations': typeof ReservationsRoute
   '/schedule': typeof ScheduleRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
   '/onboarding/agent': typeof OnboardingAgentRoute
+  '/onboarding/booking': typeof OnboardingBookingRoute
   '/onboarding/customer': typeof OnboardingCustomerRoute
+  '/onboarding/plot': typeof OnboardingPlotRoute
   '/onboarding/project': typeof OnboardingProjectRoute
+  '/onboarding/reservation': typeof OnboardingReservationRoute
   '/payments/$paymentId': typeof PaymentsPaymentIdRoute
   '/plots/editor': typeof PlotsEditorRoute
   '/plots/layout': typeof PlotsLayoutRoute
@@ -256,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/reservations/': typeof ReservationsIndexRoute
   '/site-visits/': typeof SiteVisitsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -266,14 +287,16 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/registrations': typeof RegistrationsRoute
   '/resale': typeof ResaleRoute
-  '/reservations': typeof ReservationsRoute
   '/schedule': typeof ScheduleRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
   '/onboarding/agent': typeof OnboardingAgentRoute
+  '/onboarding/booking': typeof OnboardingBookingRoute
   '/onboarding/customer': typeof OnboardingCustomerRoute
+  '/onboarding/plot': typeof OnboardingPlotRoute
   '/onboarding/project': typeof OnboardingProjectRoute
+  '/onboarding/reservation': typeof OnboardingReservationRoute
   '/payments/$paymentId': typeof PaymentsPaymentIdRoute
   '/plots/editor': typeof PlotsEditorRoute
   '/plots/layout': typeof PlotsLayoutRoute
@@ -293,6 +316,7 @@ export interface FileRoutesByTo {
   '/payments': typeof PaymentsIndexRoute
   '/plots': typeof PlotsIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/reservations': typeof ReservationsIndexRoute
   '/site-visits': typeof SiteVisitsIndexRoute
 }
 export interface FileRoutesById {
@@ -304,14 +328,16 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/registrations': typeof RegistrationsRoute
   '/resale': typeof ResaleRoute
-  '/reservations': typeof ReservationsRoute
   '/schedule': typeof ScheduleRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
   '/onboarding/agent': typeof OnboardingAgentRoute
+  '/onboarding/booking': typeof OnboardingBookingRoute
   '/onboarding/customer': typeof OnboardingCustomerRoute
+  '/onboarding/plot': typeof OnboardingPlotRoute
   '/onboarding/project': typeof OnboardingProjectRoute
+  '/onboarding/reservation': typeof OnboardingReservationRoute
   '/payments/$paymentId': typeof PaymentsPaymentIdRoute
   '/plots/editor': typeof PlotsEditorRoute
   '/plots/layout': typeof PlotsLayoutRoute
@@ -331,6 +357,7 @@ export interface FileRoutesById {
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/reservations/': typeof ReservationsIndexRoute
   '/site-visits/': typeof SiteVisitsIndexRoute
 }
 export interface FileRouteTypes {
@@ -343,14 +370,16 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/registrations'
     | '/resale'
-    | '/reservations'
     | '/schedule'
     | '/agents/$agentId'
     | '/bookings/$bookingId'
     | '/customers/$customerId'
     | '/onboarding/agent'
+    | '/onboarding/booking'
     | '/onboarding/customer'
+    | '/onboarding/plot'
     | '/onboarding/project'
+    | '/onboarding/reservation'
     | '/payments/$paymentId'
     | '/plots/editor'
     | '/plots/layout'
@@ -370,6 +399,7 @@ export interface FileRouteTypes {
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/reservations/'
     | '/site-visits/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -380,14 +410,16 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/registrations'
     | '/resale'
-    | '/reservations'
     | '/schedule'
     | '/agents/$agentId'
     | '/bookings/$bookingId'
     | '/customers/$customerId'
     | '/onboarding/agent'
+    | '/onboarding/booking'
     | '/onboarding/customer'
+    | '/onboarding/plot'
     | '/onboarding/project'
+    | '/onboarding/reservation'
     | '/payments/$paymentId'
     | '/plots/editor'
     | '/plots/layout'
@@ -407,6 +439,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/plots'
     | '/projects'
+    | '/reservations'
     | '/site-visits'
   id:
     | '__root__'
@@ -417,14 +450,16 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/registrations'
     | '/resale'
-    | '/reservations'
     | '/schedule'
     | '/agents/$agentId'
     | '/bookings/$bookingId'
     | '/customers/$customerId'
     | '/onboarding/agent'
+    | '/onboarding/booking'
     | '/onboarding/customer'
+    | '/onboarding/plot'
     | '/onboarding/project'
+    | '/onboarding/reservation'
     | '/payments/$paymentId'
     | '/plots/editor'
     | '/plots/layout'
@@ -444,6 +479,7 @@ export interface FileRouteTypes {
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/reservations/'
     | '/site-visits/'
   fileRoutesById: FileRoutesById
 }
@@ -455,14 +491,16 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   RegistrationsRoute: typeof RegistrationsRoute
   ResaleRoute: typeof ResaleRoute
-  ReservationsRoute: typeof ReservationsRoute
   ScheduleRoute: typeof ScheduleRoute
   AgentsAgentIdRoute: typeof AgentsAgentIdRoute
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
   CustomersCustomerIdRoute: typeof CustomersCustomerIdRoute
   OnboardingAgentRoute: typeof OnboardingAgentRoute
+  OnboardingBookingRoute: typeof OnboardingBookingRoute
   OnboardingCustomerRoute: typeof OnboardingCustomerRoute
+  OnboardingPlotRoute: typeof OnboardingPlotRoute
   OnboardingProjectRoute: typeof OnboardingProjectRoute
+  OnboardingReservationRoute: typeof OnboardingReservationRoute
   PaymentsPaymentIdRoute: typeof PaymentsPaymentIdRoute
   PlotsEditorRoute: typeof PlotsEditorRoute
   PlotsLayoutRoute: typeof PlotsLayoutRoute
@@ -482,6 +520,7 @@ export interface RootRouteChildren {
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   PlotsIndexRoute: typeof PlotsIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  ReservationsIndexRoute: typeof ReservationsIndexRoute
   SiteVisitsIndexRoute: typeof SiteVisitsIndexRoute
 }
 
@@ -534,13 +573,6 @@ declare module '@tanstack/react-router' {
       path: '/resale'
       fullPath: '/resale'
       preLoaderRoute: typeof ResaleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reservations': {
-      id: '/reservations'
-      path: '/reservations'
-      fullPath: '/reservations'
-      preLoaderRoute: typeof ReservationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedule': {
@@ -599,6 +631,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/booking': {
+      id: '/onboarding/booking'
+      path: '/onboarding/booking'
+      fullPath: '/onboarding/booking'
+      preLoaderRoute: typeof OnboardingBookingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/customer': {
       id: '/onboarding/customer'
       path: '/onboarding/customer'
@@ -606,11 +645,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingCustomerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/plot': {
+      id: '/onboarding/plot'
+      path: '/onboarding/plot'
+      fullPath: '/onboarding/plot'
+      preLoaderRoute: typeof OnboardingPlotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/project': {
       id: '/onboarding/project'
       path: '/onboarding/project'
       fullPath: '/onboarding/project'
       preLoaderRoute: typeof OnboardingProjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/reservation': {
+      id: '/onboarding/reservation'
+      path: '/onboarding/reservation'
+      fullPath: '/onboarding/reservation'
+      preLoaderRoute: typeof OnboardingReservationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments/': {
@@ -697,6 +750,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsSalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reservations/': {
+      id: '/reservations/'
+      path: '/reservations'
+      fullPath: '/reservations/'
+      preLoaderRoute: typeof ReservationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/audit': {
       id: '/settings/audit'
       path: '/settings/audit'
@@ -743,14 +803,16 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   RegistrationsRoute: RegistrationsRoute,
   ResaleRoute: ResaleRoute,
-  ReservationsRoute: ReservationsRoute,
   ScheduleRoute: ScheduleRoute,
   AgentsAgentIdRoute: AgentsAgentIdRoute,
   BookingsBookingIdRoute: BookingsBookingIdRoute,
   CustomersCustomerIdRoute: CustomersCustomerIdRoute,
   OnboardingAgentRoute: OnboardingAgentRoute,
+  OnboardingBookingRoute: OnboardingBookingRoute,
   OnboardingCustomerRoute: OnboardingCustomerRoute,
+  OnboardingPlotRoute: OnboardingPlotRoute,
   OnboardingProjectRoute: OnboardingProjectRoute,
+  OnboardingReservationRoute: OnboardingReservationRoute,
   PaymentsPaymentIdRoute: PaymentsPaymentIdRoute,
   PlotsEditorRoute: PlotsEditorRoute,
   PlotsLayoutRoute: PlotsLayoutRoute,
@@ -770,6 +832,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsIndexRoute: PaymentsIndexRoute,
   PlotsIndexRoute: PlotsIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  ReservationsIndexRoute: ReservationsIndexRoute,
   SiteVisitsIndexRoute: SiteVisitsIndexRoute,
 }
 export const routeTree = rootRouteImport

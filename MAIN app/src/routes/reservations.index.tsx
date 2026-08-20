@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { LayoutList, KanbanSquare, Search } from "lucide-react";
-import { PageHeader, Panel, Chip, DataTable } from "@/components/kit";
+import { PageHeader, Panel, Chip, DataTable, NewRecordButton } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
-import { reservations, byId, plots, customers, agents, formatINR, type Reservation } from "@/lib/mock-data";
+import { byId, formatINR, type Reservation } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/reservations")({
+export const Route = createFileRoute("/reservations/")({
   head: () => ({
     meta: [
       { title: "Reservations — Bhairava" },
@@ -27,6 +28,7 @@ function daysLeft(expiresAt: string) {
 }
 
 function ReservationsPage() {
+  const { reservations, plots, customers, agents } = useData();
   const [view, setView] = useState<View>("All");
   const [mode, setMode] = useState<"table" | "board">("table");
   const [query, setQuery] = useState("");
@@ -42,7 +44,7 @@ function ReservationsPage() {
       }
       return true;
     });
-  }, [view, query]);
+  }, [reservations, plots, customers, view, query]);
 
   const boardStates: Reservation["state"][] = ["Active", "Expiring today", "Expired", "Converted"];
 
@@ -52,6 +54,7 @@ function ReservationsPage() {
         eyebrow="Sales"
         title="Reservations"
         description="Holds on plots as customers move from interest to booking."
+        actions={<NewRecordButton to="/onboarding/reservation">New reservation</NewRecordButton>}
       />
 
       <div className="flex flex-wrap items-center gap-2 pb-4">

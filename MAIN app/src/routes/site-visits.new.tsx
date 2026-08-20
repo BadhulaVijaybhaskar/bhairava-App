@@ -14,7 +14,7 @@ import {
   Wizard,
   type WizardStep,
 } from "@/components/form-kit";
-import { byId, plots, type SiteVisit, type SiteVisitStatus } from "@/lib/mock-data";
+import { byId, type SiteVisit, type SiteVisitStatus } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/site-visits/new")({
@@ -35,7 +35,7 @@ function to12h(hhmm: string) {
 
 function BookSiteVisit() {
   const navigate = useNavigate();
-  const { customers, projects, agents, siteVisits, saveSiteVisit, saveCustomer, nextId } = useData();
+  const { customers, projects, agents, plots, siteVisits, saveSiteVisit, saveCustomer, nextId } = useData();
 
   const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const prefillCustomer = params?.get("customerId") ?? null;
@@ -64,7 +64,7 @@ function BookSiteVisit() {
         .filter((p) => p.projectId === projectId)
         .slice(0, 40)
         .map((p) => ({ value: p.number, label: p.number })),
-    [projectId],
+    [plots, projectId],
   );
 
   const customer = byId(customers, customerId);

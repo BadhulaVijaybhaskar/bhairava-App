@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Columns3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { Chip, FilterBar, PageHeader, Panel } from "@/components/kit";
+import { Chip, FilterBar, NewRecordButton, PageHeader, Panel } from "@/components/kit";
 import { statusLabel } from "@/components/plot-canvas";
-import { agents, byId, customers, formatINR, plots, projects, type Plot, type PlotStatus } from "@/lib/mock-data";
+import { byId, formatINR, type Plot, type PlotStatus } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/plots/")({
   head: () => ({
@@ -48,6 +49,7 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
 };
 
 function PlotsIndexPage() {
+  const { plots, projects, customers, agents } = useData();
   const [view, setView] = useState<View>("All");
   const [query, setQuery] = useState("");
   const [projectFilter, setProjectFilter] = useState<string>("all");
@@ -122,7 +124,7 @@ function PlotsIndexPage() {
     });
 
     return withMeta;
-  }, [view, projectFilter, query, sortKey, sortDir, priceOverrides]);
+  }, [plots, projects, customers, agents, view, projectFilter, query, sortKey, sortDir, priceOverrides]);
 
   const toggleSort = (key: ColumnKey) => {
     if (sortKey === key) {
@@ -150,6 +152,7 @@ function PlotsIndexPage() {
         eyebrow="Inventory"
         title="Plot Inventory"
         description="Every plot across every project, with live pricing, status and ownership."
+        actions={<NewRecordButton to="/onboarding/plot">New plot</NewRecordButton>}
       />
 
       <div className="flex flex-wrap items-center gap-2 pb-3">
