@@ -82,7 +82,9 @@ export interface Project {
   totalPlots: number;
   soldPlots: number;
   launchDate: string;
-  status: "Draft" | "Active" | "Pre-launch" | "Sold out" | "On hold";
+  status: "Draft" | "Active" | "Pre-launch" | "Sold out" | "On hold" | "Inactive";
+  /** Separate sales capability — a project can be Active AND resale-available. */
+  resaleAvailable?: boolean;
   valueCr: number;
   collectedCr: number;
   approvals: string[];
