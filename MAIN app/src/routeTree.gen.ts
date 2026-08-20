@@ -25,8 +25,12 @@ import { Route as BookingsBookingIdRouteImport } from './routes/bookings.$bookin
 import { Route as CustomersIndexRouteImport } from './routes/customers.index'
 import { Route as CustomersCustomerIdRouteImport } from './routes/customers.$customerId'
 import { Route as OnboardingAgentRouteImport } from './routes/onboarding.agent'
+import { Route as OnboardingBookingRouteImport } from './routes/onboarding.booking'
 import { Route as OnboardingCustomerRouteImport } from './routes/onboarding.customer'
+import { Route as OnboardingPlotRouteImport } from './routes/onboarding.plot'
 import { Route as OnboardingProjectRouteImport } from './routes/onboarding.project'
+import { Route as OnboardingReservationRouteImport } from './routes/onboarding.reservation'
+import { Route as OnboardingVisitRouteImport } from './routes/onboarding.visit'
 import { Route as PaymentsIndexRouteImport } from './routes/payments.index'
 import { Route as PaymentsPaymentIdRouteImport } from './routes/payments.$paymentId'
 import { Route as PlotsIndexRouteImport } from './routes/plots.index'
@@ -123,14 +127,34 @@ const OnboardingAgentRoute = OnboardingAgentRouteImport.update({
   path: '/onboarding/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingBookingRoute = OnboardingBookingRouteImport.update({
+  id: '/onboarding/booking',
+  path: '/onboarding/booking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingCustomerRoute = OnboardingCustomerRouteImport.update({
   id: '/onboarding/customer',
   path: '/onboarding/customer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingPlotRoute = OnboardingPlotRouteImport.update({
+  id: '/onboarding/plot',
+  path: '/onboarding/plot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingProjectRoute = OnboardingProjectRouteImport.update({
   id: '/onboarding/project',
   path: '/onboarding/project',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingReservationRoute = OnboardingReservationRouteImport.update({
+  id: '/onboarding/reservation',
+  path: '/onboarding/reservation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingVisitRoute = OnboardingVisitRouteImport.update({
+  id: '/onboarding/visit',
+  path: '/onboarding/visit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
@@ -223,8 +247,12 @@ export interface FileRoutesByFullPath {
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
   '/onboarding/agent': typeof OnboardingAgentRoute
+  '/onboarding/booking': typeof OnboardingBookingRoute
   '/onboarding/customer': typeof OnboardingCustomerRoute
+  '/onboarding/plot': typeof OnboardingPlotRoute
   '/onboarding/project': typeof OnboardingProjectRoute
+  '/onboarding/reservation': typeof OnboardingReservationRoute
+  '/onboarding/visit': typeof OnboardingVisitRoute
   '/payments/$paymentId': typeof PaymentsPaymentIdRoute
   '/plots/editor': typeof PlotsEditorRoute
   '/plots/layout': typeof PlotsLayoutRoute
@@ -258,8 +286,12 @@ export interface FileRoutesByTo {
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
   '/onboarding/agent': typeof OnboardingAgentRoute
+  '/onboarding/booking': typeof OnboardingBookingRoute
   '/onboarding/customer': typeof OnboardingCustomerRoute
+  '/onboarding/plot': typeof OnboardingPlotRoute
   '/onboarding/project': typeof OnboardingProjectRoute
+  '/onboarding/reservation': typeof OnboardingReservationRoute
+  '/onboarding/visit': typeof OnboardingVisitRoute
   '/payments/$paymentId': typeof PaymentsPaymentIdRoute
   '/plots/editor': typeof PlotsEditorRoute
   '/plots/layout': typeof PlotsLayoutRoute
@@ -294,8 +326,12 @@ export interface FileRoutesById {
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
   '/onboarding/agent': typeof OnboardingAgentRoute
+  '/onboarding/booking': typeof OnboardingBookingRoute
   '/onboarding/customer': typeof OnboardingCustomerRoute
+  '/onboarding/plot': typeof OnboardingPlotRoute
   '/onboarding/project': typeof OnboardingProjectRoute
+  '/onboarding/reservation': typeof OnboardingReservationRoute
+  '/onboarding/visit': typeof OnboardingVisitRoute
   '/payments/$paymentId': typeof PaymentsPaymentIdRoute
   '/plots/editor': typeof PlotsEditorRoute
   '/plots/layout': typeof PlotsLayoutRoute
@@ -331,8 +367,12 @@ export interface FileRouteTypes {
     | '/bookings/$bookingId'
     | '/customers/$customerId'
     | '/onboarding/agent'
+    | '/onboarding/booking'
     | '/onboarding/customer'
+    | '/onboarding/plot'
     | '/onboarding/project'
+    | '/onboarding/reservation'
+    | '/onboarding/visit'
     | '/payments/$paymentId'
     | '/plots/editor'
     | '/plots/layout'
@@ -366,8 +406,12 @@ export interface FileRouteTypes {
     | '/bookings/$bookingId'
     | '/customers/$customerId'
     | '/onboarding/agent'
+    | '/onboarding/booking'
     | '/onboarding/customer'
+    | '/onboarding/plot'
     | '/onboarding/project'
+    | '/onboarding/reservation'
+    | '/onboarding/visit'
     | '/payments/$paymentId'
     | '/plots/editor'
     | '/plots/layout'
@@ -401,8 +445,12 @@ export interface FileRouteTypes {
     | '/bookings/$bookingId'
     | '/customers/$customerId'
     | '/onboarding/agent'
+    | '/onboarding/booking'
     | '/onboarding/customer'
+    | '/onboarding/plot'
     | '/onboarding/project'
+    | '/onboarding/reservation'
+    | '/onboarding/visit'
     | '/payments/$paymentId'
     | '/plots/editor'
     | '/plots/layout'
@@ -437,8 +485,12 @@ export interface RootRouteChildren {
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
   CustomersCustomerIdRoute: typeof CustomersCustomerIdRoute
   OnboardingAgentRoute: typeof OnboardingAgentRoute
+  OnboardingBookingRoute: typeof OnboardingBookingRoute
   OnboardingCustomerRoute: typeof OnboardingCustomerRoute
+  OnboardingPlotRoute: typeof OnboardingPlotRoute
   OnboardingProjectRoute: typeof OnboardingProjectRoute
+  OnboardingReservationRoute: typeof OnboardingReservationRoute
+  OnboardingVisitRoute: typeof OnboardingVisitRoute
   PaymentsPaymentIdRoute: typeof PaymentsPaymentIdRoute
   PlotsEditorRoute: typeof PlotsEditorRoute
   PlotsLayoutRoute: typeof PlotsLayoutRoute
@@ -573,6 +625,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/booking': {
+      id: '/onboarding/booking'
+      path: '/onboarding/booking'
+      fullPath: '/onboarding/booking'
+      preLoaderRoute: typeof OnboardingBookingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/customer': {
       id: '/onboarding/customer'
       path: '/onboarding/customer'
@@ -580,11 +639,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingCustomerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/plot': {
+      id: '/onboarding/plot'
+      path: '/onboarding/plot'
+      fullPath: '/onboarding/plot'
+      preLoaderRoute: typeof OnboardingPlotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/project': {
       id: '/onboarding/project'
       path: '/onboarding/project'
       fullPath: '/onboarding/project'
       preLoaderRoute: typeof OnboardingProjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/reservation': {
+      id: '/onboarding/reservation'
+      path: '/onboarding/reservation'
+      fullPath: '/onboarding/reservation'
+      preLoaderRoute: typeof OnboardingReservationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/visit': {
+      id: '/onboarding/visit'
+      path: '/onboarding/visit'
+      fullPath: '/onboarding/visit'
+      preLoaderRoute: typeof OnboardingVisitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments/': {
@@ -709,8 +789,12 @@ const rootRouteChildren: RootRouteChildren = {
   BookingsBookingIdRoute: BookingsBookingIdRoute,
   CustomersCustomerIdRoute: CustomersCustomerIdRoute,
   OnboardingAgentRoute: OnboardingAgentRoute,
+  OnboardingBookingRoute: OnboardingBookingRoute,
   OnboardingCustomerRoute: OnboardingCustomerRoute,
+  OnboardingPlotRoute: OnboardingPlotRoute,
   OnboardingProjectRoute: OnboardingProjectRoute,
+  OnboardingReservationRoute: OnboardingReservationRoute,
+  OnboardingVisitRoute: OnboardingVisitRoute,
   PaymentsPaymentIdRoute: PaymentsPaymentIdRoute,
   PlotsEditorRoute: PlotsEditorRoute,
   PlotsLayoutRoute: PlotsLayoutRoute,

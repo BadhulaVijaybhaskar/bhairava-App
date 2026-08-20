@@ -40,7 +40,6 @@ export function PageHeader({
   );
 }
 
-
 export function Panel({
   children,
   className,
@@ -57,7 +56,6 @@ export function Panel({
   );
 }
 
-
 export function SectionTitle({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 pb-4">
@@ -69,7 +67,6 @@ export function SectionTitle({ children, aside }: { children: ReactNode; aside?:
     </div>
   );
 }
-
 
 export function Metric({
   label,
@@ -146,7 +143,6 @@ export function Metric({
   );
 }
 
-
 const chipTones: Record<string, string> = {
   neutral: "bg-surface-c text-muted-foreground",
   positive: "bg-primary/12 text-primary",
@@ -165,12 +161,35 @@ const chipDots: Record<string, string> = {
 
 export function toneFor(value: string): keyof typeof chipTones {
   const v = value.toLowerCase();
-  if (["available", "succeeded", "verified", "registered", "completed", "active", "converted", "sold out"].includes(v))
+  if (
+    [
+      "available",
+      "succeeded",
+      "verified",
+      "registered",
+      "completed",
+      "active",
+      "converted",
+      "sold out",
+    ].includes(v)
+  )
     return "positive";
-  if (["booked", "confirmed", "scheduled", "ready", "agreement", "invited"].includes(v)) return "info";
-  if (["reserved", "pending", "expiring today", "documentation", "on hold", "pre-launch", "draft"].includes(v))
+  if (["booked", "confirmed", "scheduled", "ready", "agreement", "invited"].includes(v))
+    return "info";
+  if (
+    [
+      "reserved",
+      "pending",
+      "expiring today",
+      "documentation",
+      "on hold",
+      "pre-launch",
+      "draft",
+    ].includes(v)
+  )
     return "warning";
-  if (["expired", "failed", "rejected", "cancelled", "suspended", "overdue"].includes(v)) return "danger";
+  if (["expired", "failed", "rejected", "cancelled", "suspended", "overdue"].includes(v))
+    return "danger";
   return "neutral";
 }
 
@@ -188,7 +207,6 @@ export function Chip({ children, tone }: { children: string; tone?: keyof typeof
     </span>
   );
 }
-
 
 export function FilterBar({
   views,
@@ -260,8 +278,6 @@ export function FilterBar({
   );
 }
 
-
-
 export function DataTable<T extends { id: string }>({
   rows,
   columns,
@@ -269,7 +285,13 @@ export function DataTable<T extends { id: string }>({
   params,
 }: {
   rows: T[];
-  columns: { key: string; header: string; align?: "right"; width?: string; cell: (row: T) => ReactNode }[];
+  columns: {
+    key: string;
+    header: string;
+    align?: "right";
+    width?: string;
+    cell: (row: T) => ReactNode;
+  }[];
   linkTo?: string;
   params?: (row: T) => Record<string, string>;
 }) {
@@ -280,7 +302,10 @@ export function DataTable<T extends { id: string }>({
       {/* Mobile: stacked record cards */}
       <div className="space-y-2 md:hidden">
         {rows.map((row) => (
-          <div key={row.id} className="panel p-4 transition-transform duration-200 active:scale-[0.995]">
+          <div
+            key={row.id}
+            className="panel p-4 transition-transform duration-200 active:scale-[0.995]"
+          >
             {first && (
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0 text-sm font-medium">{first.cell(row)}</div>
@@ -395,7 +420,6 @@ export function DataTable<T extends { id: string }>({
   );
 }
 
-
 export function RecordHeader({
   eyebrow,
   title,
@@ -423,7 +447,9 @@ export function RecordHeader({
           <h1 className="font-display text-2xl font-semibold tracking-[-0.03em] text-balance sm:text-[34px] sm:leading-[1.12]">
             {title}
           </h1>
-          {subtitle && <div className="pt-2 text-sm text-muted-foreground text-pretty">{subtitle}</div>}
+          {subtitle && (
+            <div className="pt-2 text-sm text-muted-foreground text-pretty">{subtitle}</div>
+          )}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
@@ -468,14 +494,19 @@ export function Btn({
   );
 }
 
-
-export function Timeline({ items }: { items: { time: string; title: string; detail?: string | undefined }[] }) {
+export function Timeline({
+  items,
+}: {
+  items: { time: string; title: string; detail?: string | undefined }[];
+}) {
   return (
     <ol className="space-y-6">
       {items.map((it, i) => (
         <li key={i} className="flex gap-4">
           <div className="flex flex-col items-center pt-1">
-            <span className={cn("h-2 w-2 rounded-full", i === 0 ? "bg-primary" : "bg-outline-variant")} />
+            <span
+              className={cn("h-2 w-2 rounded-full", i === 0 ? "bg-primary" : "bg-outline-variant")}
+            />
             {i < items.length - 1 && <span className="ghost-line mt-1 w-px flex-1" />}
           </div>
           <div className="pb-1">
@@ -489,11 +520,19 @@ export function Timeline({ items }: { items: { time: string; title: string; deta
   );
 }
 
-
-export function NewRecordButton({ to, children }: { to: string; children: ReactNode }) {
+export function NewRecordButton({
+  to,
+  search,
+  children,
+}: {
+  to: string;
+  search?: Record<string, string | undefined>;
+  children: ReactNode;
+}) {
   return (
     <Link
-      to={to}
+      to={to as never}
+      search={search as never}
       className="gradient-primary inline-flex min-h-10 items-center gap-1.5 rounded-xl px-4 text-sm font-semibold text-primary-foreground shadow-ambient transition-all duration-200 hover:shadow-glow active:scale-[0.97]"
     >
       <Plus className="h-4 w-4" />

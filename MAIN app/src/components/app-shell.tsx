@@ -37,7 +37,6 @@ import { notifications } from "@/lib/mock-data";
 import { BrandLogo } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
-
 interface NavItem {
   to: string;
   label: string;
@@ -56,8 +55,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Onboarding",
     items: [
       { to: "/onboarding/project", label: "New project", icon: FolderPlus },
+      { to: "/onboarding/plot", label: "New plot", icon: Grid3x3 },
       { to: "/onboarding/customer", label: "New customer", icon: UserPlus },
       { to: "/onboarding/agent", label: "New agent", icon: BadgePlus },
+      { to: "/onboarding/visit", label: "Site visit", icon: CalendarClock },
+      { to: "/onboarding/reservation", label: "New reservation", icon: Clock },
+      { to: "/onboarding/booking", label: "New booking", icon: Receipt },
     ],
   },
   {
@@ -140,7 +143,6 @@ function BrandMark() {
   );
 }
 
-
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
@@ -166,7 +168,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   )}
                 >
                   <item.icon
-                    className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "text-muted-foreground")}
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      active ? "text-primary" : "text-muted-foreground",
+                    )}
                     strokeWidth={1.9}
                   />
                   <span className="truncate">{item.label}</span>
@@ -301,9 +306,12 @@ function TopBar() {
         </kbd>
       </label>
       <div className="hidden flex-1 md:block" />
-      <button className="gradient-primary hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground sm:flex">
+      <Link
+        to="/onboarding/booking"
+        className="gradient-primary hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground sm:flex"
+      >
         <Plus className="h-4 w-4" /> New booking
-      </button>
+      </Link>
       <Link to="/notifications" className="relative shrink-0 rounded-lg bg-surface-low p-2">
         <Bell className="h-4 w-4" />
         {unread > 0 && (
