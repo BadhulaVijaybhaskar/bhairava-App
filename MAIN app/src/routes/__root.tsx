@@ -156,21 +156,21 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isLogin ? (
-        <>
-          <Outlet />
-          <Toaster position="top-center" richColors />
-        </>
-      ) : (
-        <DataProvider>
+      <DataProvider>
+        {isLogin ? (
+          <>
+            <Outlet />
+            <Toaster position="top-center" richColors />
+          </>
+        ) : (
           <FabVisibilityProvider>
             <AuthGate>
               <Outlet />
             </AuthGate>
             <Toaster position="top-center" richColors />
           </FabVisibilityProvider>
-        </DataProvider>
-      )}
+        )}
+      </DataProvider>
     </QueryClientProvider>
   );
 }
