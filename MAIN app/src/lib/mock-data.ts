@@ -15,15 +15,17 @@ export interface Plot {
   agentId?: string | undefined;
   /** normalized polygon points (0-100 space) for the SVG layout canvas */
   points: [number, number][];
+  block?: string;
+  phase?: string;
+  plotType?: "Standard" | "Premium" | "Commercial" | "Irregular" | "Villa" | "Farm";
+  lengthFt?: number;
+  widthFt?: number;
+  roadWidthFt?: number;
+  notes?: string;
 }
 
 export type Facing = "North" | "South" | "East" | "West";
-export type CornerType =
-  | "Not corner"
-  | "North-East"
-  | "North-West"
-  | "South-East"
-  | "South-West";
+export type CornerType = "Not corner" | "North-East" | "North-West" | "South-East" | "South-West";
 
 /** Reusable plot template so admins don't retype 200 identical plots. */
 export interface PlotType {
@@ -83,8 +85,6 @@ export interface Project {
   soldPlots: number;
   launchDate: string;
   status: "Draft" | "Active" | "Pre-launch" | "Sold out" | "On hold" | "Inactive";
-  /** Separate sales capability — a project can be Active AND resale-available. */
-  resaleAvailable?: boolean;
   valueCr: number;
   collectedCr: number;
   approvals: string[];
@@ -109,6 +109,9 @@ export interface Project {
   expectedCompletion?: string;
   coverImage?: string;
   brochure?: string;
+  /** Separate sales capability — a project can be Active AND resale-available. */
+  resaleAvailable?: boolean;
+  approvalAuthority?: string;
   plotTypes?: PlotType[];
   pricing?: PricingRules;
   amenities?: ProjectAmenity[];
@@ -174,6 +177,8 @@ export interface Booking {
   paid: number;
   date: string;
   stage: "Draft" | "Confirmed" | "Agreement" | "Registered" | "Cancelled";
+  notes?: string;
+  paymentMode?: Payment["mode"];
 }
 
 export interface Payment {
@@ -196,13 +201,27 @@ export interface Reservation {
   createdAt: string;
   expiresAt: string;
   state: "Active" | "Expiring today" | "Expired" | "Converted";
+  notes?: string;
+}
+
+export interface SiteVisit {
+  id: string;
+  customerId: string;
+  projectId: string;
+  plotIds: string[];
+  date: string;
+  time: string;
+  agentId: string;
+  visitors: number;
+  pickup: boolean;
+  notes: string;
+  status: "Scheduled" | "Completed" | "Cancelled";
 }
 
 const inr = (n: number) => n;
 
-const pick = <T,>(arr: readonly T[], i: number): T =>
+const pick = <T>(arr: readonly T[], i: number): T =>
   arr[((i % arr.length) + arr.length) % arr.length] as T;
-
 
 export const projects: Project[] = [
   {
@@ -283,15 +302,107 @@ export const projects: Project[] = [
 ];
 
 export const agents: Agent[] = [
-  { id: "AGT-01", name: "Priya Menon", code: "PM", region: "West Hyderabad", phone: "+91 98490 11221", bookings: 38, salesCr: 27.4, conversion: 0.31, target: 30, projects: ["PRJ-01", "PRJ-02"], status: "Active" },
-  { id: "AGT-02", name: "Arjun Reddy", code: "AR", region: "North Hyderabad", phone: "+91 98490 33440", bookings: 31, salesCr: 22.1, conversion: 0.27, target: 30, projects: ["PRJ-01", "PRJ-04"], status: "Active" },
-  { id: "AGT-03", name: "Sneha Kulkarni", code: "SK", region: "Central", phone: "+91 98490 55112", bookings: 26, salesCr: 18.9, conversion: 0.24, target: 25, projects: ["PRJ-02", "PRJ-05"], status: "Active" },
-  { id: "AGT-04", name: "Vikram Shetty", code: "VS", region: "South Hyderabad", phone: "+91 98490 77883", bookings: 19, salesCr: 12.6, conversion: 0.19, target: 25, projects: ["PRJ-03", "PRJ-05"], status: "Active" },
-  { id: "AGT-05", name: "Deepa Krishnan", code: "DK", region: "East Hyderabad", phone: "+91 98490 99001", bookings: 12, salesCr: 8.2, conversion: 0.16, target: 20, projects: ["PRJ-04"], status: "Inactive" },
+  {
+    id: "AGT-01",
+    name: "Priya Menon",
+    code: "PM",
+    region: "West Hyderabad",
+    phone: "+91 98490 11221",
+    bookings: 38,
+    salesCr: 27.4,
+    conversion: 0.31,
+    target: 30,
+    projects: ["PRJ-01", "PRJ-02"],
+    status: "Active",
+  },
+  {
+    id: "AGT-02",
+    name: "Arjun Reddy",
+    code: "AR",
+    region: "North Hyderabad",
+    phone: "+91 98490 33440",
+    bookings: 31,
+    salesCr: 22.1,
+    conversion: 0.27,
+    target: 30,
+    projects: ["PRJ-01", "PRJ-04"],
+    status: "Active",
+  },
+  {
+    id: "AGT-03",
+    name: "Sneha Kulkarni",
+    code: "SK",
+    region: "Central",
+    phone: "+91 98490 55112",
+    bookings: 26,
+    salesCr: 18.9,
+    conversion: 0.24,
+    target: 25,
+    projects: ["PRJ-02", "PRJ-05"],
+    status: "Active",
+  },
+  {
+    id: "AGT-04",
+    name: "Vikram Shetty",
+    code: "VS",
+    region: "South Hyderabad",
+    phone: "+91 98490 77883",
+    bookings: 19,
+    salesCr: 12.6,
+    conversion: 0.19,
+    target: 25,
+    projects: ["PRJ-03", "PRJ-05"],
+    status: "Active",
+  },
+  {
+    id: "AGT-05",
+    name: "Deepa Krishnan",
+    code: "DK",
+    region: "East Hyderabad",
+    phone: "+91 98490 99001",
+    bookings: 12,
+    salesCr: 8.2,
+    conversion: 0.16,
+    target: 20,
+    projects: ["PRJ-04"],
+    status: "Inactive",
+  },
 ];
 
-const firstNames = ["Ananya", "Rahul", "Meera", "Karthik", "Divya", "Sandeep", "Lakshmi", "Naveen", "Pooja", "Harish", "Swathi", "Ravi", "Nithya", "Gopal", "Anjali", "Manoj", "Sruthi", "Bharath", "Keerthi", "Vinod"];
-const lastNames = ["Sharma", "Rao", "Patel", "Naidu", "Verma", "Reddy", "Pillai", "Chowdary", "Gupta", "Bose"];
+const firstNames = [
+  "Ananya",
+  "Rahul",
+  "Meera",
+  "Karthik",
+  "Divya",
+  "Sandeep",
+  "Lakshmi",
+  "Naveen",
+  "Pooja",
+  "Harish",
+  "Swathi",
+  "Ravi",
+  "Nithya",
+  "Gopal",
+  "Anjali",
+  "Manoj",
+  "Sruthi",
+  "Bharath",
+  "Keerthi",
+  "Vinod",
+];
+const lastNames = [
+  "Sharma",
+  "Rao",
+  "Patel",
+  "Naidu",
+  "Verma",
+  "Reddy",
+  "Pillai",
+  "Chowdary",
+  "Gupta",
+  "Bose",
+];
 const sources = ["Walk-in", "Referral", "Meta Ads", "Google Ads", "Broker", "Exhibition"];
 const stages: Customer["stage"][] = ["Lead", "Site visit", "Reserved", "Booked", "Registered"];
 
@@ -377,7 +488,10 @@ export const bookings: Booking[] = plots
       amount,
       paid: p.status === "registered" ? amount : Math.round(amount * (0.2 + (i % 6) * 0.12)),
       date: `2026-0${(i % 8) + 1}-${String((i % 27) + 1).padStart(2, "0")}`,
-      stage: p.status === "registered" ? "Registered" : pick((["Confirmed", "Agreement", "Draft"] as const), i % 3),
+      stage:
+        p.status === "registered"
+          ? "Registered"
+          : pick(["Confirmed", "Agreement", "Draft"] as const, i % 3),
     };
   });
 
@@ -405,7 +519,7 @@ export const reservations: Reservation[] = plots
     amount: 100000 + (i % 5) * 25000,
     createdAt: `2026-08-${String((i % 18) + 1).padStart(2, "0")}`,
     expiresAt: `2026-08-${String((i % 12) + 19).padStart(2, "0")}`,
-    state: pick((["Active", "Active", "Expiring today", "Expired", "Converted"] as const), i % 5),
+    state: pick(["Active", "Active", "Expiring today", "Expired", "Converted"] as const, i % 5),
   }));
 
 export const cashflow = [
@@ -444,12 +558,15 @@ export interface DocumentRecord {
 
 export const documents: DocumentRecord[] = bookings.slice(0, 36).map((b, i) => ({
   id: `DOC-${String(700 + i)}`,
-  name: `${b.id}-${pick((["agreement", "sale-deed", "kyc", "receipt", "layout", "noc"] as const), i % 6)}.pdf`,
-  type: pick((["Agreement", "Sale deed", "KYC", "Receipt", "Layout approval", "NOC"] as const), i % 6),
+  name: `${b.id}-${pick(["agreement", "sale-deed", "kyc", "receipt", "layout", "noc"] as const, i % 6)}.pdf`,
+  type: pick(
+    ["Agreement", "Sale deed", "KYC", "Receipt", "Layout approval", "NOC"] as const,
+    i % 6,
+  ),
   customerId: b.customerId,
   projectId: b.projectId,
   plotId: b.plotId,
-  verified: pick((["Verified", "Verified", "Pending", "Rejected"] as const), i % 4),
+  verified: pick(["Verified", "Verified", "Pending", "Rejected"] as const, i % 4),
   modified: `2026-08-${String((i % 27) + 1).padStart(2, "0")}`,
   sizeKb: 180 + i * 37,
 }));
@@ -469,7 +586,7 @@ export const registrations: Registration[] = bookings.slice(0, 28).map((b, i) =>
   bookingId: b.id,
   customerId: b.customerId,
   plotId: b.plotId,
-  stage: pick((["Documentation", "Ready", "Scheduled", "Completed"] as const), i % 4),
+  stage: pick(["Documentation", "Ready", "Scheduled", "Completed"] as const, i % 4),
   slot: `2026-09-${String((i % 27) + 1).padStart(2, "0")} · ${10 + (i % 6)}:00`,
   subRegistrar: pick(["Shamshabad", "Rajendranagar", "Ibrahimpatnam", "Medchal"], i),
 }));
@@ -486,17 +603,20 @@ export interface Task {
 
 export const tasks: Task[] = Array.from({ length: 18 }, (_, i) => ({
   id: `TSK-${String(100 + i)}`,
-  title: pick([
-    "Follow up on pending agreement",
-    "Collect balance instalment",
-    "Schedule site visit",
-    "Verify KYC documents",
-    "Confirm registration slot",
-    "Send revised price sheet",
-  ], i),
+  title: pick(
+    [
+      "Follow up on pending agreement",
+      "Collect balance instalment",
+      "Schedule site visit",
+      "Verify KYC documents",
+      "Confirm registration slot",
+      "Send revised price sheet",
+    ],
+    i,
+  ),
   due: `2026-08-${String((i % 27) + 1).padStart(2, "0")}`,
   owner: pick(agents, i).name,
-  priority: pick((["High", "Medium", "Low"] as const), i % 3),
+  priority: pick(["High", "Medium", "Low"] as const, i % 3),
   done: i % 5 === 0,
   linked: pick(bookings, i).id,
 }));
@@ -512,14 +632,17 @@ export interface NotificationItem {
 
 export const notifications: NotificationItem[] = Array.from({ length: 16 }, (_, i) => ({
   id: `NTF-${String(200 + i)}`,
-  kind: pick((["booking", "payment", "reservation", "document", "system"] as const), i % 5),
-  title: pick([
-    "New booking confirmed",
-    "Payment received",
-    "Reservation expiring today",
-    "Document awaiting verification",
-    "Nightly sync completed",
-  ], i),
+  kind: pick(["booking", "payment", "reservation", "document", "system"] as const, i % 5),
+  title: pick(
+    [
+      "New booking confirmed",
+      "Payment received",
+      "Reservation expiring today",
+      "Document awaiting verification",
+      "Nightly sync completed",
+    ],
+    i,
+  ),
   detail: `${pick(projects, i).name} · ${pick(customers, i).name}`,
   time: `${(i % 12) + 1}h ago`,
   unread: i < 6,
@@ -535,12 +658,54 @@ export interface AppUser {
 }
 
 export const appUsers: AppUser[] = [
-  { id: "USR-01", name: "Vijay Bhaskar", email: "vijay@bhairava.in", role: "Founder", status: "Active", lastActive: "2 min ago" },
-  { id: "USR-02", name: "Ramesh Iyer", email: "ramesh@bhairava.in", role: "Administrator", status: "Active", lastActive: "1 h ago" },
-  { id: "USR-03", name: "Kavya Rao", email: "kavya@bhairava.in", role: "Sales", status: "Active", lastActive: "3 h ago" },
-  { id: "USR-04", name: "Suresh Nair", email: "suresh@bhairava.in", role: "Finance", status: "Active", lastActive: "Yesterday" },
-  { id: "USR-05", name: "Deepa Krishnan", email: "deepa@bhairava.in", role: "Sales", status: "Suspended", lastActive: "12 Jul 2026" },
-  { id: "USR-06", name: "Anil Kumar", email: "anil@bhairava.in", role: "Viewer", status: "Invited", lastActive: "—" },
+  {
+    id: "USR-01",
+    name: "Vijay Bhaskar",
+    email: "vijay@bhairava.in",
+    role: "Founder",
+    status: "Active",
+    lastActive: "2 min ago",
+  },
+  {
+    id: "USR-02",
+    name: "Ramesh Iyer",
+    email: "ramesh@bhairava.in",
+    role: "Administrator",
+    status: "Active",
+    lastActive: "1 h ago",
+  },
+  {
+    id: "USR-03",
+    name: "Kavya Rao",
+    email: "kavya@bhairava.in",
+    role: "Sales",
+    status: "Active",
+    lastActive: "3 h ago",
+  },
+  {
+    id: "USR-04",
+    name: "Suresh Nair",
+    email: "suresh@bhairava.in",
+    role: "Finance",
+    status: "Active",
+    lastActive: "Yesterday",
+  },
+  {
+    id: "USR-05",
+    name: "Deepa Krishnan",
+    email: "deepa@bhairava.in",
+    role: "Sales",
+    status: "Suspended",
+    lastActive: "12 Jul 2026",
+  },
+  {
+    id: "USR-06",
+    name: "Anil Kumar",
+    email: "anil@bhairava.in",
+    role: "Viewer",
+    status: "Invited",
+    lastActive: "—",
+  },
 ];
 
 export interface AuditEntry {
@@ -557,7 +722,17 @@ export const auditLog: AuditEntry[] = Array.from({ length: 24 }, (_, i) => ({
   id: `AUD-${String(9000 + i)}`,
   time: `2026-08-${String(19 - (i % 14)).padStart(2, "0")} ${String(9 + (i % 9)).padStart(2, "0")}:${String((i * 7) % 60).padStart(2, "0")}`,
   actor: pick(appUsers, i).name,
-  action: pick(["updated plot status", "created booking", "voided payment", "invited user", "edited price", "verified document"], i),
+  action: pick(
+    [
+      "updated plot status",
+      "created booking",
+      "voided payment",
+      "invited user",
+      "edited price",
+      "verified document",
+    ],
+    i,
+  ),
   object: pick([pick(plots, i).id, pick(bookings, i).id, pick(payments, i).id], i),
   before: pick(["available", "draft", "₹0", "—", "₹24,000", "Pending"], i),
   after: pick(["reserved", "confirmed", "₹1,20,000", "Sales", "₹25,500", "Verified"], i),
@@ -571,4 +746,5 @@ export const formatINR = (n: number, opts: { compact?: boolean } = {}) => {
   return `₹${n.toLocaleString("en-IN")}`;
 };
 
-export const byId = <T extends { id: string }>(list: T[], id?: string) => list.find((x) => x.id === id);
+export const byId = <T extends { id: string }>(list: T[], id?: string) =>
+  list.find((x) => x.id === id);

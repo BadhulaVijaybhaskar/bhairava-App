@@ -84,6 +84,10 @@
 
 :root {
   --radius: 0.5rem;
+  /* Mobile chrome — shared shell, FAB, and page padding all read these */
+  --mobile-nav-height: 4.25rem;
+  --mobile-nav-offset: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  --mobile-content-pad-bottom: calc(var(--mobile-nav-offset) + 1rem);
 
   /* Luminous surface ladder */
   --surface: oklch(0.982 0.008 262);
@@ -209,6 +213,91 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+
+  /*
+   * Mobile: lock the document. Only `.app-shell-main` scrolls.
+   * This prevents iOS Safari from showing a blank region below a
+   * bottom-fixed nav when the document itself can overscroll.
+   */
+  @media (max-width: 1023.98px) {
+    html,
+    body {
+      height: 100%;
+      max-height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+  }
+
+  .app-shell {
+    min-height: 100dvh;
+    background-color: var(--background);
+  }
+
+  @media (max-width: 1023.98px) {
+    .app-shell {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+    }
+
+    .app-shell-column {
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .app-shell-main {
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      padding-bottom: calc(
+        var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 16px
+      );
+    }
+  }
+
+  /* Viewport-fixed mobile chrome — portaled to document.body */
+  .mobile-bottom-nav {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    z-index: 1000;
+    min-height: var(--mobile-nav-height);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-color: var(--surface-lowest);
+    border-top: 1px solid color-mix(in oklab, var(--outline-variant) 35%, transparent);
+  }
+
+  .mobile-fab {
+    position: fixed !important;
+    right: 16px !important;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 16px) !important;
+    left: auto !important;
+    top: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    z-index: 1001;
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-bottom-nav,
+    .mobile-fab {
+      display: none !important;
+    }
   }
 
   h1,

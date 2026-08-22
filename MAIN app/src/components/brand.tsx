@@ -1,5 +1,7 @@
-import logo from "@/assets/bhairava-logo.png.asset.json";
 import { cn } from "@/lib/utils";
+
+/** Served from `public/branding` so it works outside Lovable's asset proxy. */
+const LOGO_SRC = "/branding/bhairava-logo.png";
 
 export function BrandLogo({
   size = 36,
@@ -11,17 +13,18 @@ export function BrandLogo({
   return (
     <span
       className={cn(
-        "relative flex shrink-0 items-center justify-center rounded-xl bg-surface-lowest shadow-ambient ring-1 ring-[color-mix(in_oklab,var(--secondary)_18%,transparent)]",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-lowest shadow-ambient ring-1 ring-[color-mix(in_oklab,var(--secondary)_18%,transparent)]",
         className,
       )}
       style={{ height: size, width: size }}
     >
       <img
-        src={logo.url}
+        src={LOGO_SRC}
         alt="Bhairava"
         width={size}
         height={size}
-        className="h-[78%] w-[78%] object-contain"
+        className="h-full w-full object-cover"
+        decoding="async"
       />
     </span>
   );

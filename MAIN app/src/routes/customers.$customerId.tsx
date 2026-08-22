@@ -1,16 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Phone, Mail, MapPin, ArrowLeft, Receipt, CreditCard, FileText } from "lucide-react";
-import { PageHeader, Panel, SectionTitle, Chip, DataTable, RecordHeader, Btn, Timeline } from "@/components/kit";
+import { Phone, Mail, MapPin, ArrowLeft, Receipt, CreditCard } from "lucide-react";
+import {
+  PageHeader,
+  Panel,
+  SectionTitle,
+  Chip,
+  DataTable,
+  RecordHeader,
+  Timeline,
+} from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
 import {
-  customers,
-  plots,
-  bookings,
-  payments,
   documents,
+  payments,
   byId,
-  agents,
   formatINR,
   type Plot,
   type Booking,
@@ -24,16 +28,27 @@ export const Route = createFileRoute("/customers/$customerId")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.customerId} · Customer — Bhairava` },
-      { name: "description", content: "Customer 360 view: plots, bookings, payments and documents." },
+      {
+        name: "description",
+        content: "Customer 360 view: plots, bookings, payments and documents.",
+      },
       { property: "og:title", content: `${params.customerId} · Customer — Bhairava` },
-      { property: "og:description", content: "Customer 360 view: plots, bookings, payments and documents." },
+      {
+        property: "og:description",
+        content: "Customer 360 view: plots, bookings, payments and documents.",
+      },
     ],
   }),
   component: CustomerDetail,
 });
 
 function initials(name: string) {
-  return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 const tabs = ["Plots", "Bookings", "Payments", "Documents"] as const;
@@ -41,7 +56,7 @@ type Tab = (typeof tabs)[number];
 
 function CustomerDetail() {
   const { customerId } = Route.useParams();
-  const { customers: customerList } = useData();
+  const { customers: customerList, plots, bookings, agents } = useData();
   const customer = byId(customerList, customerId);
   const [tab, setTab] = useState<Tab>("Plots");
 
@@ -70,13 +85,26 @@ function CustomerDetail() {
 
   const timeline = [
     { time: customer.createdAt, title: "Added as lead", detail: `Source: ${customer.source}` },
-    ...customerBookings.map((b) => ({ time: b.date, title: `Booking ${b.stage.toLowerCase()}`, detail: `${b.id} · ${formatINR(b.amount, { compact: true })}` })),
-    ...customerPayments.slice(0, 3).map((p) => ({ time: p.date, title: `Payment ${p.status.toLowerCase()}`, detail: `${formatINR(p.amount, { compact: true })} via ${p.mode}` })),
+    ...customerBookings.map((b) => ({
+      time: b.date,
+      title: `Booking ${b.stage.toLowerCase()}`,
+      detail: `${b.id} · ${formatINR(b.amount, { compact: true })}`,
+    })),
+    ...customerPayments
+      .slice(0, 3)
+      .map((p) => ({
+        time: p.date,
+        title: `Payment ${p.status.toLowerCase()}`,
+        detail: `${formatINR(p.amount, { compact: true })} via ${p.mode}`,
+      })),
   ];
 
   return (
     <AppShell>
-      <Link to="/customers" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+      <Link
+        to="/customers"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
         <ArrowLeft className="h-3.5 w-3.5" /> All customers
       </Link>
 
@@ -94,8 +122,20 @@ function CustomerDetail() {
         actions={
           <>
             <CustomerEditor customer={customer} />
-            <Btn variant="tonal">Log activity</Btn>
-            <Btn variant="primary">New booking</Btn>
+            <Link
+              to="/onboarding/visit"
+              search={{ customerId: customer.id }}
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-surface-c px-3.5 py-2 text-sm font-medium"
+            >
+              Book visit
+            </Link>
+            <Link
+              to="/onboarding/booking"
+              search={{ customerId: customer.id }}
+              className="gradient-primary inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium text-primary-foreground"
+            >
+              New booking
+            </Link>
           </>
         }
         facts={[
@@ -119,7 +159,9 @@ function CustomerDetail() {
                 onClick={() => setTab(t)}
                 className={
                   "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors " +
-                  (t === tab ? "bg-surface-lowest text-foreground shadow-ambient" : "text-muted-foreground hover:bg-surface-c")
+                  (t === tab
+                    ? "bg-surface-lowest text-foreground shadow-ambient"
+                    : "text-muted-foreground hover:bg-surface-c")
                 }
               >
                 {t}
@@ -131,10 +173,27 @@ function CustomerDetail() {
             <DataTable<Plot>
               rows={customerPlots}
               columns={[
-                { key: "number", header: "Plot", cell: (p) => <span className="numeric text-xs font-medium">{p.number}</span> },
-                { key: "project", header: "Project", cell: (p) => <span className="text-xs text-muted-foreground">{p.projectId}</span> },
-                { key: "area", header: "Area", align: "right", cell: (p) => <span className="numeric text-xs">{p.areaSqYd} sq.yd</span> },
-                { key: "facing", header: "Facing", cell: (p) => <span className="text-xs text-muted-foreground">{p.facing}</span> },
+                {
+                  key: "number",
+                  header: "Plot",
+                  cell: (p) => <span className="numeric text-xs font-medium">{p.number}</span>,
+                },
+                {
+                  key: "project",
+                  header: "Project",
+                  cell: (p) => <span className="text-xs text-muted-foreground">{p.projectId}</span>,
+                },
+                {
+                  key: "area",
+                  header: "Area",
+                  align: "right",
+                  cell: (p) => <span className="numeric text-xs">{p.areaSqYd} sq.yd</span>,
+                },
+                {
+                  key: "facing",
+                  header: "Facing",
+                  cell: (p) => <span className="text-xs text-muted-foreground">{p.facing}</span>,
+                },
                 { key: "status", header: "Status", cell: (p) => <Chip>{p.status}</Chip> },
               ]}
             />
@@ -144,11 +203,41 @@ function CustomerDetail() {
             <DataTable<Booking>
               rows={customerBookings}
               columns={[
-                { key: "id", header: "Booking", cell: (b) => <span className="numeric text-xs font-medium">{b.id}</span> },
-                { key: "plot", header: "Plot", cell: (b) => <span className="numeric text-xs">{b.plotId}</span> },
-                { key: "amount", header: "Amount", align: "right", cell: (b) => <span className="numeric text-xs">{formatINR(b.amount, { compact: true })}</span> },
-                { key: "paid", header: "Paid", align: "right", cell: (b) => <span className="numeric text-xs">{formatINR(b.paid, { compact: true })}</span> },
-                { key: "date", header: "Date", cell: (b) => <span className="numeric text-xs text-muted-foreground">{b.date}</span> },
+                {
+                  key: "id",
+                  header: "Booking",
+                  cell: (b) => <span className="numeric text-xs font-medium">{b.id}</span>,
+                },
+                {
+                  key: "plot",
+                  header: "Plot",
+                  cell: (b) => <span className="numeric text-xs">{b.plotId}</span>,
+                },
+                {
+                  key: "amount",
+                  header: "Amount",
+                  align: "right",
+                  cell: (b) => (
+                    <span className="numeric text-xs">
+                      {formatINR(b.amount, { compact: true })}
+                    </span>
+                  ),
+                },
+                {
+                  key: "paid",
+                  header: "Paid",
+                  align: "right",
+                  cell: (b) => (
+                    <span className="numeric text-xs">{formatINR(b.paid, { compact: true })}</span>
+                  ),
+                },
+                {
+                  key: "date",
+                  header: "Date",
+                  cell: (b) => (
+                    <span className="numeric text-xs text-muted-foreground">{b.date}</span>
+                  ),
+                },
                 { key: "stage", header: "Stage", cell: (b) => <Chip>{b.stage}</Chip> },
               ]}
             />
@@ -158,11 +247,40 @@ function CustomerDetail() {
             <DataTable<Payment>
               rows={customerPayments}
               columns={[
-                { key: "id", header: "Payment", cell: (p) => <span className="numeric text-xs font-medium">{p.id}</span> },
-                { key: "amount", header: "Amount", align: "right", cell: (p) => <span className="numeric text-xs">{formatINR(p.amount, { compact: true })}</span> },
-                { key: "mode", header: "Mode", cell: (p) => <span className="text-xs text-muted-foreground">{p.mode}</span> },
-                { key: "reference", header: "Reference", cell: (p) => <span className="numeric text-xs text-muted-foreground">{p.reference}</span> },
-                { key: "date", header: "Date", cell: (p) => <span className="numeric text-xs text-muted-foreground">{p.date}</span> },
+                {
+                  key: "id",
+                  header: "Payment",
+                  cell: (p) => <span className="numeric text-xs font-medium">{p.id}</span>,
+                },
+                {
+                  key: "amount",
+                  header: "Amount",
+                  align: "right",
+                  cell: (p) => (
+                    <span className="numeric text-xs">
+                      {formatINR(p.amount, { compact: true })}
+                    </span>
+                  ),
+                },
+                {
+                  key: "mode",
+                  header: "Mode",
+                  cell: (p) => <span className="text-xs text-muted-foreground">{p.mode}</span>,
+                },
+                {
+                  key: "reference",
+                  header: "Reference",
+                  cell: (p) => (
+                    <span className="numeric text-xs text-muted-foreground">{p.reference}</span>
+                  ),
+                },
+                {
+                  key: "date",
+                  header: "Date",
+                  cell: (p) => (
+                    <span className="numeric text-xs text-muted-foreground">{p.date}</span>
+                  ),
+                },
                 { key: "status", header: "Status", cell: (p) => <Chip>{p.status}</Chip> },
               ]}
             />
@@ -172,9 +290,23 @@ function CustomerDetail() {
             <DataTable<DocumentRecord>
               rows={customerDocs}
               columns={[
-                { key: "name", header: "Document", cell: (d) => <span className="text-xs font-medium">{d.name}</span> },
-                { key: "type", header: "Type", cell: (d) => <span className="text-xs text-muted-foreground">{d.type}</span> },
-                { key: "modified", header: "Modified", cell: (d) => <span className="numeric text-xs text-muted-foreground">{d.modified}</span> },
+                {
+                  key: "name",
+                  header: "Document",
+                  cell: (d) => <span className="text-xs font-medium">{d.name}</span>,
+                },
+                {
+                  key: "type",
+                  header: "Type",
+                  cell: (d) => <span className="text-xs text-muted-foreground">{d.type}</span>,
+                },
+                {
+                  key: "modified",
+                  header: "Modified",
+                  cell: (d) => (
+                    <span className="numeric text-xs text-muted-foreground">{d.modified}</span>
+                  ),
+                },
                 { key: "verified", header: "Status", cell: (d) => <Chip>{d.verified}</Chip> },
               ]}
             />
@@ -184,20 +316,27 @@ function CustomerDetail() {
         <div className="space-y-6 lg:col-span-4">
           <Panel>
             <SectionTitle>Activity</SectionTitle>
-            <Timeline items={timeline.length ? timeline : [{ time: customer.createdAt, title: "Lead created" }]} />
+            <Timeline
+              items={
+                timeline.length ? timeline : [{ time: customer.createdAt, title: "Lead created" }]
+              }
+            />
           </Panel>
 
           <Panel tonal>
             <SectionTitle>Contact details</SectionTitle>
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-3.5 w-3.5" /> <span className="numeric text-foreground">{customer.phone}</span>
+                <Phone className="h-3.5 w-3.5" />{" "}
+                <span className="numeric text-foreground">{customer.phone}</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-3.5 w-3.5" /> <span className="text-foreground">{customer.email}</span>
+                <Mail className="h-3.5 w-3.5" />{" "}
+                <span className="text-foreground">{customer.email}</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5" /> <span className="text-foreground">{customer.city}</span>
+                <MapPin className="h-3.5 w-3.5" />{" "}
+                <span className="text-foreground">{customer.city}</span>
               </div>
             </div>
           </Panel>
@@ -205,7 +344,11 @@ function CustomerDetail() {
           {agent && (
             <Panel>
               <SectionTitle>Assigned agent</SectionTitle>
-              <Link to="/agents/$agentId" params={{ agentId: agent.id }} className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-surface-low">
+              <Link
+                to="/agents/$agentId"
+                params={{ agentId: agent.id }}
+                className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-surface-low"
+              >
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-c text-[11px] font-semibold">
                   {agent.code}
                 </span>
@@ -220,9 +363,27 @@ function CustomerDetail() {
           <Panel>
             <SectionTitle>Quick actions</SectionTitle>
             <div className="flex flex-col gap-2">
-              <Btn variant="tonal"><Receipt className="h-4 w-4" /> Create booking</Btn>
-              <Btn variant="tonal"><CreditCard className="h-4 w-4" /> Record payment</Btn>
-              <Btn variant="tonal"><FileText className="h-4 w-4" /> Request document</Btn>
+              <Link
+                to="/onboarding/booking"
+                search={{ customerId: customer.id }}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-surface-c px-3.5 py-2 text-sm font-medium"
+              >
+                <Receipt className="h-4 w-4" /> Create booking
+              </Link>
+              <Link
+                to="/onboarding/visit"
+                search={{ customerId: customer.id }}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-surface-c px-3.5 py-2 text-sm font-medium"
+              >
+                Book site visit
+              </Link>
+              <Link
+                to="/onboarding/reservation"
+                search={{ customerId: customer.id }}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-surface-c px-3.5 py-2 text-sm font-medium"
+              >
+                <CreditCard className="h-4 w-4" /> Create reservation
+              </Link>
             </div>
           </Panel>
         </div>
