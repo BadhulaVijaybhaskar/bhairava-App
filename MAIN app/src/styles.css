@@ -439,3 +439,62 @@
     transparent
   );
 }
+
+/* Project card STATUS + RESALE — always one row; status text length must not wrap Resale. */
+.project-card-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.project-card-status-block {
+  min-width: 0;
+  width: 100%;
+}
+
+.project-card-resale {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.project-card-resale-short {
+  display: none;
+}
+
+@media (max-width: 360px) {
+  .project-card-controls {
+    gap: 8px;
+  }
+
+  .project-card-status-select {
+    padding-left: 0.5rem;
+    padding-right: 1.5rem;
+    font-size: 0.6875rem;
+  }
+
+  .project-card-resale-full {
+    display: none;
+  }
+
+  .project-card-resale-short {
+    display: inline;
+  }
+
+  .project-card-resale-row {
+    gap: 0.375rem;
+  }
+}
+
+/* Last resort only: extremely narrow viewports may stack; prefer compressing first. */
+@media (max-width: 280px) {
+  .project-card-controls {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+  }
+
+  .project-card-resale {
+    align-items: flex-start;
+  }
+}

@@ -109,6 +109,7 @@ export interface Project {
   expectedCompletion?: string;
   coverImage?: string;
   brochure?: string;
+  /** Separate sales capability — a project can be Active AND resale-available. */
   resaleAvailable?: boolean;
   approvalAuthority?: string;
   plotTypes?: PlotType[];
