@@ -528,7 +528,7 @@ export function Timeline({
   );
 }
 
-/** On/off switch with an explicitly anchored thumb so off stays left and on stays right. */
+/** Off = grey knob left. On = dark track, white knob right. */
 export function SwitchControl({
   checked,
   onCheckedChange,
@@ -549,24 +549,17 @@ export function SwitchControl({
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
+      data-on={checked ? "true" : "false"}
+      dir="ltr"
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
         if (disabled) return;
         onCheckedChange?.(!checked);
       }}
-      className={cn(
-        "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60",
-        checked ? "bg-primary" : "bg-surface-c",
-        className,
-      )}
+      className={cn("bhairava-switch", className)}
     >
-      <span
-        className={cn(
-          "pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200",
-          checked ? "translate-x-5" : "translate-x-0",
-        )}
-      />
+      <span className="bhairava-switch-thumb" />
     </button>
   );
 }

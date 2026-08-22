@@ -498,3 +498,46 @@
     align-items: flex-start;
   }
 }
+
+/* Switch: off = grey + knob left; on = dark + knob right. Pixel `left` avoids
+   Tailwind transform / RTL flipping the thumb on mobile Safari. */
+.bhairava-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  direction: ltr;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bhairava-switch[data-on="false"] {
+  background-color: var(--surface-c);
+}
+
+.bhairava-switch[data-on="true"] {
+  background-color: var(--primary);
+}
+
+.bhairava-switch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bhairava-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%);
+  transition: left 180ms ease;
+}
+
+.bhairava-switch[data-on="true"] .bhairava-switch-thumb {
+  left: 22px;
+}
