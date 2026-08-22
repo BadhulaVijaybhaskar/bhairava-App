@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState, type ChangeEvent } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, FilterBar, Metric, NewRecordButton } from "@/components/kit";
+import { PageHeader, FilterBar, Metric, NewRecordButton, SwitchControl } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
 import { formatINR, type Project } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
@@ -162,29 +162,15 @@ function ResaleSwitch({ project }: { project: Project }) {
   }
 
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={`Resale available for ${project.name}`}
+    <SwitchControl
+      checked={on}
       disabled={saving}
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
+      label={`Resale available for ${project.name}`}
+      className="relative z-10"
+      onCheckedChange={() => {
         void toggle();
       }}
-      className={cn(
-        "relative z-10 h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60",
-        on ? "bg-primary" : "bg-surface-c",
-      )}
-    >
-      <span
-        className={cn(
-          "absolute top-0.5 h-5 w-5 rounded-full bg-surface shadow-ambient transition-transform",
-          on ? "translate-x-5" : "translate-x-0.5",
-        )}
-      />
-    </button>
+    />
   );
 }
 

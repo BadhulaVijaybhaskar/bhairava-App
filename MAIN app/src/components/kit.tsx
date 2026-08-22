@@ -528,6 +528,49 @@ export function Timeline({
   );
 }
 
+/** On/off switch with an explicitly anchored thumb so off stays left and on stays right. */
+export function SwitchControl({
+  checked,
+  onCheckedChange,
+  disabled,
+  label,
+  className,
+}: {
+  checked: boolean;
+  onCheckedChange?: (next: boolean) => void;
+  disabled?: boolean;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (disabled) return;
+        onCheckedChange?.(!checked);
+      }}
+      className={cn(
+        "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60",
+        checked ? "bg-primary" : "bg-surface-c",
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          "pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200",
+          checked ? "translate-x-5" : "translate-x-0",
+        )}
+      />
+    </button>
+  );
+}
+
 export function NewRecordButton({
   to,
   search,

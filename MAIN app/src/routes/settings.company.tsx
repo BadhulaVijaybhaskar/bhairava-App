@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { PageHeader, Panel, SectionTitle, Btn } from "@/components/kit";
+import { PageHeader, Panel, SectionTitle, Btn, SwitchControl } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
 import { SettingsNav } from "@/components/settings-nav";
 
@@ -37,16 +37,7 @@ function Toggle({ label, hint, defaultChecked }: { label: string; hint?: string;
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="pt-0.5 text-xs leading-snug text-muted-foreground">{hint}</p>}
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-label={label}
-        onClick={() => setOn((v) => !v)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-primary" : "bg-surface-c"}`}
-      >
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-surface transition-transform ${on ? "translate-x-5" : "translate-x-0.5"}`} />
-      </button>
+      <SwitchControl checked={on} onCheckedChange={setOn} label={label} />
     </div>
   );
 }
