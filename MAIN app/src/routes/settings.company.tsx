@@ -100,7 +100,9 @@ function CompanySettings() {
           </Panel>
 
           <div className="flex justify-end">
-            <Btn variant="primary">Save changes</Btn>
+            <Btn variant="primary" className="min-h-12 w-full justify-center lg:w-auto">
+              Save changes
+            </Btn>
           </div>
         </div>
       </div>

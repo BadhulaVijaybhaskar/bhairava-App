@@ -419,7 +419,18 @@ const fabActions: NavItem[] = [
   { to: "/onboarding/agent", label: "New agent", icon: BadgePlus },
 ];
 
+/** Pages that already have Save / Continue / Create — the + button must not cover them. */
+function hideCreateFab(pathname: string) {
+  return (
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/site-visits/new") ||
+    pathname.startsWith("/plots/editor")
+  );
+}
+
 function MobileFab() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -436,7 +447,7 @@ function MobileFab() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  if (!mounted) return null;
+  if (!mounted || hideCreateFab(pathname)) return null;
 
   return createPortal(
     <>
@@ -491,7 +502,15 @@ function MobileFab() {
   );
 }
 
-export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boolean }) {
+export function AppShell({
+  children,
+  bleed,
+  hideFab,
+}: {
+  children: ReactNode;
+  bleed?: boolean;
+  hideFab?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -513,7 +532,7 @@ export function AppShell({ children, bleed }: { children: ReactNode; bleed?: boo
           {children}
         </main>
       </div>
-      <MobileFab />
+      {hideFab ? null : <MobileFab />}
       <BottomTabs onMore={() => setOpen((v) => !v)} menuOpen={open} />
     </div>
   );

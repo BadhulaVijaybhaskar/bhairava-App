@@ -480,10 +480,12 @@ export function Btn({
   children,
   variant = "ghost",
   onClick,
+  className,
 }: {
   children: ReactNode;
   variant?: "primary" | "ghost" | "tonal";
   onClick?: () => void;
+  className?: string;
 }) {
   return (
     <button
@@ -495,6 +497,7 @@ export function Btn({
           "gradient-primary text-primary-foreground shadow-ambient hover:shadow-glow",
         variant === "tonal" && "bg-surface-c text-foreground hover:bg-surface-high",
         variant === "ghost" && "text-muted-foreground hover:bg-surface-low hover:text-foreground",
+        className,
       )}
     >
       {children}

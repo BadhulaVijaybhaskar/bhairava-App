@@ -254,7 +254,7 @@ export function EditSheet({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex justify-end"
+      className="fixed inset-0 z-[1100] flex justify-end"
     >
       <button
         type="button"
