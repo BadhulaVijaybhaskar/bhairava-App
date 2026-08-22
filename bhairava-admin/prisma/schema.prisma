@@ -1,0 +1,938 @@
+// Bhairava Real Estate — full Phase 1 schema (Admin + silent roles ready)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum PlotStatus {
+  AVAILABLE
+  RESERVED
+  BOOKED
+  UNDER_DOCUMENTATION
+  SOLD
+  REGISTERED
+  RESALE_AVAILABLE
+  BLOCKED
+  CANCELLED
+}
+
+enum AreaUnit {
+  SQ_YARD
+  SQ_FT
+  SQ_M
+  ACRE
+  CENT
+}
+
+enum Facing {
+  NORTH
+  SOUTH
+  EAST
+  WEST
+  NORTH_EAST
+  NORTH_WEST
+  SOUTH_EAST
+  SOUTH_WEST
+}
+
+enum ShapeType {
+  RECT
+  POLYGON
+}
+
+enum KycStatus {
+  PENDING
+  PARTIAL
+  VERIFIED
+  REJECTED
+}
+
+enum BookingStatus {
+  DRAFT
+  RESERVED
+  BOOKED
+  AGREEMENT
+  PENDING_DOCS
+  UNDER_DOCUMENTATION
+  SOLD
+  REGISTERED
+  CANCELLED
+}
+
+enum AgreementStatus {
+  NOT_STARTED
+  DRAFTED
+  SENT
+  SIGNED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SCHEDULED
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  WAIVED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  NEFT
+  RTGS
+  CHEQUE
+  CARD
+  OTHER
+}
+
+enum DocumentCategory {
+  LAYOUT_APPROVAL
+  DTCP_APPROVAL
+  RERA_CERTIFICATE
+  BROCHURE
+  PRICE_LIST
+  MASTER_PLAN
+  LEGAL_DOCUMENTS
+  BOOKING_FORM
+  AGREEMENT
+  PAN
+  AADHAAR
+  ADDRESS_PROOF
+  SALE_DEED
+  REGISTRATION_COPY
+  TAX_RECEIPT
+  ENCUMBRANCE_CERTIFICATE
+  MUTATION
+  NOC
+  PAYMENT_RECEIPT
+  OTHER
+}
+
+enum DocumentEntityType {
+  PROJECT
+  PLOT
+  CUSTOMER
+  BOOKING
+  PAYMENT
+  REGISTRATION
+  RESALE
+  ORGANIZATION
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ACTION_REQUIRED
+}
+
+enum ResaleStatus {
+  LISTED
+  UNDER_OFFER
+  SOLD
+  WITHDRAWN
+}
+
+enum PlotInterestType {
+  VIEWED
+  INTERESTED
+  CALLBACK_REQUEST
+  WAITLIST
+  OFFER
+}
+
+enum LoginAttemptResult {
+  SUCCESS
+  FAILURE
+  LOCKED
+  SUSPENDED
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  legalName   String?  @map("legal_name")
+  gstin       String?
+  pan         String?
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  phone       String?
+  email       String?
+  website     String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  settings               OrganizationSettings?
+  users                  User[]
+  roles                  Role[]
+  projects               Project[]
+  customers              Customer[]
+  agents                 Agent[]
+  bookings               Booking[]
+  payments               Payment[]
+  documents              Document[]
+  notifications          Notification[]
+  auditLogs              AuditLog[]
+  registrations          Registration[]
+  resaleListings         ResaleListing[]
+  userProjectAssignments UserProjectAssignment[]
+
+  @@map("organizations")
+}
+
+model OrganizationSettings {
+  id               String   @id @default(uuid())
+  organizationId   String   @unique @map("organization_id")
+  logoPath         String?  @map("logo_path")
+  primaryColor     String   @default("#1A4F9D") @map("primary_color")
+  secondaryColor   String?  @map("secondary_color")
+  currencyCode     String   @default("INR") @map("currency_code")
+  dateFormat       String   @default("dd MMM yyyy") @map("date_format")
+  timezone         String   @default("Asia/Kolkata")
+  supportEmail     String?  @map("support_email")
+  supportPhone     String?  @map("support_phone")
+  addressLine      String?  @map("address_line")
+  termsHtml        String?  @map("terms_html")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
+}
+
+model User {
+  id                String     @id @default(uuid())
+  organizationId    String     @map("organization_id")
+  email             String?
+  mobile            String?
+  passwordHash      String     @map("password_hash")
+  fullName          String     @map("full_name")
+  status            UserStatus @default(ACTIVE)
+  emailVerifiedAt   DateTime?  @map("email_verified_at")
+  lastLoginAt       DateTime?  @map("last_login_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  deletedAt         DateTime?  @map("deleted_at")
+  createdBy         String?    @map("created_by")
+  updatedBy         String?    @map("updated_by")
+
+  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  userRoles              UserRole[]
+  refreshTokens          RefreshToken[]
+  passwordResetTokens    PasswordResetToken[]
+  loginAttempts          LoginAttempt[]
+  projectAssignments     UserProjectAssignment[]
+  agentProfile           Agent?
+  auditLogs              AuditLog[]              @relation("AuditActor")
+  notifications          Notification[]
+
+  @@unique([organizationId, email])
+  @@unique([organizationId, mobile])
+  @@index([organizationId, status])
+  @@map("users")
+}
+
+model Role {
+  id             String   @id @default(uuid())
+  organizationId String?  @map("organization_id")
+  code           String
+  name           String
+  description    String?
+  isSystem       Boolean  @default(true) @map("is_system")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@unique([organizationId, code])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  module      String
+  action      String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String   @map("role_id")
+  permissionId String   @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model UserProjectAssignment {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  userId         String   @map("user_id")
+  projectId      String   @map("project_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([organizationId, projectId])
+  @@map("user_project_assignments")
+}
+
+model Project {
+  id                      String        @id @default(uuid())
+  organizationId          String        @map("organization_id")
+  name                    String
+  code                    String
+  projectType             String?       @map("project_type")
+  description             String?      
+  address                 String?
+  city                    String?
+  state                   String?
+  pincode                 String?
+  latitude                Decimal?     
+  longitude               Decimal?     
+  reraNumber              String?       @map("rera_number")
+  totalArea               Decimal?      @map("total_area")
+  areaUnit                AreaUnit?     @map("area_unit")
+  totalPlots              Int           @default(0) @map("total_plots")
+  launchDate              DateTime?     @map("launch_date")
+  expectedCompletionDate  DateTime?     @map("expected_completion_date")
+  status                  ProjectStatus @default(DRAFT)
+  coverImagePath          String?       @map("cover_image_path")
+  /// Brochure-style flags: approvals, amenities, infrastructure, sustainable
+  highlights              Json?
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+  deletedAt               DateTime?     @map("deleted_at")
+  createdBy               String?       @map("created_by")
+  updatedBy               String?       @map("updated_by")
+
+  organization       Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  phases             ProjectPhase[]
+  blocks             ProjectBlock[]
+  plots              Plot[]
+  layoutMaps         LayoutMap[]
+  bookings           Booking[]
+  documents          Document[]
+  registrations      Registration[]
+  resaleListings     ResaleListing[]
+  userAssignments    UserProjectAssignment[]
+  agentAssignments   AgentProjectAssignment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([organizationId, city])
+  @@map("projects")
+}
+
+model ProjectPhase {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id")
+  name           String
+  code           String?
+  sequence       Int       @default(1)
+  description    String?
+  status         String    @default("ACTIVE")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  blocks  ProjectBlock[]
+  plots   Plot[]
+
+  @@unique([projectId, name])
+  @@index([organizationId, projectId])
+  @@map("project_phases")
+}
+
+model ProjectBlock {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id")
+  phaseId        String?   @map("phase_id")
+  name           String
+  code           String?
+  description    String?
+  plannedPlots   Int       @default(0) @map("planned_plots")
+  /// Size rows: [{ area, plotCount, facing, pricePerSqYard, additionalCharges }]
+  plotSpecs      Json?     @map("plot_specs")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  plots   Plot[]
+
+  @@unique([projectId, name])
+  @@index([organizationId, projectId])
+  @@map("project_blocks")
+}
+
+model Plot {
+  id                 String     @id @default(uuid())
+  organizationId     String     @map("organization_id")
+  projectId          String     @map("project_id")
+  phaseId            String?    @map("phase_id")
+  blockId            String?    @map("block_id")
+  plotNumber         String     @map("plot_number")
+  area               Decimal   
+  areaUnit           AreaUnit   @default(SQ_YARD) @map("area_unit")
+  length             Decimal?  
+  width              Decimal?  
+  facing             Facing?
+  pricePerSqYard     Decimal?   @map("price_per_sq_yard")
+  basePrice          Decimal    @map("base_price")
+  additionalCharges  Decimal    @default(0) @map("additional_charges")
+  totalPrice         Decimal    @map("total_price")
+  status             PlotStatus @default(AVAILABLE)
+  assignedCustomerId String?    @map("assigned_customer_id")
+  assignedAgentId    String?    @map("assigned_agent_id")
+  bookingDate        DateTime?  @map("booking_date")
+  registrationDate   DateTime?  @map("registration_date")
+  resaleStatus       Boolean    @default(false) @map("resale_status")
+  notes              String?   
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  deletedAt          DateTime?  @map("deleted_at")
+  createdBy          String?    @map("created_by")
+  updatedBy          String?    @map("updated_by")
+
+  project          Project             @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  phase            ProjectPhase?       @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  block            ProjectBlock?       @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  assignedCustomer Customer?           @relation(fields: [assignedCustomerId], references: [id], onDelete: SetNull)
+  assignedAgent    Agent?              @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  statusHistory    PlotStatusHistory[]
+  shapes           LayoutPlotShape[]
+  bookings         Booking[]
+  documents        Document[]
+  registrations    Registration[]
+  resaleListings   ResaleListing[]
+  interests        PlotInterest[]
+
+  @@unique([projectId, plotNumber])
+  @@index([organizationId, status])
+  @@index([projectId, status])
+  @@index([assignedCustomerId])
+  @@map("plots")
+}
+
+model PlotInterest {
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  projectId      String           @map("project_id")
+  plotId         String           @map("plot_id")
+  customerId     String?          @map("customer_id")
+  guestName      String?          @map("guest_name")
+  guestMobile    String?          @map("guest_mobile")
+  guestEmail     String?          @map("guest_email")
+  type           PlotInterestType @default(INTERESTED)
+  message        String?
+  source         String           @default("APP")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  plot Plot @relation(fields: [plotId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([plotId, createdAt])
+  @@index([projectId, createdAt])
+  @@map("plot_interests")
+}
+
+model PlotStatusHistory {
+  id             String     @id @default(uuid())
+  organizationId String     @map("organization_id")
+  plotId         String     @map("plot_id")
+  fromStatus     PlotStatus? @map("from_status")
+  toStatus       PlotStatus @map("to_status")
+  reason         String?
+  changedBy      String?    @map("changed_by")
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  plot Plot @relation(fields: [plotId], references: [id], onDelete: Cascade)
+
+  @@index([plotId, createdAt])
+  @@map("plot_status_history")
+}
+
+model LayoutMap {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  projectId      String   @map("project_id")
+  imagePath      String   @map("image_path")
+  originalWidth  Int      @map("original_width")
+  originalHeight Int      @map("original_height")
+  version        Int      @default(1)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdBy      String?  @map("created_by")
+
+  project Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  shapes  LayoutPlotShape[]
+
+  @@index([projectId, isActive])
+  @@map("layout_maps")
+}
+
+model LayoutPlotShape {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  layoutMapId    String    @map("layout_map_id")
+  plotId         String    @map("plot_id")
+  shapeType      ShapeType @map("shape_type")
+  /// Normalized 0–1 coordinates: [[x,y], ...] relative to image size
+  coordinates    Json
+  labelX         Decimal?  @map("label_x")
+  labelY         Decimal?  @map("label_y")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  layoutMap LayoutMap @relation(fields: [layoutMapId], references: [id], onDelete: Cascade)
+  plot      Plot      @relation(fields: [plotId], references: [id], onDelete: Cascade)
+
+  @@unique([layoutMapId, plotId])
+  @@index([plotId])
+  @@map("layout_plot_shapes")
+}
+
+model Customer {
+  id              String    @id @default(uuid())
+  organizationId  String    @map("organization_id")
+  fullName        String    @map("full_name")
+  mobile          String
+  alternateMobile String?   @map("alternate_mobile")
+  email           String?
+  address         String?
+  city            String?
+  state           String?
+  pincode         String?
+  panEncrypted    String?   @map("pan_encrypted")
+  panLast4        String?   @map("pan_last4")
+  aadhaarEncrypted String?  @map("aadhaar_encrypted")
+  aadhaarLast4    String?   @map("aadhaar_last4")
+  kycStatus       KycStatus @default(PENDING) @map("kyc_status")
+  nomineeName     String?   @map("nominee_name")
+  nomineeRelation String?   @map("nominee_relation")
+  nomineeMobile   String?   @map("nominee_mobile")
+  supportNotes    String?   @map("support_notes")
+  /// Scheduled follow-ups: [{ id, at, note? }]
+  followUps       Json?     @map("follow_ups")
+  /// Document checklist sections: [{ id, title }]
+  documentChecklist Json?   @map("document_checklist")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+  createdBy       String?   @map("created_by")
+  updatedBy       String?   @map("updated_by")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  plots        Plot[]
+  bookings     Booking[]
+  documents    Document[]
+  registrations Registration[]
+
+  @@unique([organizationId, mobile])
+  @@index([organizationId, fullName])
+  @@map("customers")
+}
+
+model Agent {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  userId         String?   @unique @map("user_id")
+  fullName       String    @map("full_name")
+  mobile         String
+  email          String?
+  employeeCode   String?   @map("employee_code")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  organization Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user         User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  projects     AgentProjectAssignment[]
+  plots        Plot[]
+  bookings     Booking[]
+
+  @@unique([organizationId, mobile])
+  @@map("agents")
+}
+
+model AgentProjectAssignment {
+  id        String   @id @default(uuid())
+  agentId   String   @map("agent_id")
+  projectId String   @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, projectId])
+  @@map("agent_project_assignments")
+}
+
+model Booking {
+  id                 String             @id @default(uuid())
+  organizationId     String             @map("organization_id")
+  bookingNumber      String             @map("booking_number")
+  projectId          String             @map("project_id")
+  plotId             String             @map("plot_id")
+  customerId         String             @map("customer_id")
+  agentId            String?            @map("agent_id")
+  bookingDate        DateTime           @map("booking_date")
+  bookingAmount      Decimal            @map("booking_amount")
+  paymentMode        PaymentMethod?     @map("payment_mode")
+  totalPlotPrice     Decimal            @map("total_plot_price")
+  discount           Decimal            @default(0)
+  finalAmount        Decimal            @map("final_amount")
+  bookingStatus      BookingStatus      @default(BOOKED) @map("booking_status")
+  agreementStatus    AgreementStatus    @default(NOT_STARTED) @map("agreement_status")
+  registrationStatus RegistrationStatus @default(NOT_STARTED) @map("registration_status")
+  notes              String?           
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  deletedAt          DateTime?          @map("deleted_at")
+  createdBy          String?            @map("created_by")
+  updatedBy          String?            @map("updated_by")
+
+  organization  Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  project       Project                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  plot          Plot                    @relation(fields: [plotId], references: [id], onDelete: Restrict)
+  customer      Customer                @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  agent         Agent?                  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  statusHistory BookingStatusHistory[]
+  schedules     PaymentSchedule[]
+  payments      Payment[]
+  documents     Document[]
+  registration  Registration?
+
+  @@unique([organizationId, bookingNumber])
+  @@index([organizationId, bookingStatus])
+  @@index([plotId])
+  @@index([customerId])
+  @@map("bookings")
+}
+
+model BookingStatusHistory {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  bookingId      String         @map("booking_id")
+  fromStatus     BookingStatus? @map("from_status")
+  toStatus       BookingStatus  @map("to_status")
+  reason         String?
+  changedBy      String?        @map("changed_by")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@map("booking_status_history")
+}
+
+model PaymentSchedule {
+  id               String        @id @default(uuid())
+  organizationId   String        @map("organization_id")
+  bookingId        String        @map("booking_id")
+  installmentNumber Int          @map("installment_number")
+  dueDate          DateTime      @map("due_date")
+  amountDue        Decimal       @map("amount_due")
+  amountPaid       Decimal       @default(0) @map("amount_paid")
+  balance          Decimal      
+  status           PaymentStatus @default(PENDING)
+  notes            String?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  booking  Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@unique([bookingId, installmentNumber])
+  @@index([organizationId, dueDate, status])
+  @@map("payment_schedules")
+}
+
+model Payment {
+  id                  String        @id @default(uuid())
+  organizationId      String        @map("organization_id")
+  bookingId           String        @map("booking_id")
+  scheduleId          String?       @map("schedule_id")
+  amount              Decimal      
+  paymentDate         DateTime      @map("payment_date")
+  paymentMethod       PaymentMethod @map("payment_method")
+  transactionReference String?      @map("transaction_reference")
+  receiptNumber       String?       @map("receipt_number")
+  status              PaymentStatus @default(PAID)
+  notes               String?
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  deletedAt           DateTime?     @map("deleted_at")
+  createdBy           String?       @map("created_by")
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  booking      Booking          @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  schedule     PaymentSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  receipt      PaymentReceipt?
+
+  @@unique([organizationId, receiptNumber])
+  @@index([bookingId, paymentDate])
+  @@map("payments")
+}
+
+model PaymentReceipt {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  paymentId      String   @unique @map("payment_id")
+  receiptNumber  String   @map("receipt_number")
+  issuedAt       DateTime @default(now()) @map("issued_at")
+  pdfPath        String?  @map("pdf_path")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, receiptNumber])
+  @@map("payment_receipts")
+}
+
+model Document {
+  id             String             @id @default(uuid())
+  organizationId String             @map("organization_id")
+  entityType     DocumentEntityType @map("entity_type")
+  entityId       String             @map("entity_id")
+  category       DocumentCategory
+  title          String
+  projectId      String?            @map("project_id")
+  plotId         String?            @map("plot_id")
+  customerId     String?            @map("customer_id")
+  bookingId      String?            @map("booking_id")
+  currentVersion Int                @default(1) @map("current_version")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  deletedAt      DateTime?          @map("deleted_at")
+  createdBy      String?            @map("created_by")
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  project      Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  plot         Plot?             @relation(fields: [plotId], references: [id], onDelete: SetNull)
+  customer     Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  booking      Booking?          @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  versions     DocumentVersion[]
+
+  @@index([organizationId, entityType, entityId])
+  @@index([projectId, category])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id             String   @id @default(uuid())
+  documentId     String   @map("document_id")
+  versionNumber  Int      @map("version_number")
+  storagePath    String   @map("storage_path")
+  originalName   String   @map("original_name")
+  mimeType       String   @map("mime_type")
+  sizeBytes      Int      @map("size_bytes")
+  uploadedBy     String?  @map("uploaded_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model Registration {
+  id               String             @id @default(uuid())
+  organizationId   String             @map("organization_id")
+  bookingId        String             @unique @map("booking_id")
+  projectId        String             @map("project_id")
+  plotId           String             @map("plot_id")
+  customerId       String             @map("customer_id")
+  status           RegistrationStatus @default(NOT_STARTED)
+  scheduledDate    DateTime?          @map("scheduled_date")
+  completedDate    DateTime?          @map("completed_date")
+  registrationNumber String?          @map("registration_number")
+  notes            String?           
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  plot         Plot         @relation(fields: [plotId], references: [id], onDelete: Restrict)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status])
+  @@map("registrations")
+}
+
+model ResaleListing {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  projectId      String       @map("project_id")
+  plotId         String       @map("plot_id")
+  askingPrice    Decimal      @map("asking_price")
+  status         ResaleStatus @default(LISTED)
+  listedAt       DateTime     @default(now()) @map("listed_at")
+  notes          String?     
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  plot         Plot         @relation(fields: [plotId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status])
+  @@map("resale_listings")
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  userId         String           @map("user_id")
+  type           NotificationType @default(INFO)
+  title          String
+  body           String
+  linkUrl        String?          @map("link_url")
+  isRead         Boolean          @default(false) @map("is_read")
+  readAt         DateTime?        @map("read_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String?  @map("organization_id")
+  actorUserId    String?  @map("actor_user_id")
+  action         String
+  entityType     String?  @map("entity_type")
+  entityId       String?  @map("entity_id")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor        User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model RefreshToken {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  tokenHash      String    @map("token_hash")
+  expiresAt      DateTime  @map("expires_at")
+  revokedAt      DateTime? @map("revoked_at")
+  replacedById   String?   @map("replaced_by_id")
+  userAgent      String?   @map("user_agent")
+  ipAddress      String?   @map("ip_address")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model LoginAttempt {
+  id             String             @id @default(uuid())
+  organizationId String?            @map("organization_id")
+  userId         String?            @map("user_id")
+  identifier     String
+  result         LoginAttemptResult
+  ipAddress      String?            @map("ip_address")
+  userAgent      String?            @map("user_agent")
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([identifier, createdAt])
+  @@map("login_attempts")
+}
