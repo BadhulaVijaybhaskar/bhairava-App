@@ -659,7 +659,7 @@ export function AppShell({
   return (
     // Mobile: lock the shell to the dynamic viewport (see .app-shell CSS) and scroll
     // only `.app-shell-main` so the portaled bottom tab bar stays pinned.
-    <div className="app-shell flex bg-background">
+    <div className="app-shell flex max-w-full min-w-0 bg-background">
       <Sidebar />
       <MobileMenu open={open} onClose={() => setOpen(false)} />
       <div className="app-shell-column flex min-h-0 min-w-0 flex-1 flex-col">

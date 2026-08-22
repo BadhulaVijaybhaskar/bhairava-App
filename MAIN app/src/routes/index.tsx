@@ -86,7 +86,7 @@ function QuickActionTile({
   return (
     <Link
       to={to}
-      className="rise flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-outline-variant/40 bg-surface-lowest px-1.5 py-3 text-center transition-transform active:scale-[0.97]"
+      className="rise flex min-h-[88px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border border-outline-variant/40 bg-surface-lowest px-1.5 py-3 text-center transition-transform active:scale-[0.97]"
       style={{ animationDelay: `${index * 40}ms` }}
     >
       <span className="relative inline-flex">
@@ -114,27 +114,27 @@ function Dashboard() {
   return (
     <AppShell>
       {/* ---------- MOBILE dashboard: compact, high information density ---------- */}
-      <div className="space-y-4 lg:hidden">
+      <div className="min-w-0 max-w-full space-y-4 overflow-x-clip lg:hidden">
         <h1 className="pt-1 font-display text-[22px] font-semibold tracking-[-0.03em]">Dashboard</h1>
 
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center justify-between gap-2 pb-2">
             <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
               Quick actions
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="min-w-0 truncate text-[11px] text-muted-foreground">
               <span className="numeric font-semibold text-foreground">{todayVisits}</span> today ·{" "}
               <span className="numeric font-semibold text-foreground">{upcomingVisits}</span> upcoming
             </p>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2 min-[430px]:grid-cols-4">
             {quickActions.map((action, i) => (
               <QuickActionTile key={action.label} {...action} index={i} />
             ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid min-w-0 grid-cols-2 gap-3">
           <Metric label="Collected" value="₹18.2 Cr" delta="+21.3%" hint="vs Jul" accent />
           <Metric label="Bookings" value="34" delta="+7" hint="this month" />
           <Metric label="Outstanding" value="₹5.3 Cr" delta="-4.1%" hint="due < 30d" />
@@ -145,7 +145,7 @@ function Dashboard() {
           />
         </div>
 
-        <Panel className="p-3.5">
+        <Panel className="min-w-0 p-3.5">
           <SectionTitle aside={<Link to="/projects">All projects</Link>}>Project absorption</SectionTitle>
           <div className="space-y-2">
             {projects.slice(0, 4).map((p) => {
@@ -171,9 +171,9 @@ function Dashboard() {
           </div>
         </Panel>
 
-        <Panel>
+        <Panel className="min-w-0">
           <SectionTitle aside="8 months">Cashflow vs target</SectionTitle>
-          <div className="h-56">
+          <div className="h-56 w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={cashflow} margin={{ left: -22, right: 4, top: 6 }}>
                 <defs>
@@ -214,9 +214,9 @@ function Dashboard() {
           </div>
         </Panel>
 
-        <Panel tonal>
+        <Panel className="min-w-0" tonal>
           <SectionTitle aside="Bookings vs site visits">Sales momentum</SectionTitle>
-          <div className="h-56">
+          <div className="h-56 w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={salesTrend} margin={{ left: -22, right: 4, top: 6 }}>
                 <CartesianGrid stroke="var(--outline-variant)" strokeOpacity={0.18} vertical={false} />

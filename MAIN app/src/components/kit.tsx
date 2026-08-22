@@ -53,7 +53,7 @@ export function Panel({
   tonal?: boolean;
 }) {
   return (
-    <section className={cn(tonal ? "panel-tonal" : "panel", "p-4 sm:p-6", className)}>
+    <section className={cn(tonal ? "panel-tonal" : "panel", "min-w-0 p-4 sm:p-6", className)}>
       {children}
     </section>
   );
@@ -89,7 +89,7 @@ export function Metric({
   return (
     <div
       className={cn(
-        "panel lift relative overflow-hidden p-3.5 sm:p-5",
+        "panel lift relative min-w-0 overflow-hidden p-3.5 sm:p-5",
         accent ? "gradient-primary sheen text-primary-foreground shadow-float" : "sheen",
       )}
     >
