@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand";
-import { signIn } from "@/lib/auth";
+import { isAuthenticated, signIn } from "@/lib/auth";
 
 const EMAIL_DRAFT_KEY = "bhairava.login.email";
 
@@ -47,6 +47,11 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    // Drop a leftover session if sign-out's storage clear lost the navigation race.
+    isAuthenticated();
+  }, []);
 
   return (
     <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-10">

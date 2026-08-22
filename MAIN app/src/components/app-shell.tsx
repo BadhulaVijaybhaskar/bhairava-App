@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   FolderPlus,
   UserPlus,
@@ -204,20 +204,20 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function handleSignOut() {
-  signOut();
-  // Give the cookie / localStorage writes a tick before navigating.
-  // A same-tick replace can drop the storage clear on mobile WebKit.
-  window.setTimeout(() => {
-    window.location.replace("/login");
-  }, 50);
+function useSignOut() {
+  const navigate = useNavigate();
+  return () => {
+    signOut();
+    void navigate({ to: "/login", replace: true });
+  };
 }
 
 function SignOutButton({ className }: { className?: string }) {
+  const onSignOut = useSignOut();
   return (
     <button
       type="button"
-      onClick={handleSignOut}
+      onClick={onSignOut}
       className={cn(
         "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-surface-c px-3 text-sm font-medium text-foreground transition-colors active:bg-surface-highest",
         className,
@@ -262,6 +262,7 @@ function matchesQuery(label: string, query: string) {
 
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onSignOut = useSignOut();
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -376,7 +377,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
                 spellCheck={false}
               />
             </label>
-            <button type="button" onClick={handleSignOut} className="mobile-more-signout">
+            <button type="button" onClick={onSignOut} className="mobile-more-signout">
               <LogOut className="h-3.5 w-3.5" strokeWidth={2.1} />
               Sign out
             </button>
