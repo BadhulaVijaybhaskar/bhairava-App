@@ -30,6 +30,7 @@ import {
   Plus,
   Menu,
   X,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -188,34 +189,50 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function handleSignOut() {
+  signOut();
+  window.location.assign("/login");
+}
+
+function SignOutButton({ className }: { className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={handleSignOut}
+      className={cn(
+        "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-surface-c px-3 text-sm font-medium text-foreground transition-colors active:bg-surface-highest",
+        className,
+      )}
+    >
+      <LogOut className="h-4 w-4 text-primary" strokeWidth={2} />
+      Sign out
+    </button>
+  );
+}
+
 function UserCard() {
   const session = getSession();
   return (
-    <div className="mt-6 rounded-xl bg-surface-c px-3 py-3">
+    <div className="shrink-0 rounded-xl bg-surface-c px-3 py-3">
       <p className="text-xs font-medium">{session?.name ?? "Vijay Bhaskar"}</p>
-      <p className="text-[11px] text-muted-foreground">{session?.email ?? "admin@bhairava.com"}</p>
-      <button
-        type="button"
-        onClick={() => {
-          signOut();
-          window.location.assign("/login");
-        }}
-        className="mt-2 text-[11px] font-medium text-primary"
-      >
-        Sign out
-      </button>
+      <p className="truncate text-[11px] text-muted-foreground">
+        {session?.email ?? "admin@bhairava.com"}
+      </p>
+      <SignOutButton className="mt-2 w-full" />
     </div>
   );
 }
 
 function Sidebar() {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-surface-low px-4 pt-6 pb-8 lg:flex">
-      <div className="mb-8 px-2">
+    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-surface-low px-4 pt-6 pb-6 lg:flex">
+      <div className="mb-6 shrink-0 px-2">
         <BrandMark />
       </div>
       <NavList />
-      <UserCard />
+      <div className="mt-4 shrink-0">
+        <UserCard />
+      </div>
     </aside>
   );
 }
@@ -241,9 +258,9 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
         onClick={onClose}
         className="absolute inset-0 bg-foreground/35 backdrop-blur-[2px]"
       />
-      <div className="absolute inset-x-0 bottom-0 max-h-[86svh] overflow-y-auto rounded-t-3xl bg-surface-low pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-float">
-        <div className="sticky top-0 z-10 bg-surface-low px-5 pt-3 pb-3">
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-surface-c" />
+      <div className="absolute inset-x-0 bottom-0 flex max-h-[86svh] flex-col rounded-t-3xl bg-surface-low shadow-float">
+        <div className="shrink-0 px-5 pt-3 pb-3">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-surface-c" />
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <BrandMark />
             <button
@@ -254,9 +271,10 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
               <X className="h-4 w-4" />
             </button>
           </div>
+          <SignOutButton className="mt-3 w-full" />
         </div>
 
-        <div className="space-y-5 px-5 pt-1">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-1 pb-3">
           {navGroups.map((group) => (
             <div key={group.label}>
               <p className="pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
@@ -295,7 +313,6 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
               </div>
             </div>
           ))}
-          <UserCard />
         </div>
       </div>
     </div>
