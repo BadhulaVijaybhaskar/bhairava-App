@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { AuthGate } from "@/components/auth-gate";
 import { DataProvider } from "@/lib/store";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -143,8 +144,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <DataProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <AuthGate>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AuthGate>
         <Toaster position="top-center" richColors />
       </DataProvider>
     </QueryClientProvider>

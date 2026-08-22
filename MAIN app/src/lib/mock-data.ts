@@ -315,7 +315,7 @@ export const projects: Project[] = [
 
 export const agents: Agent[] = [
   {
-    id: "AGT-01",
+    id: "brag0001",
     name: "Priya Menon",
     code: "PM",
     region: "West Hyderabad",
@@ -328,7 +328,7 @@ export const agents: Agent[] = [
     status: "Active",
   },
   {
-    id: "AGT-02",
+    id: "brag0002",
     name: "Arjun Reddy",
     code: "AR",
     region: "North Hyderabad",
@@ -341,7 +341,7 @@ export const agents: Agent[] = [
     status: "Active",
   },
   {
-    id: "AGT-03",
+    id: "brag0003",
     name: "Sneha Kulkarni",
     code: "SK",
     region: "Central",
@@ -354,7 +354,7 @@ export const agents: Agent[] = [
     status: "Active",
   },
   {
-    id: "AGT-04",
+    id: "brag0004",
     name: "Vikram Shetty",
     code: "VS",
     region: "South Hyderabad",
@@ -367,7 +367,7 @@ export const agents: Agent[] = [
     status: "Active",
   },
   {
-    id: "AGT-05",
+    id: "brag0005",
     name: "Deepa Krishnan",
     code: "DK",
     region: "East Hyderabad",
@@ -423,7 +423,7 @@ export const customers: Customer[] = Array.from({ length: 42 }, (_, i) => {
   const stage = pick(stages, i);
   const total = inr(2800000 + (i % 9) * 640000);
   return {
-    id: `CUS-${String(i + 1).padStart(3, "0")}`,
+    id: `Br${String(i + 1).padStart(6, "0")}`,
     name,
     phone: `+91 9${String(700000000 + i * 137911).slice(0, 9)}`,
     email: `${name.toLowerCase().replace(/ /g, ".")}@example.com`,
@@ -769,15 +769,15 @@ const visitShift = (days: number) => {
 };
 
 export const siteVisits: SiteVisit[] = [
-  { id: "SV-001", customerId: "CUS-001", projectId: "PRJ-01", agentId: "AGT-01", date: visitShift(0), time: "10:30 AM", status: "Confirmed", plotInterest: ["BGF-118", "BGF-119"], visitors: 2, source: "Referral" },
-  { id: "SV-002", customerId: "CUS-002", projectId: "PRJ-02", agentId: "AGT-02", date: visitShift(0), time: "12:00 PM", status: "Scheduled", visitors: 1 },
-  { id: "SV-003", customerId: "CUS-003", projectId: "PRJ-01", agentId: "AGT-03", date: visitShift(0), time: "04:00 PM", status: "Scheduled", pickupRequired: true, pickupLocation: "Gachibowli" },
-  { id: "SV-004", customerId: "CUS-004", projectId: "PRJ-04", agentId: "AGT-01", date: visitShift(1), time: "11:00 AM", status: "Confirmed", visitors: 3 },
-  { id: "SV-005", customerId: "CUS-005", projectId: "PRJ-05", agentId: "AGT-04", date: visitShift(2), time: "09:30 AM", status: "Scheduled" },
-  { id: "SV-006", customerId: "CUS-006", projectId: "PRJ-02", agentId: "AGT-02", date: visitShift(3), time: "02:00 PM", status: "Rescheduled" },
-  { id: "SV-007", customerId: "CUS-007", projectId: "PRJ-03", agentId: "AGT-05", date: visitShift(-2), time: "10:00 AM", status: "Completed", plotInterest: ["MND-045"] },
-  { id: "SV-008", customerId: "CUS-008", projectId: "PRJ-01", agentId: "AGT-01", date: visitShift(-3), time: "03:30 PM", status: "Completed" },
-  { id: "SV-009", customerId: "CUS-009", projectId: "PRJ-05", agentId: "AGT-03", date: visitShift(-1), time: "01:00 PM", status: "Cancelled" },
-  { id: "SV-010", customerId: "CUS-010", projectId: "PRJ-04", agentId: "AGT-04", date: visitShift(4), time: "05:00 PM", status: "Scheduled", visitors: 2 },
+  { id: "SV-001", customerId: "Br000001", projectId: "PRJ-01", agentId: "brag0001", date: visitShift(0), time: "10:30 AM", status: "Confirmed", plotInterest: ["BGF-118", "BGF-119"], visitors: 2, source: "Referral" },
+  { id: "SV-002", customerId: "Br000002", projectId: "PRJ-02", agentId: "brag0002", date: visitShift(0), time: "12:00 PM", status: "Scheduled", visitors: 1 },
+  { id: "SV-003", customerId: "Br000003", projectId: "PRJ-01", agentId: "brag0003", date: visitShift(0), time: "04:00 PM", status: "Scheduled", pickupRequired: true, pickupLocation: "Gachibowli" },
+  { id: "SV-004", customerId: "Br000004", projectId: "PRJ-04", agentId: "brag0001", date: visitShift(1), time: "11:00 AM", status: "Confirmed", visitors: 3 },
+  { id: "SV-005", customerId: "Br000005", projectId: "PRJ-05", agentId: "brag0004", date: visitShift(2), time: "09:30 AM", status: "Scheduled" },
+  { id: "SV-006", customerId: "Br000006", projectId: "PRJ-02", agentId: "brag0002", date: visitShift(3), time: "02:00 PM", status: "Rescheduled" },
+  { id: "SV-007", customerId: "Br000007", projectId: "PRJ-03", agentId: "brag0005", date: visitShift(-2), time: "10:00 AM", status: "Completed", plotInterest: ["MND-045"] },
+  { id: "SV-008", customerId: "Br000008", projectId: "PRJ-01", agentId: "brag0001", date: visitShift(-3), time: "03:30 PM", status: "Completed" },
+  { id: "SV-009", customerId: "Br000009", projectId: "PRJ-05", agentId: "brag0003", date: visitShift(-1), time: "01:00 PM", status: "Cancelled" },
+  { id: "SV-010", customerId: "Br000010", projectId: "PRJ-04", agentId: "brag0004", date: visitShift(4), time: "05:00 PM", status: "Scheduled", visitors: 2 },
 ];
 

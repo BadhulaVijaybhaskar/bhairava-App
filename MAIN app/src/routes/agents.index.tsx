@@ -28,7 +28,7 @@ function AgentsIndex() {
   const filtered = useMemo(() => {
     return agents.filter((a) => {
       if (active !== "All" && a.status !== active) return false;
-      if (query && !`${a.name} ${a.code} ${a.region}`.toLowerCase().includes(query.toLowerCase())) return false;
+      if (query && !`${a.id} ${a.name} ${a.code} ${a.region}`.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
   }, [agents, active, query]);
@@ -68,6 +68,11 @@ function AgentsIndex() {
           linkTo="/agents/$agentId"
           params={(a) => ({ agentId: a.id })}
           columns={[
+            {
+              key: "id",
+              header: "Agent ID",
+              cell: (a) => <span className="numeric text-xs font-medium">{a.id}</span>,
+            },
             {
               key: "name",
               header: "Agent",

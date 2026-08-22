@@ -309,7 +309,7 @@ function CustomerOnboarding() {
   ];
 
   const complete = () => {
-    const id = nextId("CUS-", customers);
+    const id = nextId("Br", customers);
     saveCustomer({
       id,
       name: f.name.trim(),

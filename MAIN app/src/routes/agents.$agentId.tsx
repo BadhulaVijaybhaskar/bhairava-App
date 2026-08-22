@@ -68,6 +68,7 @@ function AgentDetail() {
           </span>
         }
         facts={[
+          { label: "Agent ID", value: <span className="numeric">{agent.id}</span> },
           { label: "Status", value: <Chip>{agent.status}</Chip> },
           { label: "Region", value: agent.region },
           { label: "Projects", value: String(agent.projects.length) },

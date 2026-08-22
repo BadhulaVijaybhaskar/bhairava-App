@@ -35,6 +35,7 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { notifications } from "@/lib/mock-data";
+import { getSession, signOut } from "@/lib/auth";
 import { BrandLogo } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
@@ -188,10 +189,21 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function UserCard() {
+  const session = getSession();
   return (
     <div className="mt-6 rounded-xl bg-surface-c px-3 py-3">
-      <p className="text-xs font-medium">Vijay Bhaskar</p>
-      <p className="text-[11px] text-muted-foreground">Founder · Astranova</p>
+      <p className="text-xs font-medium">{session?.name ?? "Vijay Bhaskar"}</p>
+      <p className="text-[11px] text-muted-foreground">{session?.email ?? "admin@bhairava.com"}</p>
+      <button
+        type="button"
+        onClick={() => {
+          signOut();
+          window.location.assign("/login");
+        }}
+        className="mt-2 text-[11px] font-medium text-primary"
+      >
+        Sign out
+      </button>
     </div>
   );
 }

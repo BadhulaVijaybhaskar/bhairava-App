@@ -154,6 +154,7 @@ function CustomerDetail() {
           </>
         }
         facts={[
+          { label: "Cust ID", value: <span className="numeric">{customer.id}</span> },
           { label: "Stage", value: <Chip>{customer.stage}</Chip> },
           { label: "Agent", value: agent?.name ?? "—" },
           { label: "Source", value: customer.source },

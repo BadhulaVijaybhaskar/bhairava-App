@@ -44,7 +44,7 @@ function CustomersIndex() {
       if (active !== "All" && c.stage !== active) return false;
       if (
         query &&
-        !`${c.name} ${c.email} ${c.phone} ${c.city} ${c.source}`
+        !`${c.id} ${c.name} ${c.email} ${c.phone} ${c.city} ${c.source}`
           .toLowerCase()
           .includes(query.toLowerCase())
       )
@@ -86,6 +86,11 @@ function CustomersIndex() {
         linkTo="/customers/$customerId"
         params={(c) => ({ customerId: c.id })}
         columns={[
+          {
+            key: "id",
+            header: "Cust ID",
+            cell: (c) => <span className="numeric text-xs font-medium">{c.id}</span>,
+          },
           {
             key: "name",
             header: "Customer",

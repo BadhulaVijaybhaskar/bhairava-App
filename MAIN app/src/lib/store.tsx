@@ -29,7 +29,7 @@ import {
   type SiteVisit,
 } from "@/lib/mock-data";
 
-const KEY = "bhairava.admin.v2";
+const KEY = "bhairava.admin.v3";
 
 interface Persisted {
   projects?: Project[];
@@ -317,11 +317,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       nextId: (prefix, list) => {
         let max = 0;
-        let pad = 2;
+        let pad = prefix === "Br" ? 6 : prefix === "brag" ? 4 : 2;
         for (const x of list) {
+          if (!x.id.startsWith(prefix)) continue;
           const m = /(\d+)$/.exec(x.id);
           if (!m?.[1]) continue;
-          pad = m[1].length;
+          pad = Math.max(pad, m[1].length);
           max = Math.max(max, Number(m[1]));
         }
         return `${prefix}${String(max + 1).padStart(pad, "0")}`;

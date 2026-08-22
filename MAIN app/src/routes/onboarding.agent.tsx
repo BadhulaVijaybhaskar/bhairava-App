@@ -167,7 +167,7 @@ function AgentOnboarding() {
   ];
 
   const complete = () => {
-    const id = nextId("AGT-", agents);
+    const id = nextId("brag", agents);
     saveAgent({
       id,
       name: f.name.trim(),
