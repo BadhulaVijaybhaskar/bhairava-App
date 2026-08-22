@@ -577,9 +577,8 @@
   }
 }
 
-/* More sheet: only `.mobile-more-scroll` moves. The sheet sits above the
-   fixed tab bar (not the physical viewport bottom) so Administration can
-   rest fully in view. Extra end space clears the fixed + button. */
+/* Compact More launcher. Only `.mobile-more-scroll` moves. The sheet sits
+   above the tab bar so Administration can rest fully in view. */
 .more-menu-open,
 .more-menu-open body {
   overflow: hidden !important;
@@ -589,6 +588,10 @@
 .more-menu-open .app-shell-main {
   overflow: hidden !important;
   overscroll-behavior: none;
+}
+
+.more-menu-open .mobile-fab {
+  display: none !important;
 }
 
 .mobile-more-overlay {
@@ -603,17 +606,56 @@
   position: absolute;
   left: 0;
   right: 0;
-  /* Definite height: top + bottom. Do not size against the full viewport
-     while the tab bar occupies the bottom. */
-  top: max(2.75rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));
+  top: max(2.5rem, calc(env(safe-area-inset-top, 0px) + 0.35rem));
   bottom: var(--mobile-nav-offset);
   display: flex;
+  max-height: calc(100dvh - var(--mobile-nav-offset));
   flex-direction: column;
   overflow: hidden;
   overscroll-behavior: none;
-  border-radius: 1.5rem 1.5rem 0 0;
-  background-color: var(--surface-low);
+  border-radius: 1.25rem 1.25rem 0 0;
+  background-color: var(--surface-lowest);
   box-shadow: var(--shadow-float);
+}
+
+.mobile-more-header {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  min-height: 3.75rem;
+  padding: 0.4rem 1rem 0.45rem;
+}
+
+.mobile-more-handle {
+  margin: 0 auto 0.4rem;
+  height: 0.2rem;
+  width: 2.25rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--outline-variant) 55%, transparent);
+}
+
+.mobile-more-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-more-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mobile-more-close {
+  display: grid;
+  height: 2rem;
+  width: 2rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-c);
 }
 
 .mobile-more-scroll {
@@ -625,18 +667,238 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   scroll-snap-type: none;
-  padding: 0.25rem 1.25rem 0;
+  padding: 0 0.85rem 0;
 }
 
-.mobile-more-scroll > * + *:not(.mobile-more-scroll-end) {
+.mobile-more-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobile-more-search {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 1px solid color-mix(in oklab, var(--outline-variant) 40%, transparent);
+  border-radius: 0.7rem;
+  background: var(--surface-low);
+}
+
+.mobile-more-search input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.mobile-more-search input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.mobile-more-signout {
+  display: inline-flex;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.7rem;
+  border: 1px solid color-mix(in oklab, var(--outline-variant) 40%, transparent);
+  border-radius: 0.7rem;
+  background: var(--surface-low);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mobile-more-kicker {
+  margin: 0.85rem 0 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mobile-more-quick-wrap {
+  min-width: 0;
+}
+
+.mobile-more-quick {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  scrollbar-width: none;
+}
+
+.mobile-more-quick::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-more-quick-tile {
+  display: flex;
+  width: 4.65rem;
+  min-height: 4.15rem;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.3rem;
+  border: 1px solid color-mix(in oklab, var(--outline-variant) 38%, transparent);
+  border-radius: 0.8rem;
+  background: var(--surface-lowest);
+  color: var(--foreground);
+  text-align: center;
+}
+
+.mobile-more-quick-tile span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mobile-more-quick-tile svg,
+.mobile-more-tile svg {
+  color: var(--primary);
+}
+
+.mobile-more-quick-tile.is-active,
+.mobile-more-tile.is-active {
+  background: color-mix(in oklab, var(--primary) 10%, var(--surface-lowest));
+  border-color: color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+.more-section-pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.mobile-more-section {
+  min-width: 0;
+  padding: 0.55rem 0.6rem 0.65rem;
+  border: 1px solid color-mix(in oklab, var(--outline-variant) 36%, transparent);
+  border-radius: 0.85rem;
+  background: var(--surface-lowest);
+}
+
+.mobile-more-section-head {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+  color: var(--foreground);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mobile-more-section-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 180ms ease;
+}
+
+.mobile-more-section-body.is-open {
+  grid-template-rows: 1fr;
+}
+
+.mobile-more-section-body > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mobile-more-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.mobile-more-grid[data-count="1"],
+.mobile-more-grid[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mobile-more-tile {
+  display: flex;
+  min-height: 4.25rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.55rem 0.4rem;
+  border: 1px solid color-mix(in oklab, var(--outline-variant) 32%, transparent);
+  border-radius: 0.75rem;
+  background: var(--surface-low);
+  color: var(--foreground);
+  text-align: center;
+}
+
+.mobile-more-tile span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mobile-more-empty {
   margin-top: 1.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  text-align: center;
 }
 
-/* Real spacer (not only padding-bottom) so iOS includes the clearance in
-   scrollHeight. 32px breathing room + room to clear the 56px + button. */
 .mobile-more-scroll-end {
   flex-shrink: 0;
-  height: calc(2rem + 4.5rem);
-  margin-top: 0.5rem;
+  height: 1.5rem;
   pointer-events: none;
+}
+
+@media (min-width: 430px) {
+  .mobile-more-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mobile-more-grid[data-count="5"] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .mobile-more-grid[data-count="1"],
+  .mobile-more-grid[data-count="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 480px) {
+  .more-section-pairs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem 0.65rem;
+  }
+
+  .mobile-more-section[data-span="true"] {
+    grid-column: 1 / -1;
+  }
+
+  .mobile-more-section[data-span="false"] .mobile-more-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

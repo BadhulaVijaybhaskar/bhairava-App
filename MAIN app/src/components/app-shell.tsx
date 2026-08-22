@@ -31,9 +31,10 @@ import {
   Menu,
   X,
   LogOut,
+  ChevronDown,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { notifications } from "@/lib/mock-data";
 import { getSession, signOut } from "@/lib/auth";
@@ -120,6 +121,19 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
 ];
+
+const quickActions: NavItem[] = [
+  { to: "/onboarding/project", label: "New project", icon: FolderPlus },
+  { to: "/onboarding/plot", label: "New plot", icon: Grid3x3 },
+  { to: "/onboarding/customer", label: "New customer", icon: UserPlus },
+  { to: "/onboarding/agent", label: "New agent", icon: BadgePlus },
+  { to: "/onboarding/visit", label: "Site visit", icon: CalendarClock },
+  { to: "/onboarding/reservation", label: "Reservation", icon: Clock },
+  { to: "/onboarding/booking", label: "Booking", icon: Receipt },
+];
+
+const moreSections = navGroups.filter((group) => group.label !== "Onboarding");
+const pairedSection = new Set(["Overview", "Inventory", "Finance", "Reports"]);
 
 const tabItems: NavItem[] = [
   { to: "/", label: "Home", icon: LayoutDashboard },
@@ -238,16 +252,28 @@ function Sidebar() {
   );
 }
 
+function matchesQuery(label: string, query: string) {
+  return !query || label.toLowerCase().includes(query);
+}
+
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mounted, setMounted] = useState(false);
+  const [query, setQuery] = useState("");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setQuery("");
+      setCollapsed({});
+      return;
+    }
     const html = document.documentElement;
     const main = document.querySelector(".app-shell-main");
     const prevHtml = html.style.overflow;
@@ -263,7 +289,11 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
       if (target instanceof Element && target.closest(".mobile-more-scroll")) return;
       event.preventDefault();
     };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCloseRef.current();
+    };
     document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("keydown", onKey);
 
     return () => {
       html.style.overflow = prevHtml;
@@ -271,8 +301,26 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
       html.classList.remove("more-menu-open");
       if (main instanceof HTMLElement) main.style.overflow = prevMain;
       document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleQuick = useMemo(
+    () => quickActions.filter((item) => matchesQuery(item.label, normalizedQuery)),
+    [normalizedQuery],
+  );
+  const visibleSections = useMemo(
+    () =>
+      moreSections
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => matchesQuery(item.label, normalizedQuery)),
+        }))
+        .filter((group) => group.items.length > 0),
+    [normalizedQuery],
+  );
+  const hasResults = visibleQuick.length > 0 || visibleSections.length > 0;
 
   if (!open || !mounted) return null;
 
@@ -285,61 +333,126 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
         className="absolute inset-0 bg-foreground/35 backdrop-blur-[2px]"
       />
       <div className="mobile-more-sheet">
-        <div className="shrink-0 px-5 pt-3 pb-3">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-surface-c" />
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-            <BrandMark />
+        <header className="mobile-more-header">
+          <div className="mobile-more-handle" aria-hidden="true" />
+          <div className="mobile-more-brand-row">
+            <Link to="/" onClick={onClose} className="mobile-more-brand">
+              <BrandLogo size={32} />
+              <span className="min-w-0 leading-tight">
+                <span className="block truncate font-display text-[15px] font-semibold tracking-tight">
+                  Bhairava
+                </span>
+                <span className="block truncate text-[10px] tracking-wide text-muted-foreground">
+                  Land Sales OS
+                </span>
+              </span>
+            </Link>
             <button
               type="button"
               onClick={onClose}
               aria-label="Close menu"
-              className="shrink-0 rounded-full bg-surface-c p-2.5"
+              className="mobile-more-close"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <SignOutButton className="mt-3 w-full" />
-        </div>
+        </header>
 
         <div className="mobile-more-scroll">
-          {navGroups.map((group) => (
-            <div key={group.label} className="space-y-2">
-              <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-                {group.label}
-              </p>
-              <div className="grid grid-cols-4 gap-2">
-                {group.items.map((item) => {
+          <div className="mobile-more-toolbar">
+            <label className="mobile-more-search">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search menu..."
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </label>
+            <button type="button" onClick={handleSignOut} className="mobile-more-signout">
+              <LogOut className="h-3.5 w-3.5" strokeWidth={2.1} />
+              Sign out
+            </button>
+          </div>
+
+          {visibleQuick.length > 0 ? (
+            <section className="mobile-more-quick-wrap">
+              <p className="mobile-more-kicker">Quick actions</p>
+              <div className="mobile-more-quick">
+                {visibleQuick.map((item) => {
                   const active = isActive(pathname, item.to);
                   return (
                     <Link
                       key={item.to}
                       to={item.to}
                       onClick={onClose}
-                      className={cn(
-                        "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl px-1 py-2.5 text-center transition-colors",
-                        active
-                          ? "bg-surface-lowest shadow-ambient"
-                          : "bg-surface-c/60 active:bg-surface-c",
-                      )}
+                      className={cn("mobile-more-quick-tile", active && "is-active")}
                     >
-                      <item.icon
-                        className={cn("h-5 w-5", active ? "text-primary" : "text-muted-foreground")}
-                        strokeWidth={active ? 2.1 : 1.8}
-                      />
-                      <span
-                        className={cn(
-                          "line-clamp-2 text-[10px] leading-tight font-medium",
-                          active ? "text-foreground" : "text-muted-foreground",
-                        )}
-                      >
-                        {item.label}
-                      </span>
+                      <item.icon className="h-5 w-5" strokeWidth={active ? 2.1 : 1.8} />
+                      <span>{item.label}</span>
                     </Link>
                   );
                 })}
               </div>
+            </section>
+          ) : null}
+
+          {hasResults ? (
+            <div className="more-section-pairs">
+              {visibleSections.map((group) => {
+                const expanded = Boolean(normalizedQuery) || !collapsed[group.label];
+                return (
+                  <section
+                    key={group.label}
+                    className="mobile-more-section"
+                    data-span={pairedSection.has(group.label) ? "false" : "true"}
+                  >
+                    <button
+                      type="button"
+                      className="mobile-more-section-head"
+                      aria-expanded={expanded}
+                      onClick={() =>
+                        setCollapsed((prev) => ({ ...prev, [group.label]: !prev[group.label] }))
+                      }
+                    >
+                      <span>{group.label}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+                          !expanded && "-rotate-90",
+                        )}
+                      />
+                    </button>
+                    <div className={cn("mobile-more-section-body", expanded && "is-open")}>
+                      <div>
+                        <div className="mobile-more-grid" data-count={group.items.length}>
+                          {group.items.map((item) => {
+                            const active = isActive(pathname, item.to);
+                            return (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                onClick={onClose}
+                                className={cn("mobile-more-tile", active && "is-active")}
+                              >
+                                <item.icon className="h-5 w-5" strokeWidth={active ? 2.1 : 1.75} />
+                                <span>{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            <p className="mobile-more-empty">No matching actions</p>
+          )}
           <div className="mobile-more-scroll-end" aria-hidden="true" />
         </div>
       </div>
@@ -562,7 +675,7 @@ export function AppShell({
           {children}
         </main>
       </div>
-      {hideFab ? null : <MobileFab />}
+      {hideFab || open ? null : <MobileFab />}
       <BottomTabs onMore={() => setOpen((v) => !v)} menuOpen={open} />
     </div>
   );
