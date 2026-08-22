@@ -206,7 +206,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 function handleSignOut() {
   signOut();
-  window.location.replace("/login");
+  // Give the cookie / localStorage writes a tick before navigating.
+  // A same-tick replace can drop the storage clear on mobile WebKit.
+  window.setTimeout(() => {
+    window.location.replace("/login");
+  }, 50);
 }
 
 function SignOutButton({ className }: { className?: string }) {

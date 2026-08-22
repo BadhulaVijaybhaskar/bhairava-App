@@ -1,15 +1,23 @@
 const SESSION_KEY = "bhairava.session.v1";
 const AUTH_COOKIE = "bhairava.auth";
 
-function writeAuthCookie() {
+function writeAuthCookie(value: "1" | "0") {
   if (typeof document === "undefined") return;
-  document.cookie = `${AUTH_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`;
+  document.cookie = `${AUTH_COOKIE}=${value}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`;
 }
 
-function clearAuthCookie() {
-  if (typeof document === "undefined") return;
-  document.cookie = `${AUTH_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`;
-  document.cookie = `${AUTH_COOKIE}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+function hasSignedOutCookie() {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split(";").some((part) => part.trim() === `${AUTH_COOKIE}=0`);
+}
+
+function clearSessionStorage() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore quota / private mode */
+  }
 }
 
 export const DEMO_ADMIN = {
@@ -39,10 +47,14 @@ function readStorage(): Session | null {
 }
 
 export function getSession(): Session | null {
-  return readStorage();
+  return isAuthenticated() ? readStorage() : null;
 }
 
 export function isAuthenticated(): boolean {
+  if (hasSignedOutCookie()) {
+    clearSessionStorage();
+    return false;
+  }
   return readStorage() !== null;
 }
 
@@ -55,12 +67,11 @@ export function signIn(email: string, password: string): Session | null {
     role: DEMO_ADMIN.role,
   };
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  writeAuthCookie();
+  writeAuthCookie("1");
   return session;
 }
 
 export function signOut() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(SESSION_KEY);
-  clearAuthCookie();
+  writeAuthCookie("0");
+  clearSessionStorage();
 }
