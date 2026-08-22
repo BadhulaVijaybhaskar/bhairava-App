@@ -3,6 +3,7 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  redirect,
   useRouter,
   HeadContent,
   Scripts,
@@ -12,6 +13,7 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { AuthGate } from "@/components/auth-gate";
+import { isAuthenticated } from "@/lib/auth";
 import { FabVisibilityProvider } from "@/lib/fab-visibility";
 import { DataProvider } from "@/lib/store";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -77,6 +79,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: ({ location }) => {
+    if (location.pathname === "/login") return;
+    // Server has no localStorage, so never SSR a protected page. That was
+    // painting the dashboard for a moment before the client sent users to login.
+    if (typeof window === "undefined" || !isAuthenticated()) {
+      throw redirect({ to: "/login" });
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

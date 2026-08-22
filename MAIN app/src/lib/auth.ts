@@ -1,4 +1,21 @@
 const SESSION_KEY = "bhairava.session.v1";
+export const AUTH_COOKIE = "bhairava.auth";
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+
+function writeAuthCookie() {
+  if (typeof document === "undefined") return;
+  document.cookie = `${AUTH_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=${AUTH_COOKIE_MAX_AGE}`;
+}
+
+function clearAuthCookie() {
+  if (typeof document === "undefined") return;
+  document.cookie = `${AUTH_COOKIE}=; Path=/; Max-Age=0`;
+}
+
+function hasAuthCookie() {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split(";").some((part) => part.trim() === `${AUTH_COOKIE}=1`);
+}
 
 export const DEMO_ADMIN = {
   email: "admin@bhairava.com",
@@ -31,7 +48,12 @@ export function getSession(): Session | null {
 }
 
 export function isAuthenticated(): boolean {
-  return readStorage() !== null;
+  const stored = readStorage();
+  if (stored) {
+    if (!hasAuthCookie()) writeAuthCookie();
+    return true;
+  }
+  return hasAuthCookie();
 }
 
 export function signIn(email: string, password: string): Session | null {
@@ -43,10 +65,12 @@ export function signIn(email: string, password: string): Session | null {
     role: DEMO_ADMIN.role,
   };
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  writeAuthCookie();
   return session;
 }
 
 export function signOut() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(SESSION_KEY);
+  clearAuthCookie();
 }

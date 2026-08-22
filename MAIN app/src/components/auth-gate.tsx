@@ -20,15 +20,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
   }, [pathname, navigate]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
-        <BrandLogo size={48} className="rounded-2xl" />
-      </div>
-    );
+  if (pathname === "/login") {
+    return children;
   }
 
-  if (!authed && pathname !== "/login") {
+  if (!ready || !authed) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background">
         <BrandLogo size={48} className="rounded-2xl" />
