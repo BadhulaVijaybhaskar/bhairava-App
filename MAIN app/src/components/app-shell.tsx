@@ -240,31 +240,57 @@ function Sidebar() {
 
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
+    const html = document.documentElement;
+    const main = document.querySelector(".app-shell-main");
+    const prevHtml = html.style.overflow;
+    const prevBody = document.body.style.overflow;
+    const prevMain = main instanceof HTMLElement ? main.style.overflow : "";
+    html.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    html.classList.add("more-menu-open");
+    if (main instanceof HTMLElement) main.style.overflow = "hidden";
+
+    const onTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest(".mobile-more-scroll")) return;
+      event.preventDefault();
+    };
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+
     return () => {
-      document.body.style.overflow = prev;
+      html.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+      html.classList.remove("more-menu-open");
+      if (main instanceof HTMLElement) main.style.overflow = prevMain;
+      document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+  return createPortal(
+    <div className="mobile-more-overlay lg:hidden">
       <button
+        type="button"
         aria-label="Close menu"
         onClick={onClose}
         className="absolute inset-0 bg-foreground/35 backdrop-blur-[2px]"
       />
-      <div className="absolute inset-x-0 bottom-0 flex max-h-[86svh] flex-col rounded-t-3xl bg-surface-low shadow-float">
+      <div className="mobile-more-sheet">
         <div className="shrink-0 px-5 pt-3 pb-3">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-surface-c" />
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <BrandMark />
             <button
+              type="button"
               onClick={onClose}
               aria-label="Close menu"
               className="shrink-0 rounded-full bg-surface-c p-2.5"
@@ -275,10 +301,10 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           <SignOutButton className="mt-3 w-full" />
         </div>
 
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-1 pb-3">
+        <div className="mobile-more-scroll">
           {navGroups.map((group) => (
-            <div key={group.label}>
-              <p className="pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+            <div key={group.label} className="space-y-2">
+              <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                 {group.label}
               </p>
               <div className="grid grid-cols-4 gap-2">
@@ -314,9 +340,11 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
               </div>
             </div>
           ))}
+          <div className="mobile-more-scroll-end" aria-hidden="true" />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

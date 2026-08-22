@@ -564,3 +564,67 @@
     display: none;
   }
 }
+
+/* More sheet: only `.mobile-more-scroll` moves. The sheet sits above the
+   fixed tab bar (not the physical viewport bottom) so Administration can
+   rest fully in view. Extra end space clears the fixed + button. */
+.more-menu-open,
+.more-menu-open body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.more-menu-open .app-shell-main {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.mobile-more-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.mobile-more-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Definite height: top + bottom. Do not size against the full viewport
+     while the tab bar occupies the bottom. */
+  top: max(2.75rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));
+  bottom: var(--mobile-nav-offset);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: none;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background-color: var(--surface-low);
+  box-shadow: var(--shadow-float);
+}
+
+.mobile-more-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scroll-snap-type: none;
+  padding: 0.25rem 1.25rem 0;
+}
+
+.mobile-more-scroll > * + *:not(.mobile-more-scroll-end) {
+  margin-top: 1.25rem;
+}
+
+/* Real spacer (not only padding-bottom) so iOS includes the clearance in
+   scrollHeight. 32px breathing room + room to clear the 56px + button. */
+.mobile-more-scroll-end {
+  flex-shrink: 0;
+  height: calc(2rem + 4.5rem);
+  margin-top: 0.5rem;
+  pointer-events: none;
+}
