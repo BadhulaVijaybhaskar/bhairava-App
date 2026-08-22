@@ -17,7 +17,7 @@ log "Installing root workspace dependencies (concurrently)..."
 cd "${REPO_ROOT}"
 npm install --no-audit --no-fund
 
-for app in bhairava-app bhairava-agent bhairava-customer; do
+for app in archive/bhairava-app archive/bhairava-agent archive/bhairava-customer; do
   log "Installing dependencies for ${app}..."
   npm ci --no-audit --no-fund --prefix "${REPO_ROOT}/${app}"
 done
@@ -31,7 +31,7 @@ log "Syncing database schema to prisma/schema.prisma..."
 # with a read-only additive diff (empty->schema on a fresh DB, delta only afterwards),
 # which is fully idempotent and non-destructive.
 DRIFT_SQL="$(mktemp)"
-( cd "${REPO_ROOT}/bhairava-app" \
+( cd "${REPO_ROOT}/archive/bhairava-app" \
   && npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script 2>/dev/null ) \
   | grep -v '^Loaded Prisma config' > "${DRIFT_SQL}"
 if grep -qiE 'CREATE|ALTER' "${DRIFT_SQL}"; then
@@ -44,6 +44,6 @@ fi
 rm -f "${DRIFT_SQL}"
 
 log "Seeding database (idempotent)..."
-npm run db:seed --prefix "${REPO_ROOT}/bhairava-app"
+npm run db:seed --prefix "${REPO_ROOT}/archive/bhairava-app"
 
 log "Install complete."

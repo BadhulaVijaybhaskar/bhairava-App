@@ -85,7 +85,7 @@ ENV
 }
 
 write_all_envs() {
-  write_env "bhairava-app" 3000
-  write_env "bhairava-agent" 3001
-  write_env "bhairava-customer" 3002
+  write_env "archive/bhairava-app" 3000
+  write_env "archive/bhairava-agent" 3001
+  write_env "archive/bhairava-customer" 3002
 }

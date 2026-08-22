@@ -1,8 +1,8 @@
 const path = require("path");
 const fs = require("fs");
 
-const adminRoot = path.join(__dirname, "..", "bhairava-app");
-const targets = ["bhairava-agent", "bhairava-customer"];
+const adminRoot = path.join(__dirname, "..", "archive", "bhairava-app");
+const targets = ["archive/bhairava-agent", "archive/bhairava-customer"];
 
 const srcPrisma = path.join(adminRoot, "node_modules", ".prisma");
 if (!fs.existsSync(path.join(srcPrisma, "client"))) {
