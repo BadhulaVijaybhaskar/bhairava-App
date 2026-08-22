@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, FilterBar, Metric, NewRecordButton, PageHeader } from "@/components/kit";
+import { BookingCard } from "@/components/booking-card";
 import { byId, formatINR } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 
@@ -51,7 +52,7 @@ function BookingsIndex() {
         return true;
       })
       .sort((a, b) => (a.date < b.date ? 1 : -1));
-  }, [active, query, bookings, customers, plots, projects, agents]);
+  }, [bookings, customers, plots, projects, agents, active, query]);
 
   const totalAmount = bookings.reduce((a, b) => a + b.amount, 0);
   const totalPaid = bookings.reduce((a, b) => a + b.paid, 0);
@@ -99,6 +100,7 @@ function BookingsIndex() {
         rows={rows}
         linkTo="/bookings/$bookingId"
         params={(r) => ({ bookingId: r.id })}
+        renderMobileCard={(r) => <BookingCard booking={r} />}
         columns={[
           {
             key: "id",

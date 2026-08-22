@@ -19,6 +19,7 @@ import {
   plots as seedPlots,
   projects as seedProjects,
   reservations as seedReservations,
+  siteVisits as seedSiteVisits,
   type Agent,
   type Booking,
   type Customer,
@@ -58,9 +59,14 @@ interface Ctx extends Data {
   saveAgent: (a: Agent) => void;
   removeAgent: (id: string) => void;
   savePlot: (p: Plot) => void;
+  removePlot: (id: string) => void;
   saveBooking: (b: Booking) => void;
+  removeBooking: (id: string) => void;
   saveReservation: (r: Reservation) => void;
+  removeReservation: (id: string) => void;
   saveVisit: (v: SiteVisit) => void;
+  saveSiteVisit: (v: SiteVisit) => void;
+  removeSiteVisit: (id: string) => void;
   reset: () => void;
   nextId: (prefix: string, list: { id: string }[]) => string;
 }
@@ -80,7 +86,7 @@ const seed = (): Data => ({
   plots: seedPlots,
   bookings: seedBookings,
   reservations: seedReservations,
-  siteVisits: [],
+  siteVisits: seedSiteVisits,
 });
 
 const DataContext = createContext<Ctx | null>(null);
@@ -227,7 +233,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       plots: mergeById(seedPlots, extraPlots),
       bookings: mergeById(seedBookings, extraBookings),
       reservations: mergeById(seedReservations, extraReservations),
-      siteVisits: extraVisits,
+      siteVisits: mergeById(seedSiteVisits, extraVisits),
       saveProject: (p) => upsertCore("projects", p),
       removeProject: (id) => removeCore("projects", id),
       saveCustomer: (c) => upsertCore("customers", c),
@@ -241,9 +247,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return next;
         });
       },
+      removePlot: (id) => {
+        setExtraPlots((prev) => {
+          const next = prev.filter((x) => x.id !== id);
+          snapshot({ extraPlots: next });
+          return next;
+        });
+      },
       saveBooking: (b) => {
         setExtraBookings((prev) => {
           const next = upsertExtra(prev, b);
+          snapshot({ extraBookings: next });
+          return next;
+        });
+      },
+      removeBooking: (id) => {
+        setExtraBookings((prev) => {
+          const next = prev.filter((x) => x.id !== id);
           snapshot({ extraBookings: next });
           return next;
         });
@@ -255,9 +275,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return next;
         });
       },
+      removeReservation: (id) => {
+        setExtraReservations((prev) => {
+          const next = prev.filter((x) => x.id !== id);
+          snapshot({ extraReservations: next });
+          return next;
+        });
+      },
       saveVisit: (v) => {
         setExtraVisits((prev) => {
           const next = upsertExtra(prev, v);
+          snapshot({ extraVisits: next });
+          return next;
+        });
+      },
+      saveSiteVisit: (v) => {
+        setExtraVisits((prev) => {
+          const next = upsertExtra(prev, v);
+          snapshot({ extraVisits: next });
+          return next;
+        });
+      },
+      removeSiteVisit: (id) => {
+        setExtraVisits((prev) => {
+          const next = prev.filter((x) => x.id !== id);
           snapshot({ extraVisits: next });
           return next;
         });

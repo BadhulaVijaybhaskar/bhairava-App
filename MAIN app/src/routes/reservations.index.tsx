@@ -7,7 +7,7 @@ import { byId, formatINR, type Reservation } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/reservations")({
+export const Route = createFileRoute("/reservations/")({
   head: () => ({
     meta: [
       { title: "Reservations — Bhairava" },
@@ -50,7 +50,7 @@ function ReservationsPage() {
       }
       return true;
     });
-  }, [view, query, reservations, plots, customers]);
+  }, [reservations, plots, customers, view, query]);
 
   const boardStates: Reservation["state"][] = ["Active", "Expiring today", "Expired", "Converted"];
 

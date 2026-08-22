@@ -120,18 +120,7 @@ function PlotsIndexPage() {
     });
 
     return withMeta;
-  }, [
-    view,
-    projectFilter,
-    query,
-    sortKey,
-    sortDir,
-    priceOverrides,
-    plots,
-    projects,
-    customers,
-    agents,
-  ]);
+  }, [plots, projects, customers, agents, view, projectFilter, query, sortKey, sortDir, priceOverrides]);
 
   const toggleSort = (key: ColumnKey) => {
     if (sortKey === key) {

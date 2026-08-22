@@ -17,7 +17,7 @@ export const Route = createFileRoute("/settings/company")({
 });
 
 const inputCls =
-  "h-9 w-full rounded-lg bg-surface-low px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary";
+  "h-10 w-full rounded-lg bg-surface-low px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary";
 
 function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -31,12 +31,17 @@ function Field({ label, ...props }: { label: string } & React.InputHTMLAttribute
 function Toggle({ label, hint, defaultChecked }: { label: string; hint?: string; defaultChecked?: boolean }) {
   const [on, setOn] = useState(!!defaultChecked);
   return (
-    <div className="flex items-center justify-between rounded-lg bg-surface-low px-4 py-3">
-      <div>
+    // Two-column row: text wraps in the flexible column, switch keeps its intrinsic width.
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-lg bg-surface-low px-4 py-2.5">
+      <div className="min-w-0">
         <p className="text-sm font-medium">{label}</p>
-        {hint && <p className="pt-0.5 text-xs text-muted-foreground">{hint}</p>}
+        {hint && <p className="pt-0.5 text-xs leading-snug text-muted-foreground">{hint}</p>}
       </div>
       <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={label}
         onClick={() => setOn((v) => !v)}
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-primary" : "bg-surface-c"}`}
       >
@@ -84,7 +89,7 @@ function CompanySettings() {
 
           <Panel tonal>
             <SectionTitle>Notifications</SectionTitle>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Toggle label="New booking alerts" hint="Notify sales heads when a booking is confirmed" defaultChecked />
               <Toggle label="Reservation expiry reminders" hint="Alert agents a day before a reservation lapses" defaultChecked />
               <Toggle label="Payment failure alerts" hint="Notify finance team on failed transactions" defaultChecked />

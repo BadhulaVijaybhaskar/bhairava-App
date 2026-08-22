@@ -14,8 +14,6 @@ export default defineConfig({
   },
   // Allow Cloudflare quick-tunnel hosts so the dashboard can be opened on mobile.
   vite: {
-    server: {
-      allowedHosts: [".trycloudflare.com", "localhost", "127.0.0.1"],
-    },
+    server: { allowedHosts: true },
   },
 });

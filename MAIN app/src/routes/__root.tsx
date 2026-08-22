@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { DataProvider } from "@/lib/store";
@@ -144,6 +145,7 @@ function RootComponent() {
       <DataProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <Toaster position="top-center" richColors />
       </DataProvider>
     </QueryClientProvider>
   );

@@ -106,12 +106,14 @@ export function SelectInput<T extends string>({
   options,
   placeholder,
   invalid,
+  size = "md",
 }: {
   value: T | "";
   onChange: (v: T) => void;
   options: readonly T[] | { value: T; label: string }[];
   placeholder?: string;
   invalid?: boolean;
+  size?: "md" | "lg";
 }) {
   const opts = options.map((o) => (typeof o === "string" ? { value: o, label: o } : o));
   return (
@@ -124,6 +126,7 @@ export function SelectInput<T extends string>({
         className={cn(
           fieldBase,
           "appearance-none pr-9",
+          size === "lg" && "h-12",
           invalid && "ring-1 ring-destructive",
           !value && "text-muted-foreground",
         )}

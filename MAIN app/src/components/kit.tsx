@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, SlidersHorizontal, Search, Download, Plus } from "lucide-react";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { ScrollTabs } from "@/components/scroll-tabs";
 
 export function PageHeader({
   eyebrow,
@@ -15,27 +16,28 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="rise py-6 sm:py-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="rise py-3 sm:py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:items-end sm:gap-4">
         <div className="min-w-0 max-w-2xl">
+          {/* Eyebrow + long description are desktop-only — mobile is an operational interface. */}
           {eyebrow && (
-            <p className="flex items-center gap-2 pb-2 text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+            <p className="hidden items-center gap-2 pb-2 text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase sm:flex">
               <span aria-hidden className="gradient-gold h-3 w-px rounded-full" />
               {eyebrow}
             </p>
           )}
-          <h1 className="font-display text-2xl font-semibold tracking-[-0.03em] text-balance sm:text-[32px] sm:leading-[1.15]">
+          <h1 className="font-display text-[22px] font-semibold tracking-[-0.03em] text-balance sm:text-[32px] sm:leading-[1.15]">
             {title}
           </h1>
           {description && (
-            <p className="max-w-prose pt-2 text-sm leading-relaxed text-muted-foreground text-pretty">
+            <p className="hidden max-w-prose pt-2 text-sm leading-relaxed text-muted-foreground text-pretty sm:block">
               {description}
             </p>
           )}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      <span aria-hidden className="hairline-gold mt-5 block h-px w-full opacity-70 sm:mt-6" />
+      <span aria-hidden className="hairline-gold mt-3 block h-px w-full opacity-70 sm:mt-6" />
     </div>
   );
 }
@@ -86,7 +88,7 @@ export function Metric({
   return (
     <div
       className={cn(
-        "panel lift relative overflow-hidden p-4 sm:p-5",
+        "panel lift relative overflow-hidden p-3.5 sm:p-5",
         accent ? "gradient-primary sheen text-primary-foreground shadow-float" : "sheen",
       )}
     >
@@ -228,15 +230,19 @@ export function FilterBar({
   return (
     <div className="flex flex-col gap-2.5 pb-4 md:flex-row md:flex-wrap md:items-center">
       {views && views.length > 0 && (
-        <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto rounded-xl px-1 py-1 md:mx-0 md:flex-wrap md:overflow-visible md:bg-surface-low md:px-1">
+        <ScrollTabs
+          activeKey={active}
+          className="-mx-1 rounded-xl px-1 py-1 md:mx-0 md:flex-wrap md:overflow-x-visible md:bg-surface-low md:px-1"
+        >
           {views.map((v) => (
             <button
               key={v}
               type="button"
+              data-active={v === active ? "true" : undefined}
               aria-pressed={v === active}
               onClick={() => onSelect?.(v)}
               className={cn(
-                "shrink-0 rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition-all duration-200 md:py-1.5",
+                "flex-none rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition-all duration-200 md:py-1.5",
                 v === active
                   ? "bg-surface-lowest text-foreground shadow-ambient"
                   : "text-muted-foreground hover:bg-surface-c hover:text-foreground",
@@ -245,7 +251,7 @@ export function FilterBar({
               {v}
             </button>
           ))}
-        </div>
+        </ScrollTabs>
       )}
       <div className="hidden flex-1 md:block" />
       <div className="flex items-center gap-2">
@@ -283,6 +289,7 @@ export function DataTable<T extends { id: string }>({
   columns,
   linkTo,
   params,
+  renderMobileCard,
 }: {
   rows: T[];
   columns: {
@@ -294,6 +301,8 @@ export function DataTable<T extends { id: string }>({
   }[];
   linkTo?: string;
   params?: (row: T) => Record<string, string>;
+  /** When provided, the mobile (< md) view renders this instead of the generic field grid. */
+  renderMobileCard?: (row: T) => ReactNode;
 }) {
   const [first, ...rest] = columns;
 
@@ -301,11 +310,10 @@ export function DataTable<T extends { id: string }>({
     <>
       {/* Mobile: stacked record cards */}
       <div className="space-y-2 md:hidden">
-        {rows.map((row) => (
-          <div
-            key={row.id}
-            className="panel p-4 transition-transform duration-200 active:scale-[0.995]"
-          >
+        {renderMobileCard
+          ? rows.map((row) => <Fragment key={row.id}>{renderMobileCard(row)}</Fragment>)
+          : rows.map((row) => (
+          <div key={row.id} className="panel p-3.5 transition-transform duration-200 active:scale-[0.995]">
             {first && (
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0 text-sm font-medium">{first.cell(row)}</div>
@@ -322,7 +330,7 @@ export function DataTable<T extends { id: string }>({
               </div>
             )}
             {rest.length > 0 && (
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
+              <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2">
                 {rest.map((c) => (
                   <div key={c.key} className="min-w-0">
                     <dt className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
@@ -533,7 +541,7 @@ export function NewRecordButton({
     <Link
       to={to as never}
       search={search as never}
-      className="gradient-primary inline-flex min-h-10 items-center gap-1.5 rounded-xl px-4 text-sm font-semibold text-primary-foreground shadow-ambient transition-all duration-200 hover:shadow-glow active:scale-[0.97]"
+      className="gradient-primary inline-flex min-h-11 items-center gap-1.5 rounded-xl px-4 text-sm font-semibold text-primary-foreground shadow-ambient transition-all duration-200 hover:shadow-glow active:scale-[0.97]"
     >
       <Plus className="h-4 w-4" />
       {children}

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Phone, Mail, MapPin, ArrowLeft, Receipt, CreditCard } from "lucide-react";
+import { Phone, Mail, MapPin, ArrowLeft, Receipt, CreditCard, CalendarPlus } from "lucide-react";
 import {
   PageHeader,
   Panel,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 import { CustomerEditor } from "@/components/record-editors";
+import { BookingCard } from "@/components/booking-card";
 
 export const Route = createFileRoute("/customers/$customerId")({
   head: ({ params }) => ({
@@ -51,12 +52,17 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+const visitTodayIso = new Date().toISOString().slice(0, 10);
+function fmtVisitDate(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+}
+
 const tabs = ["Plots", "Bookings", "Payments", "Documents"] as const;
 type Tab = (typeof tabs)[number];
 
 function CustomerDetail() {
   const { customerId } = Route.useParams();
-  const { customers: customerList, plots, bookings, agents } = useData();
+  const { customers: customerList, plots, bookings, agents, siteVisits, projects: projectList } = useData();
   const customer = byId(customerList, customerId);
   const [tab, setTab] = useState<Tab>("Plots");
 
@@ -82,6 +88,15 @@ function CustomerDetail() {
   const customerPayments = payments.filter((p) => p.customerId === customer.id);
   const customerDocs = documents.filter((d) => d.customerId === customer.id);
   const balance = customer.totalValue - customer.paid;
+
+  const upcomingVisit = siteVisits
+    .filter(
+      (v) =>
+        v.customerId === customer.id &&
+        v.date >= visitTodayIso &&
+        (v.status === "Scheduled" || v.status === "Confirmed" || v.status === "Rescheduled"),
+    )
+    .sort((a, b) => (a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)))[0];
 
   const timeline = [
     { time: customer.createdAt, title: "Added as lead", detail: `Source: ${customer.source}` },
@@ -127,7 +142,7 @@ function CustomerDetail() {
               search={{ customerId: customer.id }}
               className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-surface-c px-3.5 py-2 text-sm font-medium"
             >
-              Book visit
+              <CalendarPlus className="h-3.5 w-3.5" /> Book visit
             </Link>
             <Link
               to="/onboarding/booking"
@@ -149,6 +164,40 @@ function CustomerDetail() {
           { label: "Since", value: customer.createdAt },
         ]}
       />
+
+      {upcomingVisit && (
+        <Panel tonal className="mt-4 sm:mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+                Upcoming site visit
+              </p>
+              <p className="numeric pt-1 text-sm font-medium">
+                {fmtVisitDate(upcomingVisit.date)} · {upcomingVisit.time}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {byId(projectList, upcomingVisit.projectId)?.name ?? "—"} ·{" "}
+                {byId(agents, upcomingVisit.agentId)?.name ?? "—"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Chip>{upcomingVisit.status}</Chip>
+              <Link
+                to="/site-visits"
+                className="inline-flex min-h-10 items-center rounded-xl bg-surface-c px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-high"
+              >
+                View
+              </Link>
+              <a
+                href={`/site-visits/new?customerId=${customer.id}`}
+                className="inline-flex min-h-10 items-center rounded-xl bg-surface-c px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-high"
+              >
+                Reschedule
+              </a>
+            </div>
+          </div>
+        </Panel>
+      )}
 
       <div className="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-12">
         <div className="lg:col-span-8">
@@ -202,6 +251,7 @@ function CustomerDetail() {
           {tab === "Bookings" && (
             <DataTable<Booking>
               rows={customerBookings}
+              renderMobileCard={(b) => <BookingCard booking={b} />}
               columns={[
                 {
                   key: "id",

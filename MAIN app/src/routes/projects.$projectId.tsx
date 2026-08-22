@@ -12,6 +12,8 @@ import {
 import { ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Panel, RecordHeader, SectionTitle, Timeline } from "@/components/kit";
+import { ScrollTabs } from "@/components/scroll-tabs";
+import { BookingCard } from "@/components/booking-card";
 import { byId, documents, formatINR, projects, salesTrend } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 import { ProjectEditor } from "@/components/record-editors";
@@ -156,12 +158,13 @@ function ProjectRecord() {
         }
       />
 
-      <div className="mt-6 flex gap-1 rounded-xl bg-surface-low p-1">
+      <ScrollTabs activeKey={tab} className="mt-6 rounded-xl bg-surface-low p-1 lg:overflow-x-visible">
         {tabs.map((t) => (
           <button
             key={t}
+            data-active={tab === t ? "true" : undefined}
             onClick={() => setTab(t)}
-            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-none whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors lg:flex-1 ${
               tab === t
                 ? "bg-surface-lowest text-foreground shadow-ambient"
                 : "text-muted-foreground hover:bg-surface-c"
@@ -170,7 +173,7 @@ function ProjectRecord() {
             {t}
           </button>
         ))}
-      </div>
+      </ScrollTabs>
 
       <div className="pt-6">
         {tab === "Overview" && (
@@ -290,6 +293,7 @@ function ProjectRecord() {
             rows={projectBookings}
             linkTo="/bookings/$bookingId"
             params={(r) => ({ bookingId: r.id })}
+            renderMobileCard={(r) => <BookingCard booking={r} />}
             columns={[
               {
                 key: "id",

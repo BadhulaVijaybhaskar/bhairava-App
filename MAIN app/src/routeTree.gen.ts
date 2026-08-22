@@ -16,7 +16,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as RegistrationsRouteImport } from './routes/registrations'
 import { Route as ResaleRouteImport } from './routes/resale'
-import { Route as ReservationsRouteImport } from './routes/reservations'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as AgentsIndexRouteImport } from './routes/agents.index'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents.$agentId'
@@ -43,9 +42,12 @@ import { Route as ReportsAgentsRouteImport } from './routes/reports.agents'
 import { Route as ReportsCollectionsRouteImport } from './routes/reports.collections'
 import { Route as ReportsInventoryRouteImport } from './routes/reports.inventory'
 import { Route as ReportsSalesRouteImport } from './routes/reports.sales'
+import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
 import { Route as SettingsAuditRouteImport } from './routes/settings.audit'
 import { Route as SettingsCompanyRouteImport } from './routes/settings.company'
 import { Route as SettingsUsersRouteImport } from './routes/settings.users'
+import { Route as SiteVisitsIndexRouteImport } from './routes/site-visits.index'
+import { Route as SiteVisitsNewRouteImport } from './routes/site-visits.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -80,11 +82,6 @@ const RegistrationsRoute = RegistrationsRouteImport.update({
 const ResaleRoute = ResaleRouteImport.update({
   id: '/resale',
   path: '/resale',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReservationsRoute = ReservationsRouteImport.update({
-  id: '/reservations',
-  path: '/reservations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScheduleRoute = ScheduleRouteImport.update({
@@ -217,6 +214,11 @@ const ReportsSalesRoute = ReportsSalesRouteImport.update({
   path: '/reports/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReservationsIndexRoute = ReservationsIndexRouteImport.update({
+  id: '/reservations/',
+  path: '/reservations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsAuditRoute = SettingsAuditRouteImport.update({
   id: '/settings/audit',
   path: '/settings/audit',
@@ -232,6 +234,16 @@ const SettingsUsersRoute = SettingsUsersRouteImport.update({
   path: '/settings/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SiteVisitsIndexRoute = SiteVisitsIndexRouteImport.update({
+  id: '/site-visits/',
+  path: '/site-visits/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SiteVisitsNewRoute = SiteVisitsNewRouteImport.update({
+  id: '/site-visits/new',
+  path: '/site-visits/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -241,7 +253,6 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/registrations': typeof RegistrationsRoute
   '/resale': typeof ResaleRoute
-  '/reservations': typeof ReservationsRoute
   '/schedule': typeof ScheduleRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
@@ -265,12 +276,15 @@ export interface FileRoutesByFullPath {
   '/settings/audit': typeof SettingsAuditRoute
   '/settings/company': typeof SettingsCompanyRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents/': typeof AgentsIndexRoute
   '/bookings/': typeof BookingsIndexRoute
   '/customers/': typeof CustomersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/reservations/': typeof ReservationsIndexRoute
+  '/site-visits/': typeof SiteVisitsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -280,7 +294,6 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/registrations': typeof RegistrationsRoute
   '/resale': typeof ResaleRoute
-  '/reservations': typeof ReservationsRoute
   '/schedule': typeof ScheduleRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
@@ -304,12 +317,15 @@ export interface FileRoutesByTo {
   '/settings/audit': typeof SettingsAuditRoute
   '/settings/company': typeof SettingsCompanyRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents': typeof AgentsIndexRoute
   '/bookings': typeof BookingsIndexRoute
   '/customers': typeof CustomersIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/plots': typeof PlotsIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/reservations': typeof ReservationsIndexRoute
+  '/site-visits': typeof SiteVisitsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -320,7 +336,6 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/registrations': typeof RegistrationsRoute
   '/resale': typeof ResaleRoute
-  '/reservations': typeof ReservationsRoute
   '/schedule': typeof ScheduleRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
@@ -344,12 +359,15 @@ export interface FileRoutesById {
   '/settings/audit': typeof SettingsAuditRoute
   '/settings/company': typeof SettingsCompanyRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents/': typeof AgentsIndexRoute
   '/bookings/': typeof BookingsIndexRoute
   '/customers/': typeof CustomersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/reservations/': typeof ReservationsIndexRoute
+  '/site-visits/': typeof SiteVisitsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -361,7 +379,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/registrations'
     | '/resale'
-    | '/reservations'
     | '/schedule'
     | '/agents/$agentId'
     | '/bookings/$bookingId'
@@ -385,12 +402,15 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/company'
     | '/settings/users'
+    | '/site-visits/new'
     | '/agents/'
     | '/bookings/'
     | '/customers/'
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/reservations/'
+    | '/site-visits/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -400,7 +420,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/registrations'
     | '/resale'
-    | '/reservations'
     | '/schedule'
     | '/agents/$agentId'
     | '/bookings/$bookingId'
@@ -424,12 +443,15 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/company'
     | '/settings/users'
+    | '/site-visits/new'
     | '/agents'
     | '/bookings'
     | '/customers'
     | '/payments'
     | '/plots'
     | '/projects'
+    | '/reservations'
+    | '/site-visits'
   id:
     | '__root__'
     | '/'
@@ -439,7 +461,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/registrations'
     | '/resale'
-    | '/reservations'
     | '/schedule'
     | '/agents/$agentId'
     | '/bookings/$bookingId'
@@ -463,12 +484,15 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/company'
     | '/settings/users'
+    | '/site-visits/new'
     | '/agents/'
     | '/bookings/'
     | '/customers/'
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/reservations/'
+    | '/site-visits/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -479,7 +503,6 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   RegistrationsRoute: typeof RegistrationsRoute
   ResaleRoute: typeof ResaleRoute
-  ReservationsRoute: typeof ReservationsRoute
   ScheduleRoute: typeof ScheduleRoute
   AgentsAgentIdRoute: typeof AgentsAgentIdRoute
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
@@ -503,12 +526,15 @@ export interface RootRouteChildren {
   SettingsAuditRoute: typeof SettingsAuditRoute
   SettingsCompanyRoute: typeof SettingsCompanyRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
+  SiteVisitsNewRoute: typeof SiteVisitsNewRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
   BookingsIndexRoute: typeof BookingsIndexRoute
   CustomersIndexRoute: typeof CustomersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   PlotsIndexRoute: typeof PlotsIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  ReservationsIndexRoute: typeof ReservationsIndexRoute
+  SiteVisitsIndexRoute: typeof SiteVisitsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -560,13 +586,6 @@ declare module '@tanstack/react-router' {
       path: '/resale'
       fullPath: '/resale'
       preLoaderRoute: typeof ResaleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reservations': {
-      id: '/reservations'
-      path: '/reservations'
-      fullPath: '/reservations'
-      preLoaderRoute: typeof ReservationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedule': {
@@ -751,6 +770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsSalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reservations/': {
+      id: '/reservations/'
+      path: '/reservations'
+      fullPath: '/reservations/'
+      preLoaderRoute: typeof ReservationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/audit': {
       id: '/settings/audit'
       path: '/settings/audit'
@@ -772,6 +798,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/site-visits/': {
+      id: '/site-visits/'
+      path: '/site-visits'
+      fullPath: '/site-visits/'
+      preLoaderRoute: typeof SiteVisitsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/site-visits/new': {
+      id: '/site-visits/new'
+      path: '/site-visits/new'
+      fullPath: '/site-visits/new'
+      preLoaderRoute: typeof SiteVisitsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -783,7 +823,6 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   RegistrationsRoute: RegistrationsRoute,
   ResaleRoute: ResaleRoute,
-  ReservationsRoute: ReservationsRoute,
   ScheduleRoute: ScheduleRoute,
   AgentsAgentIdRoute: AgentsAgentIdRoute,
   BookingsBookingIdRoute: BookingsBookingIdRoute,
@@ -807,12 +846,15 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsAuditRoute: SettingsAuditRoute,
   SettingsCompanyRoute: SettingsCompanyRoute,
   SettingsUsersRoute: SettingsUsersRoute,
+  SiteVisitsNewRoute: SiteVisitsNewRoute,
   AgentsIndexRoute: AgentsIndexRoute,
   BookingsIndexRoute: BookingsIndexRoute,
   CustomersIndexRoute: CustomersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   PlotsIndexRoute: PlotsIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  ReservationsIndexRoute: ReservationsIndexRoute,
+  SiteVisitsIndexRoute: SiteVisitsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
