@@ -90,6 +90,18 @@
   --mobile-content-pad-bottom: calc(var(--mobile-nav-offset) + 1rem);
   --wizard-action-height: 4.5rem;
 
+  /* Plot status — solid (legend/chips) and soft fill (master layout) */
+  --plot-available: #4caf7d;
+  --plot-available-fill: #bfe5d1;
+  --plot-reserved: #f2b84b;
+  --plot-reserved-fill: #f6d89a;
+  --plot-booked: #3b82f6;
+  --plot-booked-fill: #a9d2ff;
+  --plot-registered: #7657d5;
+  --plot-registered-fill: #c4b5f4;
+  --plot-resale: #d85c8a;
+  --plot-resale-fill: #f0b6cb;
+
   /* Luminous surface ladder */
   --surface: oklch(0.982 0.008 262);
   --surface-bright: oklch(1 0 0);

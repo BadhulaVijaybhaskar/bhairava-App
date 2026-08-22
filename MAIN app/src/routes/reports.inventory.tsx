@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { PageHeader, Panel, SectionTitle, Metric, DataTable, Chip } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
 import { plots, projects, customers, agents, byId, type PlotStatus, formatINR } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import { plotStatusSolid } from "@/lib/plot-status-colors";
 
 export const Route = createFileRoute("/reports/inventory")({
   head: () => ({
@@ -20,13 +20,7 @@ export const Route = createFileRoute("/reports/inventory")({
 });
 
 const statuses: PlotStatus[] = ["available", "reserved", "booked", "registered", "resale"];
-const statusColorVar: Record<PlotStatus, string> = {
-  available: "var(--primary)",
-  reserved: "var(--warning)",
-  booked: "var(--secondary)",
-  registered: "var(--outline-variant)",
-  resale: "var(--destructive)",
-};
+const statusColorVar = plotStatusSolid;
 
 function InventoryReport() {
   const [selected, setSelected] = useState<PlotStatus | "all">("all");

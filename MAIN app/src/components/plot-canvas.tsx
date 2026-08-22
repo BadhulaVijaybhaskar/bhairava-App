@@ -1,23 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Plus, Maximize2 } from "lucide-react";
 import type { Plot, PlotStatus } from "@/lib/mock-data";
+import { plotStatusFill, plotStatusLabel } from "@/lib/plot-status-colors";
 import { cn } from "@/lib/utils";
 
-export const statusFill: Record<PlotStatus, string> = {
-  available: "var(--surface-highest)",
-  reserved: "color-mix(in oklab, var(--warning) 55%, var(--surface-lowest))",
-  booked: "color-mix(in oklab, var(--secondary) 55%, var(--surface-lowest))",
-  registered: "color-mix(in oklab, var(--primary) 65%, var(--surface-lowest))",
-  resale: "color-mix(in oklab, var(--chart-5) 45%, var(--surface-lowest))",
-};
-
-export const statusLabel: Record<PlotStatus, string> = {
-  available: "Available",
-  reserved: "Reserved",
-  booked: "Booked",
-  registered: "Registered",
-  resale: "Resale",
-};
+export const statusFill = plotStatusFill;
+export const statusLabel = plotStatusLabel;
 
 interface Props {
   plots: Plot[];

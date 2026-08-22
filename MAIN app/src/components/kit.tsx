@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, SlidersHorizontal, Search, Download, Plus } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
+import { plotStatusFill, plotStatusFromLabel, plotStatusInk, plotStatusSolid } from "@/lib/plot-status-colors";
 import { cn } from "@/lib/utils";
 import { ScrollTabs } from "@/components/scroll-tabs";
 
@@ -168,7 +169,6 @@ export function toneFor(value: string): keyof typeof chipTones {
       "available",
       "succeeded",
       "verified",
-      "registered",
       "completed",
       "active",
       "converted",
@@ -196,6 +196,23 @@ export function toneFor(value: string): keyof typeof chipTones {
 }
 
 export function Chip({ children, tone }: { children: string; tone?: keyof typeof chipTones }) {
+  const plotStatus = tone ? null : plotStatusFromLabel(children);
+  if (plotStatus) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-2 text-[11px] font-medium whitespace-nowrap"
+        style={{ background: plotStatusFill[plotStatus], color: plotStatusInk[plotStatus] }}
+      >
+        <span
+          aria-hidden
+          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          style={{ background: plotStatusSolid[plotStatus] }}
+        />
+        {children}
+      </span>
+    );
+  }
+
   const key = tone ?? toneFor(children);
   return (
     <span
