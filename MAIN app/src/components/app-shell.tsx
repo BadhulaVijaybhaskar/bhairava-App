@@ -37,6 +37,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { notifications } from "@/lib/mock-data";
 import { getSession, signOut } from "@/lib/auth";
+import { useCreateFabBlocked } from "@/lib/fab-visibility";
 import { BrandLogo } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
@@ -431,6 +432,7 @@ function hideCreateFab(pathname: string) {
 
 function MobileFab() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const formOpen = useCreateFabBlocked();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -447,7 +449,7 @@ function MobileFab() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  if (!mounted || hideCreateFab(pathname)) return null;
+  if (!mounted || hideCreateFab(pathname) || formOpen) return null;
 
   return createPortal(
     <>

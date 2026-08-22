@@ -10,8 +10,10 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react";
+import { createPortal } from "react-dom";
 import { AppShell } from "@/components/app-shell";
 import { ConfirmDialog, useUnsavedGuard } from "@/components/form-kit";
+import { useOccupyCreateFab } from "@/lib/fab-visibility";
 import { cn } from "@/lib/utils";
 
 export type FieldErrors<T extends object> = { [K in keyof T]?: string | undefined };
@@ -142,17 +144,25 @@ export function WizardNavigation({
   last: boolean;
   submitLabel: string;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const showBack = !backDisabled;
+  const actionLabel = last ? submitLabel : "Continue";
+
   return (
     <>
       <div className="mt-5 hidden items-center justify-between gap-3 lg:flex">
-        <button
-          type="button"
-          disabled={backDisabled}
-          onClick={onBack}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-        >
-          <ChevronLeft className="h-4 w-4" /> Back
-        </button>
+        {showBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" /> Back
+          </button>
+        ) : (
+          <span />
+        )}
         <button
           type="button"
           onClick={onNext}
@@ -160,32 +170,38 @@ export function WizardNavigation({
           className="gradient-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold text-primary-foreground shadow-ambient transition-all duration-200 hover:shadow-glow active:scale-[0.98] disabled:opacity-70"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {last ? submitLabel : "Continue"}
+          {actionLabel}
           {!last && <ChevronRight className="h-4 w-4" />}
         </button>
       </div>
 
-      <div className="glass fixed inset-x-0 bottom-[var(--mobile-nav-offset)] z-30 flex items-center gap-3 px-4 py-2.5 lg:hidden">
-        <button
-          type="button"
-          disabled={backDisabled}
-          onClick={onBack}
-          aria-label="Back to previous step"
-          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-low text-muted-foreground transition-colors active:bg-surface-c disabled:pointer-events-none disabled:opacity-40"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={busy}
-          className="gradient-primary inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary-foreground shadow-ambient transition-transform duration-200 active:scale-[0.98] disabled:opacity-70"
-        >
-          {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {last ? submitLabel : "Continue"}
-          {!last && <ChevronRight className="h-4 w-4" />}
-        </button>
-      </div>
+      {mounted
+        ? createPortal(
+            <div className="wizard-action-bar">
+              {showBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  aria-label="Back to previous step"
+                  className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-low text-muted-foreground transition-colors active:bg-surface-c"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onNext}
+                disabled={busy}
+                className="gradient-primary inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary-foreground shadow-ambient transition-transform duration-200 active:scale-[0.98] disabled:opacity-70"
+              >
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                {actionLabel}
+                {!last && <ChevronRight className="h-4 w-4" />}
+              </button>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
@@ -234,6 +250,7 @@ export function Wizard({
   dirty?: boolean | undefined;
   onDiscard?: (() => void) | undefined;
 }) {
+  useOccupyCreateFab();
   const [i, setI] = useState(0);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string>();
@@ -284,7 +301,7 @@ export function Wizard({
 
   return (
     <WizardContext.Provider value={api}>
-      <div className="grid gap-3 pb-28 sm:gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8 lg:pb-0">
+      <div className="grid gap-3 pb-[calc(var(--wizard-action-height)+1.25rem)] sm:gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8 lg:pb-0">
         <div className="lg:hidden">
           {dirty && onDiscard && (
             <div className="mb-1.5 flex justify-end">

@@ -88,6 +88,7 @@
   --mobile-nav-height: 4.25rem;
   --mobile-nav-offset: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
   --mobile-content-pad-bottom: calc(var(--mobile-nav-offset) + 1rem);
+  --wizard-action-height: 4.5rem;
 
   /* Luminous surface ladder */
   --surface: oklch(0.982 0.008 262);
@@ -540,4 +541,26 @@
 
 .bhairava-switch[data-on="true"] .bhairava-switch-thumb {
   left: 22px;
+}
+
+/* Wizard Continue/Back — viewport footer above the tab bar, never inside the form card. */
+.wizard-action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--mobile-nav-offset);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: var(--wizard-action-height);
+  padding: 0.625rem 1rem;
+  background-color: var(--surface-lowest);
+  border-top: 1px solid color-mix(in oklab, var(--outline-variant) 35%, transparent);
+}
+
+@media (min-width: 1024px) {
+  .wizard-action-bar {
+    display: none;
+  }
 }

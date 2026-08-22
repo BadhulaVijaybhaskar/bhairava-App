@@ -1,6 +1,7 @@
 import { Check, ChevronRight, Upload, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useOccupyCreateFab } from "@/lib/fab-visibility";
 import { cn } from "@/lib/utils";
 
 /* ---------------------------------- fields --------------------------------- */
@@ -236,6 +237,7 @@ export function EditSheet({
   children: ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  useOccupyCreateFab(open);
   useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (!open) return;

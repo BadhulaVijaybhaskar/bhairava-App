@@ -12,6 +12,7 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { AuthGate } from "@/components/auth-gate";
+import { FabVisibilityProvider } from "@/lib/fab-visibility";
 import { DataProvider } from "@/lib/store";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -144,11 +145,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <DataProvider>
-        <AuthGate>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </AuthGate>
-        <Toaster position="top-center" richColors />
+        <FabVisibilityProvider>
+          <AuthGate>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </AuthGate>
+          <Toaster position="top-center" richColors />
+        </FabVisibilityProvider>
       </DataProvider>
     </QueryClientProvider>
   );

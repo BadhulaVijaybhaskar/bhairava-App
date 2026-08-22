@@ -3,6 +3,7 @@ import { useState } from "react";
 import { PageHeader, Panel, SectionTitle, Btn, SwitchControl } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
 import { SettingsNav } from "@/components/settings-nav";
+import { useOccupyCreateFab } from "@/lib/fab-visibility";
 
 export const Route = createFileRoute("/settings/company")({
   head: () => ({
@@ -43,8 +44,9 @@ function Toggle({ label, hint, defaultChecked }: { label: string; hint?: string;
 }
 
 function CompanySettings() {
+  useOccupyCreateFab();
   return (
-    <AppShell>
+    <AppShell hideFab>
       <PageHeader eyebrow="Settings" title="Company" description="Workspace identity, sales defaults and notification preferences." />
 
       <div className="flex flex-col gap-8 lg:flex-row">
