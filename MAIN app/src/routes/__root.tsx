@@ -5,6 +5,7 @@ import {
   createRootRouteWithContext,
   redirect,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -81,9 +82,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: ({ location }) => {
     if (location.pathname === "/login") return;
-    // Server has no localStorage, so never SSR a protected page. That was
-    // painting the dashboard for a moment before the client sent users to login.
-    if (typeof window === "undefined" || !isAuthenticated()) {
+    // Client only. A server redirect here bounced /login ↔ / and wiped the form.
+    if (typeof window !== "undefined" && !isAuthenticated()) {
       throw redirect({ to: "/login" });
     }
   },
@@ -151,18 +151,26 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isLogin = pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DataProvider>
-        <FabVisibilityProvider>
-          <AuthGate>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </AuthGate>
+      {isLogin ? (
+        <>
+          <Outlet />
           <Toaster position="top-center" richColors />
-        </FabVisibilityProvider>
-      </DataProvider>
+        </>
+      ) : (
+        <DataProvider>
+          <FabVisibilityProvider>
+            <AuthGate>
+              <Outlet />
+            </AuthGate>
+            <Toaster position="top-center" richColors />
+          </FabVisibilityProvider>
+        </DataProvider>
+      )}
     </QueryClientProvider>
   );
 }

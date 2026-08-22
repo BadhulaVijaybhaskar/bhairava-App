@@ -1,20 +1,15 @@
 const SESSION_KEY = "bhairava.session.v1";
-export const AUTH_COOKIE = "bhairava.auth";
-const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const AUTH_COOKIE = "bhairava.auth";
 
 function writeAuthCookie() {
   if (typeof document === "undefined") return;
-  document.cookie = `${AUTH_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=${AUTH_COOKIE_MAX_AGE}`;
+  document.cookie = `${AUTH_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`;
 }
 
 function clearAuthCookie() {
   if (typeof document === "undefined") return;
-  document.cookie = `${AUTH_COOKIE}=; Path=/; Max-Age=0`;
-}
-
-function hasAuthCookie() {
-  if (typeof document === "undefined") return false;
-  return document.cookie.split(";").some((part) => part.trim() === `${AUTH_COOKIE}=1`);
+  document.cookie = `${AUTH_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`;
+  document.cookie = `${AUTH_COOKIE}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 export const DEMO_ADMIN = {
@@ -48,12 +43,7 @@ export function getSession(): Session | null {
 }
 
 export function isAuthenticated(): boolean {
-  const stored = readStorage();
-  if (stored) {
-    if (!hasAuthCookie()) writeAuthCookie();
-    return true;
-  }
-  return hasAuthCookie();
+  return readStorage() !== null;
 }
 
 export function signIn(email: string, password: string): Session | null {

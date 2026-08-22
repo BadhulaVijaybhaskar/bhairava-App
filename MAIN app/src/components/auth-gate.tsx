@@ -14,15 +14,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
     setAuthed(ok);
     setReady(true);
     if (!ok && pathname !== "/login") {
-      void navigate({ to: "/login" });
-    } else if (ok && pathname === "/login") {
-      void navigate({ to: "/" });
+      void navigate({ to: "/login", replace: true });
     }
   }, [pathname, navigate]);
-
-  if (pathname === "/login") {
-    return children;
-  }
 
   if (!ready || !authed) {
     return (

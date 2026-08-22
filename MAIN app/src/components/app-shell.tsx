@@ -206,7 +206,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 function handleSignOut() {
   signOut();
-  window.location.assign("/login");
+  window.location.replace("/login");
 }
 
 function SignOutButton({ className }: { className?: string }) {

@@ -1,10 +1,30 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand";
 import { signIn } from "@/lib/auth";
 
+const EMAIL_DRAFT_KEY = "bhairava.login.email";
+
+function readEmailDraft() {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.sessionStorage.getItem(EMAIL_DRAFT_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeEmailDraft(value: string) {
+  try {
+    window.sessionStorage.setItem(EMAIL_DRAFT_KEY, value);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 export const Route = createFileRoute("/login")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Sign in — Bhairava Land Sales OS" },
@@ -23,8 +43,7 @@ function later(label: string) {
 }
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(readEmailDraft);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -46,8 +65,10 @@ function LoginPage() {
 
         <form
           className="space-y-4"
+          noValidate
           onSubmit={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setError("");
             setSubmitting(true);
             const session = signIn(email, password);
@@ -56,21 +77,33 @@ function LoginPage() {
               setError("Email or password is incorrect.");
               return;
             }
-            void navigate({ to: "/" });
+            try {
+              window.sessionStorage.removeItem(EMAIL_DRAFT_KEY);
+            } catch {
+              /* ignore */
+            }
+            window.location.replace("/");
           }}
         >
           <label className="block">
             <span className="text-xs font-medium text-muted-foreground">Email</span>
             <input
               type="email"
+              name="email"
+              inputMode="email"
+              enterKeyHint="next"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
+                writeEmailDraft(e.target.value);
                 setError("");
               }}
               placeholder="admin@bhairava.com"
-              className="mt-1.5 h-11 w-full rounded-lg bg-surface-low px-3 text-sm outline-none placeholder:text-muted-foreground focus:bg-surface-lowest focus:ring-2 focus:ring-primary"
+              className="mt-1.5 h-11 w-full rounded-lg bg-surface-low px-3 text-base outline-none placeholder:text-muted-foreground focus:bg-surface-lowest focus:ring-2 focus:ring-primary"
             />
           </label>
 
@@ -87,6 +120,7 @@ function LoginPage() {
             </span>
             <input
               type="password"
+              name="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => {
@@ -94,7 +128,8 @@ function LoginPage() {
                 setError("");
               }}
               placeholder="••••••••"
-              className="mt-1.5 h-11 w-full rounded-lg bg-surface-low px-3 text-sm outline-none placeholder:text-muted-foreground focus:bg-surface-lowest focus:ring-2 focus:ring-primary"
+              enterKeyHint="done"
+              className="mt-1.5 h-11 w-full rounded-lg bg-surface-low px-3 text-base outline-none placeholder:text-muted-foreground focus:bg-surface-lowest focus:ring-2 focus:ring-primary"
             />
           </label>
 

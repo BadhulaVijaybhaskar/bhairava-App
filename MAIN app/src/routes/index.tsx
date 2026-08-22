@@ -38,6 +38,7 @@ const visitTodayIso = new Date().toISOString().slice(0, 10);
 const isActiveVisit = (s: string) => s === "Scheduled" || s === "Confirmed" || s === "Rescheduled";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Bhairava Dashboard — Land Sales Command Centre" },
