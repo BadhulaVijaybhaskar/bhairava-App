@@ -103,4 +103,13 @@ npm run build      → pass
 
 ## Routes verified (static + build)
 
-Settings users/audit/company; documents; notifications; payments list/detail; receipts; registrations; plots layout; dashboard; collections; schedule; resale; reports/collections; booking onboarding payment side-effect. Manual browser E2E not run in this environment for every route; logic covered by store APIs + unit tests + production build.
+Settings users/audit/company; documents; notifications; payments list/detail; receipts; registrations; plots layout; dashboard; collections; schedule; resale; reports/collections; booking onboarding payment side-effect.
+
+### Browser smoke (Playwright)
+
+- Signed in with demo Founder session
+- Invited `priya@bhairava.in` → member count **6 → 7**
+- Three-dot menu on Ramesh shows Change role / Suspend / Remove from workspace
+- Audit log shows live `invited user` for `USR-07`
+- Fixed Strict Mode duplicate audit writes on member mutations after observing a double row
+
