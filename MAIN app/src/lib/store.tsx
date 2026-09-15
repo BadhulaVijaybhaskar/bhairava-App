@@ -708,24 +708,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!check.ok) return { ok: false, error: check.reason ?? "Not allowed." };
         if (target.role === role) return { ok: true };
 
-        setWorkspaceUsers((prev) => {
-          const next = prev.map((u) => (u.id === id ? { ...u, role } : u));
-          setAuditEntries((ae) => {
-            const entries = appendAudit(
-              {
-                action: "changed member role",
-                object: id,
-                before: target.role,
-                after: role,
-              },
-              prev,
-              ae,
-            );
-            snapshot({ workspaceUsers: next, auditEntries: entries });
-            return entries;
-          });
-          return next;
-        });
+        const nextUsers = workspaceUsers.map((u) => (u.id === id ? { ...u, role } : u));
+        const nextAudit = appendAudit(
+          {
+            action: "changed member role",
+            object: id,
+            before: target.role,
+            after: role,
+          },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
         return { ok: true };
       },
 
@@ -754,19 +750,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
               ? "reactivated member"
               : "updated member status";
 
-        setWorkspaceUsers((prev) => {
-          const next = prev.map((u) => (u.id === id ? { ...u, status } : u));
-          setAuditEntries((ae) => {
-            const entries = appendAudit(
-              { action, object: id, before: target.status, after: status },
-              prev,
-              ae,
-            );
-            snapshot({ workspaceUsers: next, auditEntries: entries });
-            return entries;
-          });
-          return next;
-        });
+        const nextUsers = workspaceUsers.map((u) => (u.id === id ? { ...u, status } : u));
+        const nextAudit = appendAudit(
+          { action, object: id, before: target.status, after: status },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
         return { ok: true };
       },
 
@@ -777,24 +769,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const check = canRemoveMember(actor, target, workspaceUsers);
         if (!check.ok) return { ok: false, error: check.reason ?? "Not allowed." };
 
-        setWorkspaceUsers((prev) => {
-          const next = prev.filter((u) => u.id !== id);
-          setAuditEntries((ae) => {
-            const entries = appendAudit(
-              {
-                action: target.status === "Invited" ? "revoked invitation" : "removed member",
-                object: id,
-                before: target.status,
-                after: "removed",
-              },
-              prev,
-              ae,
-            );
-            snapshot({ workspaceUsers: next, auditEntries: entries });
-            return entries;
-          });
-          return next;
-        });
+        const nextUsers = workspaceUsers.filter((u) => u.id !== id);
+        const nextAudit = appendAudit(
+          {
+            action: target.status === "Invited" ? "revoked invitation" : "removed member",
+            object: id,
+            before: target.status,
+            after: "removed",
+          },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
         return { ok: true };
       },
 
@@ -823,19 +811,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
           lastActive: "—",
         };
 
-        setWorkspaceUsers((prev) => {
-          const next = [user, ...prev];
-          setAuditEntries((ae) => {
-            const entries = appendAudit(
-              { action: "invited user", object: user.id, before: "—", after: role },
-              prev,
-              ae,
-            );
-            snapshot({ workspaceUsers: next, auditEntries: entries });
-            return entries;
-          });
-          return next;
-        });
+        const nextUsers = [user, ...workspaceUsers];
+        const nextAudit = appendAudit(
+          { action: "invited user", object: user.id, before: "—", after: role },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
         return { ok: true, user };
       },
 
@@ -844,15 +828,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!target || target.status !== "Invited") {
           return { ok: false, error: "No pending invitation for this member." };
         }
-        setAuditEntries((ae) => {
-          const entries = appendAudit(
-            { action: "resent invitation", object: id, before: "Invited", after: "Invited" },
-            workspaceUsers,
-            ae,
-          );
-          snapshot({ auditEntries: entries });
-          return entries;
-        });
+        const nextAudit = appendAudit(
+          { action: "resent invitation", object: id, before: "Invited", after: "Invited" },
+          workspaceUsers,
+          auditEntries,
+        );
+        setAuditEntries(nextAudit);
+        snapshot({ auditEntries: nextAudit });
         return { ok: true };
       },
 
@@ -864,40 +846,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
         const check = canRemoveMember(actor, target, workspaceUsers);
         if (!check.ok) return { ok: false, error: check.reason ?? "Not allowed." };
-        setWorkspaceUsers((prev) => {
-          const next = prev.filter((u) => u.id !== id);
-          setAuditEntries((ae) => {
-            const entries = appendAudit(
-              { action: "revoked invitation", object: id, before: "Invited", after: "removed" },
-              prev,
-              ae,
-            );
-            snapshot({ workspaceUsers: next, auditEntries: entries });
-            return entries;
-          });
-          return next;
-        });
+        const nextUsers = workspaceUsers.filter((u) => u.id !== id);
+        const nextAudit = appendAudit(
+          { action: "revoked invitation", object: id, before: "Invited", after: "removed" },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
         return { ok: true };
       },
 
       logAudit,
 
       saveCompanySettings: (s) => {
+        const nextAudit = appendAudit(
+          {
+            action: "changed company settings",
+            object: "company",
+            before: companySettings.companyName,
+            after: s.companyName,
+          },
+          workspaceUsers,
+          auditEntries,
+        );
         setCompanySettings(s);
-        setAuditEntries((ae) => {
-          const entries = appendAudit(
-            {
-              action: "changed company settings",
-              object: "company",
-              before: companySettings.companyName,
-              after: s.companyName,
-            },
-            workspaceUsers,
-            ae,
-          );
-          snapshot({ companySettings: s, auditEntries: entries });
-          return entries;
-        });
+        setAuditEntries(nextAudit);
+        snapshot({ companySettings: s, auditEntries: nextAudit });
       },
 
       saveDocument: (d) => {
