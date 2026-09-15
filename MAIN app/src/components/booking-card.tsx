@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Chip } from "@/components/kit";
-import { agents, byId, customers, formatINR, plots, projects, type Booking } from "@/lib/mock-data";
+import { byId, formatINR, type Booking } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 /** Reusable payment progress row: ₹Paid / ₹Total on the left, % on the right, one bar underneath. */
 export function PaymentProgress({ paid, total }: { paid: number; total: number }) {
@@ -27,6 +28,7 @@ export function PaymentProgress({ paid, total }: { paid: number; total: number }
  * Top row: booking id + stage pill · customer name · Project + Plot · Agent + Date · one payment-progress row.
  */
 export function BookingCard({ booking }: { booking: Booking }) {
+  const { customers, plots, projects, agents } = useData();
   const customer = byId(customers, booking.customerId);
   const plot = byId(plots, booking.plotId);
   const project = byId(projects, booking.projectId);
@@ -47,13 +49,17 @@ export function BookingCard({ booking }: { booking: Booking }) {
 
       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="min-w-0 truncate">{project?.name ?? "—"}</span>
-        <span aria-hidden className="text-muted-foreground/60">·</span>
+        <span aria-hidden className="text-muted-foreground/60">
+          ·
+        </span>
         <span className="numeric shrink-0">{plot?.number ?? "—"}</span>
       </div>
 
       <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
         <span className="min-w-0 truncate">{agent?.name ?? "—"}</span>
-        <span aria-hidden className="text-muted-foreground/60">·</span>
+        <span aria-hidden className="text-muted-foreground/60">
+          ·
+        </span>
         <span className="numeric shrink-0">{booking.date}</span>
       </div>
 

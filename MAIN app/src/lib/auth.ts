@@ -24,7 +24,7 @@ export const DEMO_ADMIN = {
   email: "admin@bhairava.com",
   password: "admin@2026",
   name: "Vijay Bhaskar",
-  role: "Administrator",
+  role: "Founder",
 } as const;
 
 export interface Session {

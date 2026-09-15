@@ -4,15 +4,22 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { Chip, Metric, PageHeader, SectionTitle } from "@/components/kit";
-import { bookings, byId, customers, formatINR } from "@/lib/mock-data";
+import { byId, formatINR } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
     meta: [
       { title: "Payment Schedule — Bhairava" },
-      { name: "description", content: "Instalment timeline grouped by overdue, due this month, upcoming and paid." },
+      {
+        name: "description",
+        content: "Instalment timeline grouped by overdue, due this month, upcoming and paid.",
+      },
       { property: "og:title", content: "Payment Schedule — Bhairava" },
-      { property: "og:description", content: "Instalment timeline grouped by overdue, due this month, upcoming and paid." },
+      {
+        property: "og:description",
+        content: "Instalment timeline grouped by overdue, due this month, upcoming and paid.",
+      },
     ],
   }),
   component: SchedulePage,
@@ -29,7 +36,17 @@ interface Instalment {
   bucket: "Overdue" | "Due this month" | "Upcoming" | "Paid";
 }
 
-function buildInstalments(): Instalment[] {
+function buildInstalments(
+  bookings: {
+    id: string;
+    customerId: string;
+    amount: number;
+    paid: number;
+    stage: string;
+    date?: string;
+  }[],
+  customers: { id: string; name: string }[],
+): Instalment[] {
   const out: Instalment[] = [];
   bookings.forEach((b, i) => {
     const remaining = Math.max(0, b.amount - b.paid);
@@ -43,7 +60,7 @@ function buildInstalments(): Instalment[] {
         bookingId: b.id,
         customerName: customer?.name ?? "—",
         amount: b.paid,
-        due: b.date,
+        due: b.date ?? "2026-08-01",
         bucket: "Paid",
       });
     }
@@ -56,7 +73,8 @@ function buildInstalments(): Instalment[] {
       const dueStr = d.toISOString().slice(0, 10);
       let bucket: Instalment["bucket"];
       if (d < TODAY) bucket = "Overdue";
-      else if (d.getMonth() === TODAY.getMonth() && d.getFullYear() === TODAY.getFullYear()) bucket = "Due this month";
+      else if (d.getMonth() === TODAY.getMonth() && d.getFullYear() === TODAY.getFullYear())
+        bucket = "Due this month";
       else bucket = "Upcoming";
 
       out.push({
@@ -75,12 +93,21 @@ function buildInstalments(): Instalment[] {
 const bucketOrder: Instalment["bucket"][] = ["Overdue", "Due this month", "Upcoming", "Paid"];
 
 function SchedulePage() {
-  const instalments = useMemo(buildInstalments, []);
+  const { bookings, customers } = useData();
+  const instalments = useMemo(() => buildInstalments(bookings, customers), [bookings, customers]);
 
-  const overdueTotal = instalments.filter((i) => i.bucket === "Overdue").reduce((a, i) => a + i.amount, 0);
-  const dueThisMonthTotal = instalments.filter((i) => i.bucket === "Due this month").reduce((a, i) => a + i.amount, 0);
-  const upcomingTotal = instalments.filter((i) => i.bucket === "Upcoming").reduce((a, i) => a + i.amount, 0);
-  const paidTotal = instalments.filter((i) => i.bucket === "Paid").reduce((a, i) => a + i.amount, 0);
+  const overdueTotal = instalments
+    .filter((i) => i.bucket === "Overdue")
+    .reduce((a, i) => a + i.amount, 0);
+  const dueThisMonthTotal = instalments
+    .filter((i) => i.bucket === "Due this month")
+    .reduce((a, i) => a + i.amount, 0);
+  const upcomingTotal = instalments
+    .filter((i) => i.bucket === "Upcoming")
+    .reduce((a, i) => a + i.amount, 0);
+  const paidTotal = instalments
+    .filter((i) => i.bucket === "Paid")
+    .reduce((a, i) => a + i.amount, 0);
 
   const monthly = useMemo(() => {
     const map = new Map<string, number>();
@@ -110,7 +137,11 @@ function SchedulePage() {
       />
 
       <div className="grid gap-4 pb-8 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Overdue" value={formatINR(overdueTotal, { compact: true })} hint={`${instalments.filter((i) => i.bucket === "Overdue").length} instalments`} />
+        <Metric
+          label="Overdue"
+          value={formatINR(overdueTotal, { compact: true })}
+          hint={`${instalments.filter((i) => i.bucket === "Overdue").length} instalments`}
+        />
         <Metric label="Due this month" value={formatINR(dueThisMonthTotal, { compact: true })} />
         <Metric label="Upcoming" value={formatINR(upcomingTotal, { compact: true })} />
         <Metric label="Collected" value={formatINR(paidTotal, { compact: true })} />
@@ -121,11 +152,30 @@ function SchedulePage() {
         <div className="panel p-6" style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthly} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="var(--outline-variant)" strokeDasharray="3 6" vertical={false} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} width={40} />
+              <CartesianGrid
+                stroke="var(--outline-variant)"
+                strokeDasharray="3 6"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                width={40}
+              />
               <Tooltip
-                contentStyle={{ background: "var(--surface-lowest)", border: "none", borderRadius: 12, fontSize: 12 }}
+                contentStyle={{
+                  background: "var(--surface-lowest)",
+                  border: "none",
+                  borderRadius: 12,
+                  fontSize: 12,
+                }}
                 formatter={(v: number) => [`₹${v.toFixed(1)} L`, "Expected"]}
               />
               <Bar dataKey="amount" fill="var(--secondary)" radius={[6, 6, 0, 0]} />
@@ -147,15 +197,33 @@ function SchedulePage() {
                     key={r.id}
                     className={`grid grid-cols-2 items-center gap-x-4 gap-y-1.5 px-4 py-3.5 sm:px-5 lg:grid-cols-12 lg:gap-4 ${i % 2 === 1 ? "bg-surface/60" : ""}`}
                   >
-                    <div className="numeric order-1 col-span-1 text-xs text-muted-foreground lg:col-span-2">{r.due}</div>
-                    <div className="order-3 col-span-2 truncate text-sm lg:order-2 lg:col-span-3">{r.customerName}</div>
+                    <div className="numeric order-1 col-span-1 text-xs text-muted-foreground lg:col-span-2">
+                      {r.due}
+                    </div>
+                    <div className="order-3 col-span-2 truncate text-sm lg:order-2 lg:col-span-3">
+                      {r.customerName}
+                    </div>
                     <div className="order-4 col-span-1 lg:order-3 lg:col-span-2">
-                      <Link to="/bookings/$bookingId" params={{ bookingId: r.bookingId }} className="numeric text-xs text-muted-foreground hover:text-primary">
+                      <Link
+                        to="/bookings/$bookingId"
+                        params={{ bookingId: r.bookingId }}
+                        className="numeric text-xs text-muted-foreground hover:text-primary"
+                      >
                         {r.bookingId}
                       </Link>
                     </div>
                     <div className="order-2 col-span-1 flex justify-end lg:order-4 lg:col-span-2 lg:justify-start">
-                      <Chip tone={bucket === "Overdue" ? "danger" : bucket === "Paid" ? "positive" : bucket === "Due this month" ? "warning" : "neutral"}>
+                      <Chip
+                        tone={
+                          bucket === "Overdue"
+                            ? "danger"
+                            : bucket === "Paid"
+                              ? "positive"
+                              : bucket === "Due this month"
+                                ? "warning"
+                                : "neutral"
+                        }
+                      >
                         {bucket}
                       </Chip>
                     </div>
@@ -166,7 +234,6 @@ function SchedulePage() {
                       {formatINR(r.amount, { compact: true })}
                     </div>
                   </div>
-
                 ))}
               </div>
             </div>

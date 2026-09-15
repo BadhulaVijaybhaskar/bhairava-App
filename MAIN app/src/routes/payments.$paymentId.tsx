@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, RotateCcw, Send } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Btn, Chip, Panel, SectionTitle, Timeline } from "@/components/kit";
-import { bookings, byId, customers, formatINR, payments, plots, projects } from "@/lib/mock-data";
+import { byId, formatINR } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
+import { canMutateFinance } from "@/lib/permissions";
 
 export const Route = createFileRoute("/payments/$paymentId")({
   head: ({ params }) => ({
@@ -18,6 +21,8 @@ export const Route = createFileRoute("/payments/$paymentId")({
 
 function PaymentDetail() {
   const { paymentId } = Route.useParams();
+  const { payments, customers, bookings, plots, projects, savePayment, currentUser, logAudit } =
+    useData();
   const payment = byId(payments, paymentId);
 
   if (!payment) {
@@ -38,21 +43,56 @@ function PaymentDetail() {
   const booking = byId(bookings, payment.bookingId);
   const plot = booking ? byId(plots, booking.plotId) : undefined;
   const project = booking ? byId(projects, booking.projectId) : undefined;
+  const canFinance = canMutateFinance(currentUser);
 
   const feePct = payment.status === "Succeeded" ? 0.012 : 0;
   const fee = Math.round(payment.amount * feePct);
   const net = payment.amount - fee;
 
   const timeline = [
-    { time: payment.date, title: "Payment succeeded", detail: `Settled via ${payment.mode}` },
+    {
+      time: payment.date,
+      title: `Payment ${payment.status.toLowerCase()}`,
+      detail: `Settled via ${payment.mode}`,
+    },
     { time: payment.date, title: "Payment processed", detail: `Reference ${payment.reference}` },
-    { time: payment.date, title: "Payment created", detail: `Linked to booking ${payment.bookingId}` },
+    {
+      time: payment.date,
+      title: "Payment created",
+      detail: `Linked to booking ${payment.bookingId}`,
+    },
   ];
+
+  const onRefund = () => {
+    if (!canFinance) {
+      toast.error("You do not have permission to refund payments.");
+      return;
+    }
+    if (payment.status === "Refunded") {
+      toast.message("Payment is already refunded.");
+      return;
+    }
+    savePayment({ ...payment, status: "Refunded" });
+    toast.success("Payment refunded");
+  };
+
+  const onResend = () => {
+    logAudit({
+      action: "resent receipt",
+      object: payment.id,
+      before: "—",
+      after: "sent",
+    });
+    toast.success(`Receipt resent to ${customer?.email ?? "customer"}`);
+  };
 
   return (
     <AppShell>
       <div className="pt-8 pb-2">
-        <Link to="/payments" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+        <Link
+          to="/payments"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> Payments
         </Link>
       </div>
@@ -70,10 +110,14 @@ function PaymentDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Btn variant="tonal">
+          <Btn
+            variant="tonal"
+            disabled={!canFinance || payment.status === "Refunded"}
+            onClick={onRefund}
+          >
             <RotateCcw className="h-4 w-4" /> Refund
           </Btn>
-          <Btn variant="primary">
+          <Btn variant="primary" onClick={onResend}>
             <Send className="h-4 w-4" /> Resend receipt
           </Btn>
         </div>
@@ -85,13 +129,20 @@ function PaymentDetail() {
             <SectionTitle>Payment method</SectionTitle>
             <div className="grid grid-cols-2 gap-6">
               <Field label="Mode" value={payment.mode} />
-              <Field label="Reference" value={<span className="numeric">{payment.reference}</span>} />
+              <Field
+                label="Reference"
+                value={<span className="numeric">{payment.reference}</span>}
+              />
               <Field label="Date" value={<span className="numeric">{payment.date}</span>} />
               <Field
                 label="Customer"
                 value={
                   customer ? (
-                    <Link to="/customers/$customerId" params={{ customerId: customer.id }} className="hover:text-primary">
+                    <Link
+                      to="/customers/$customerId"
+                      params={{ customerId: customer.id }}
+                      className="hover:text-primary"
+                    >
                       {customer.name}
                     </Link>
                   ) : (
@@ -103,7 +154,11 @@ function PaymentDetail() {
                 label="Booking"
                 value={
                   booking ? (
-                    <Link to="/bookings/$bookingId" params={{ bookingId: booking.id }} className="numeric hover:text-primary">
+                    <Link
+                      to="/bookings/$bookingId"
+                      params={{ bookingId: booking.id }}
+                      className="numeric hover:text-primary"
+                    >
                       {booking.id}
                     </Link>
                   ) : (
@@ -156,17 +211,31 @@ function PaymentDetail() {
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
+      <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+        {label}
+      </p>
       <div className="pt-1.5 text-sm font-medium">{value}</div>
     </div>
   );
 }
 
-function Row({ label, value, muted, strong }: { label: string; value: string; muted?: boolean; strong?: boolean }) {
+function Row({
+  label,
+  value,
+  muted,
+  strong,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+  strong?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`numeric text-sm ${strong ? "text-lg font-semibold" : muted ? "text-muted-foreground" : "font-medium"}`}>
+      <span
+        className={`numeric text-sm ${strong ? "text-lg font-semibold" : muted ? "text-muted-foreground" : "font-medium"}`}
+      >
         {value}
       </span>
     </div>

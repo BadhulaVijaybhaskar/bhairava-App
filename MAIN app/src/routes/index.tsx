@@ -21,17 +21,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Metric, Panel, SectionTitle } from "@/components/kit";
-import {
-  bookings,
-  cashflow,
-  customers,
-  byId,
-  formatINR,
-  plots,
-  projects,
-  reservations,
-  salesTrend,
-} from "@/lib/mock-data";
+import { cashflow, byId, formatINR, salesTrend } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 
 const visitTodayIso = new Date().toISOString().slice(0, 10);
@@ -50,7 +40,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Bhairava Dashboard — Land Sales Command Centre" },
       {
         property: "og:description",
-        content: "Live inventory, collections, bookings and agent performance in one command centre.",
+        content:
+          "Live inventory, collections, bookings and agent performance in one command centre.",
       },
     ],
   }),
@@ -105,18 +96,24 @@ function QuickActionTile({
 }
 
 function Dashboard() {
+  const { bookings, customers, plots, projects, reservations, siteVisits } = useData();
   const available = plots.filter((p) => p.status === "available").length;
   const recent = bookings.slice(0, 6);
-  const { siteVisits } = useData();
-  const todayVisits = siteVisits.filter((v) => v.date === visitTodayIso && isActiveVisit(v.status)).length;
-  const upcomingVisits = siteVisits.filter((v) => v.date > visitTodayIso && isActiveVisit(v.status)).length;
+  const todayVisits = siteVisits.filter(
+    (v) => v.date === visitTodayIso && isActiveVisit(v.status),
+  ).length;
+  const upcomingVisits = siteVisits.filter(
+    (v) => v.date > visitTodayIso && isActiveVisit(v.status),
+  ).length;
   const availablePct = plots.length ? Math.round((available / plots.length) * 100) : 0;
 
   return (
     <AppShell>
       {/* ---------- MOBILE dashboard: compact, high information density ---------- */}
       <div className="min-w-0 max-w-full space-y-4 overflow-x-clip lg:hidden">
-        <h1 className="pt-1 font-display text-[22px] font-semibold tracking-[-0.03em]">Dashboard</h1>
+        <h1 className="pt-1 font-display text-[22px] font-semibold tracking-[-0.03em]">
+          Dashboard
+        </h1>
 
         <div className="min-w-0">
           <div className="flex items-center justify-between gap-2 pb-2">
@@ -125,7 +122,8 @@ function Dashboard() {
             </p>
             <p className="min-w-0 truncate text-[11px] text-muted-foreground">
               <span className="numeric font-semibold text-foreground">{todayVisits}</span> today ·{" "}
-              <span className="numeric font-semibold text-foreground">{upcomingVisits}</span> upcoming
+              <span className="numeric font-semibold text-foreground">{upcomingVisits}</span>{" "}
+              upcoming
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 min-[430px]:grid-cols-4">
@@ -147,7 +145,9 @@ function Dashboard() {
         </div>
 
         <Panel className="min-w-0 p-3.5">
-          <SectionTitle aside={<Link to="/projects">All projects</Link>}>Project absorption</SectionTitle>
+          <SectionTitle aside={<Link to="/projects">All projects</Link>}>
+            Project absorption
+          </SectionTitle>
           <div className="space-y-2">
             {projects.slice(0, 4).map((p) => {
               const pct = Math.round((p.soldPlots / p.totalPlots) * 100);
@@ -164,7 +164,10 @@ function Dashboard() {
                     <span className="numeric text-xs text-muted-foreground">{pct}%</span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-c">
-                    <div className="gradient-primary h-full rounded-full" style={{ width: `${pct}%` }} />
+                    <div
+                      className="gradient-primary h-full rounded-full"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
               );
@@ -183,7 +186,11 @@ function Dashboard() {
                     <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="var(--outline-variant)" strokeOpacity={0.18} vertical={false} />
+                <CartesianGrid
+                  stroke="var(--outline-variant)"
+                  strokeOpacity={0.18}
+                  vertical={false}
+                />
                 <XAxis dataKey="month" {...chartAxis} />
                 <YAxis {...chartAxis} width={40} />
                 <Tooltip
@@ -220,7 +227,11 @@ function Dashboard() {
           <div className="h-56 w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={salesTrend} margin={{ left: -22, right: 4, top: 6 }}>
-                <CartesianGrid stroke="var(--outline-variant)" strokeOpacity={0.18} vertical={false} />
+                <CartesianGrid
+                  stroke="var(--outline-variant)"
+                  strokeOpacity={0.18}
+                  vertical={false}
+                />
                 <XAxis dataKey="month" {...chartAxis} />
                 <YAxis {...chartAxis} width={40} />
                 <Tooltip
@@ -251,13 +262,17 @@ function Dashboard() {
                 className="flex items-center justify-between gap-3 rounded-lg bg-surface-low px-3 py-2 transition-colors active:bg-surface-c"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{byId(customers, r.customerId)?.name ?? "—"}</p>
+                  <p className="truncate text-sm font-medium">
+                    {byId(customers, r.customerId)?.name ?? "—"}
+                  </p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     {byId(projects, r.projectId)?.name ?? "—"}
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="numeric text-xs font-medium">{formatINR(r.amount, { compact: true })}</p>
+                  <p className="numeric text-xs font-medium">
+                    {formatINR(r.amount, { compact: true })}
+                  </p>
                   <div className="pt-0.5">
                     <Chip>{r.stage}</Chip>
                   </div>
@@ -268,7 +283,9 @@ function Dashboard() {
         </Panel>
 
         <Panel tonal>
-          <SectionTitle aside={<Link to="/reservations">Manage</Link>}>Reservations at risk</SectionTitle>
+          <SectionTitle aside={<Link to="/reservations">Manage</Link>}>
+            Reservations at risk
+          </SectionTitle>
           <div className="space-y-1.5">
             {reservations
               .filter((r) => r.state !== "Converted")
@@ -279,7 +296,9 @@ function Dashboard() {
                   className="flex items-center justify-between gap-3 rounded-lg bg-surface-lowest px-3 py-2"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-medium">{byId(customers, r.customerId)?.name ?? "—"}</p>
+                    <p className="truncate text-xs font-medium">
+                      {byId(customers, r.customerId)?.name ?? "—"}
+                    </p>
                     <p className="numeric text-[11px] text-muted-foreground">{r.plotId}</p>
                   </div>
                   <Chip>{r.state}</Chip>
@@ -298,8 +317,8 @@ function Dashboard() {
             </p>
             <h1 className="font-display text-3xl font-semibold">Good morning, Vijay</h1>
             <p className="pt-2 text-sm text-muted-foreground">
-              ₹18.2 Cr collected this month across {projects.filter((p) => p.status === "Active").length}{" "}
-              active projects.
+              ₹18.2 Cr collected this month across{" "}
+              {projects.filter((p) => p.status === "Active").length} active projects.
             </p>
           </div>
           <Link
@@ -321,7 +340,14 @@ function Dashboard() {
 
         <div className="grid gap-4 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <Metric label="Collected this month" value="₹18.2 Cr" delta="+21.3%" hint="vs July" size="lg" accent />
+            <Metric
+              label="Collected this month"
+              value="₹18.2 Cr"
+              delta="+21.3%"
+              hint="vs July"
+              size="lg"
+              accent
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-3 lg:col-span-7">
             <Metric label="Bookings" value="34" delta="+7" hint="this month" />
@@ -342,7 +368,11 @@ function Dashboard() {
                       <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="var(--outline-variant)" strokeOpacity={0.18} vertical={false} />
+                  <CartesianGrid
+                    stroke="var(--outline-variant)"
+                    strokeOpacity={0.18}
+                    vertical={false}
+                  />
                   <XAxis dataKey="month" {...chartAxis} />
                   <YAxis {...chartAxis} />
                   <Tooltip
@@ -379,7 +409,11 @@ function Dashboard() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={salesTrend} margin={{ left: -20, right: 4, top: 8 }}>
-                  <CartesianGrid stroke="var(--outline-variant)" strokeOpacity={0.18} vertical={false} />
+                  <CartesianGrid
+                    stroke="var(--outline-variant)"
+                    strokeOpacity={0.18}
+                    vertical={false}
+                  />
                   <XAxis dataKey="month" {...chartAxis} />
                   <YAxis {...chartAxis} />
                   <Tooltip
@@ -402,20 +436,36 @@ function Dashboard() {
 
         <div className="grid gap-4 pt-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
-            <SectionTitle aside={<Link to="/bookings">View all</Link>}>Recent bookings</SectionTitle>
+            <SectionTitle aside={<Link to="/bookings">View all</Link>}>
+              Recent bookings
+            </SectionTitle>
             <DataTable
               rows={recent}
               linkTo="/bookings/$bookingId"
               params={(r) => ({ bookingId: r.id })}
               columns={[
-                { key: "id", header: "Booking", cell: (r) => <span className="numeric">{r.id}</span> },
-                { key: "cust", header: "Customer", cell: (r) => byId(customers, r.customerId)?.name ?? "—" },
-                { key: "proj", header: "Project", cell: (r) => byId(projects, r.projectId)?.name ?? "—" },
+                {
+                  key: "id",
+                  header: "Booking",
+                  cell: (r) => <span className="numeric">{r.id}</span>,
+                },
+                {
+                  key: "cust",
+                  header: "Customer",
+                  cell: (r) => byId(customers, r.customerId)?.name ?? "—",
+                },
+                {
+                  key: "proj",
+                  header: "Project",
+                  cell: (r) => byId(projects, r.projectId)?.name ?? "—",
+                },
                 {
                   key: "amt",
                   header: "Amount",
                   align: "right",
-                  cell: (r) => <span className="numeric">{formatINR(r.amount, { compact: true })}</span>,
+                  cell: (r) => (
+                    <span className="numeric">{formatINR(r.amount, { compact: true })}</span>
+                  ),
                 },
                 { key: "stage", header: "Stage", cell: (r) => <Chip>{r.stage}</Chip> },
               ]}
@@ -424,7 +474,9 @@ function Dashboard() {
 
           <div className="space-y-4 lg:col-span-4">
             <Panel>
-              <SectionTitle aside={<Link to="/projects">All projects</Link>}>Project absorption</SectionTitle>
+              <SectionTitle aside={<Link to="/projects">All projects</Link>}>
+                Project absorption
+              </SectionTitle>
               <div className="space-y-5">
                 {projects.slice(0, 4).map((p) => {
                   const pct = Math.round((p.soldPlots / p.totalPlots) * 100);
@@ -441,7 +493,10 @@ function Dashboard() {
                         <span className="numeric text-xs text-muted-foreground">{pct}%</span>
                       </div>
                       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-c">
-                        <div className="gradient-primary h-full rounded-full" style={{ width: `${pct}%` }} />
+                        <div
+                          className="gradient-primary h-full rounded-full"
+                          style={{ width: `${pct}%` }}
+                        />
                       </div>
                     </div>
                   );
@@ -450,7 +505,9 @@ function Dashboard() {
             </Panel>
 
             <Panel tonal>
-              <SectionTitle aside={<Link to="/reservations">Manage</Link>}>Reservations at risk</SectionTitle>
+              <SectionTitle aside={<Link to="/reservations">Manage</Link>}>
+                Reservations at risk
+              </SectionTitle>
               <div className="space-y-3">
                 {reservations
                   .filter((r) => r.state !== "Converted")

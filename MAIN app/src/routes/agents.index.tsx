@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader, FilterBar, Chip, DataTable, Metric, NewRecordButton } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
-import { bookings, formatINR, type Agent } from "@/lib/mock-data";
+import { formatINR, type Agent } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -10,9 +10,15 @@ export const Route = createFileRoute("/agents/")({
   head: () => ({
     meta: [
       { title: "Agents — Bhairava" },
-      { name: "description", content: "Track sales agent performance, targets and conversion across regions." },
+      {
+        name: "description",
+        content: "Track sales agent performance, targets and conversion across regions.",
+      },
       { property: "og:title", content: "Agents — Bhairava" },
-      { property: "og:description", content: "Track sales agent performance, targets and conversion across regions." },
+      {
+        property: "og:description",
+        content: "Track sales agent performance, targets and conversion across regions.",
+      },
     ],
   }),
   component: AgentsIndex,
@@ -21,14 +27,18 @@ export const Route = createFileRoute("/agents/")({
 const views = ["All", "Active", "Inactive"];
 
 function AgentsIndex() {
-  const { agents } = useData();
+  const { agents, bookings } = useData();
   const [active, setActive] = useState("All");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     return agents.filter((a) => {
       if (active !== "All" && a.status !== active) return false;
-      if (query && !`${a.id} ${a.name} ${a.code} ${a.region}`.toLowerCase().includes(query.toLowerCase())) return false;
+      if (
+        query &&
+        !`${a.id} ${a.name} ${a.code} ${a.region}`.toLowerCase().includes(query.toLowerCase())
+      )
+        return false;
       return true;
     });
   }, [agents, active, query]);
@@ -47,8 +57,16 @@ function AgentsIndex() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label="Total sales" value={`₹${totalSales.toFixed(1)} Cr`} hint="across all agents" />
-        <Metric label="Avg conversion" value={`${Math.round(avgConversion * 100)}%`} hint="site visit to booking" />
+        <Metric
+          label="Total sales"
+          value={`₹${totalSales.toFixed(1)} Cr`}
+          hint="across all agents"
+        />
+        <Metric
+          label="Avg conversion"
+          value={`${Math.round(avgConversion * 100)}%`}
+          hint="site visit to booking"
+        />
         <Metric label="Active agents" value={String(activeCount)} hint={`of ${agents.length}`} />
       </div>
 
@@ -60,7 +78,11 @@ function AgentsIndex() {
           query={query}
           onQuery={setQuery}
           placeholder="Search agents…"
-          right={<span className="numeric px-2 text-xs text-muted-foreground">{filtered.length} of {agents.length}</span>}
+          right={
+            <span className="numeric px-2 text-xs text-muted-foreground">
+              {filtered.length} of {agents.length}
+            </span>
+          }
         />
 
         <DataTable<Agent>
@@ -99,20 +121,26 @@ function AgentsIndex() {
               header: "Bookings",
               align: "right",
               cell: (a) => (
-                <span className="numeric text-xs">{bookings.filter((b) => b.agentId === a.id).length}</span>
+                <span className="numeric text-xs">
+                  {bookings.filter((b) => b.agentId === a.id).length}
+                </span>
               ),
             },
             {
               key: "sales",
               header: "Sales",
               align: "right",
-              cell: (a) => <span className="numeric text-xs font-medium">₹{a.salesCr.toFixed(1)} Cr</span>,
+              cell: (a) => (
+                <span className="numeric text-xs font-medium">₹{a.salesCr.toFixed(1)} Cr</span>
+              ),
             },
             {
               key: "conversion",
               header: "Conversion",
               align: "right",
-              cell: (a) => <span className="numeric text-xs">{Math.round(a.conversion * 100)}%</span>,
+              cell: (a) => (
+                <span className="numeric text-xs">{Math.round(a.conversion * 100)}%</span>
+              ),
             },
             {
               key: "target",
@@ -124,7 +152,10 @@ function AgentsIndex() {
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 w-24 overflow-hidden rounded-full bg-surface-c">
                       <div
-                        className={cn("h-full rounded-full", pct >= 100 ? "bg-primary" : "bg-secondary")}
+                        className={cn(
+                          "h-full rounded-full",
+                          pct >= 100 ? "bg-primary" : "bg-secondary",
+                        )}
                         style={{ width: `${pct}%` }}
                       />
                     </div>

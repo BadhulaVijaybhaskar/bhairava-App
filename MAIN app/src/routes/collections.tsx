@@ -1,18 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Panel, SectionTitle } from "@/components/kit";
-import { bookings, byId, cashflow, customers, formatINR, payments } from "@/lib/mock-data";
+import { byId, cashflow, formatINR } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/collections")({
   head: () => ({
     meta: [
       { title: "Collections — Bhairava" },
-      { name: "description", content: "Live collections, cashflow trend and recent payments across all Bhairava projects." },
+      {
+        name: "description",
+        content:
+          "Live collections, cashflow trend and recent payments across all Bhairava projects.",
+      },
       { property: "og:title", content: "Collections — Bhairava" },
-      { property: "og:description", content: "Live collections, cashflow trend and recent payments across all Bhairava projects." },
+      {
+        property: "og:description",
+        content:
+          "Live collections, cashflow trend and recent payments across all Bhairava projects.",
+      },
     ],
   }),
   component: CollectionsPage,
@@ -28,6 +45,7 @@ function windowFor(period: Period) {
 }
 
 function CollectionsPage() {
+  const { payments, customers, bookings } = useData();
   const [period, setPeriod] = useState<Period>("8M");
   const data = useMemo(() => windowFor(period), [period]);
 
@@ -75,12 +93,17 @@ function CollectionsPage() {
                 delta >= 0 ? "text-primary" : "text-destructive"
               }`}
             >
-              {delta >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+              {delta >= 0 ? (
+                <ArrowUpRight className="h-4 w-4" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4" />
+              )}
               {Math.abs(delta).toFixed(1)}% vs target
             </span>
           </div>
           <p className="pt-2 text-sm text-muted-foreground">
-            Total collected across the selected period, against a target of {formatINR(target * 1e7, { compact: true })}.
+            Total collected across the selected period, against a target of{" "}
+            {formatINR(target * 1e7, { compact: true })}.
           </p>
 
           <div className="mt-6 flex gap-1 rounded-lg bg-surface-low p-1 w-fit">
@@ -89,7 +112,9 @@ function CollectionsPage() {
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                  p === period ? "bg-surface-lowest text-foreground shadow-ambient" : "text-muted-foreground hover:text-foreground"
+                  p === period
+                    ? "bg-surface-lowest text-foreground shadow-ambient"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {p}
@@ -106,9 +131,23 @@ function CollectionsPage() {
                     <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="var(--outline-variant)" strokeDasharray="3 6" vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} width={40} />
+                <CartesianGrid
+                  stroke="var(--outline-variant)"
+                  strokeDasharray="3 6"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  width={40}
+                />
                 <Tooltip
                   contentStyle={{
                     background: "var(--surface-lowest)",
@@ -118,7 +157,13 @@ function CollectionsPage() {
                   }}
                   formatter={(v: number) => [`₹${v.toFixed(1)} Cr`, "Collected"]}
                 />
-                <Area type="monotone" dataKey="collected" stroke="var(--primary)" strokeWidth={2.5} fill="url(#collectedFill)" />
+                <Area
+                  type="monotone"
+                  dataKey="collected"
+                  stroke="var(--primary)"
+                  strokeWidth={2.5}
+                  fill="url(#collectedFill)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -126,20 +171,33 @@ function CollectionsPage() {
 
         <div className="flex flex-col gap-4 lg:col-span-4">
           <Panel className="p-5">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Outstanding</p>
-            <p className="numeric pt-2 text-2xl font-semibold">{formatINR(outstanding * 1e7, { compact: true })}</p>
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Outstanding
+            </p>
+            <p className="numeric pt-2 text-2xl font-semibold">
+              {formatINR(outstanding * 1e7, { compact: true })}
+            </p>
             <p className="pt-1 text-xs text-muted-foreground">across active bookings</p>
           </Panel>
           <Panel className="p-5">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Overdue risk</p>
-            <p className="numeric pt-2 text-2xl font-semibold">{formatINR(outstanding * 0.31 * 1e7, { compact: true })}</p>
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Overdue risk
+            </p>
+            <p className="numeric pt-2 text-2xl font-semibold">
+              {formatINR(outstanding * 0.31 * 1e7, { compact: true })}
+            </p>
             <p className="pt-1 text-xs text-muted-foreground">estimated 30+ days past due</p>
           </Panel>
           <Panel className="p-5">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Collection efficiency</p>
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Collection efficiency
+            </p>
             <p className="numeric pt-2 text-2xl font-semibold">{efficiency.toFixed(0)}%</p>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-c">
-              <div className="gradient-primary h-full rounded-full" style={{ width: `${Math.min(100, efficiency)}%` }} />
+              <div
+                className="gradient-primary h-full rounded-full"
+                style={{ width: `${Math.min(100, efficiency)}%` }}
+              />
             </div>
             <p className="pt-2 text-xs text-muted-foreground">
               {momDelta >= 0 ? "+" : ""}
@@ -157,14 +215,20 @@ function CollectionsPage() {
               <div key={m.month} className="flex items-center justify-between px-5 py-4">
                 <div>
                   <p className="text-sm font-medium">{m.month}</p>
-                  <p className="text-xs text-muted-foreground">collected {formatINR(m.collected * 1e7, { compact: true })}</p>
+                  <p className="text-xs text-muted-foreground">
+                    collected {formatINR(m.collected * 1e7, { compact: true })}
+                  </p>
                 </div>
                 <span
                   className={`numeric flex items-center gap-1 text-sm font-medium ${
                     m.change >= 0 ? "text-primary" : "text-destructive"
                   }`}
                 >
-                  {m.change >= 0 ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+                  {m.change >= 0 ? (
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  ) : (
+                    <ArrowDownRight className="h-3.5 w-3.5" />
+                  )}
                   {formatINR(Math.abs(m.change) * 1e7, { compact: true })}
                 </span>
               </div>
@@ -173,23 +237,53 @@ function CollectionsPage() {
         </div>
 
         <div className="lg:col-span-8">
-          <SectionTitle aside={`${recentPayments.length} transactions`}>Recent transactions</SectionTitle>
+          <SectionTitle aside={`${recentPayments.length} transactions`}>
+            Recent transactions
+          </SectionTitle>
           <DataTable
             rows={recentPayments}
             linkTo="/payments/$paymentId"
             params={(r) => ({ paymentId: r.id })}
             columns={[
-              { key: "id", header: "Payment", cell: (r) => <span className="numeric text-xs">{r.id}</span> },
-              { key: "customer", header: "Customer", cell: (r) => <span className="text-sm">{r.customerName}</span> },
-              { key: "booking", header: "Booking", cell: (r) => <span className="numeric text-xs text-muted-foreground">{r.bookingId}</span> },
-              { key: "mode", header: "Mode", cell: (r) => <span className="text-xs text-muted-foreground">{r.mode}</span> },
+              {
+                key: "id",
+                header: "Payment",
+                cell: (r) => <span className="numeric text-xs">{r.id}</span>,
+              },
+              {
+                key: "customer",
+                header: "Customer",
+                cell: (r) => <span className="text-sm">{r.customerName}</span>,
+              },
+              {
+                key: "booking",
+                header: "Booking",
+                cell: (r) => (
+                  <span className="numeric text-xs text-muted-foreground">{r.bookingId}</span>
+                ),
+              },
+              {
+                key: "mode",
+                header: "Mode",
+                cell: (r) => <span className="text-xs text-muted-foreground">{r.mode}</span>,
+              },
               { key: "status", header: "Status", cell: (r) => <Chip>{r.status}</Chip> },
-              { key: "date", header: "Date", cell: (r) => <span className="numeric text-xs text-muted-foreground">{r.date}</span> },
+              {
+                key: "date",
+                header: "Date",
+                cell: (r) => (
+                  <span className="numeric text-xs text-muted-foreground">{r.date}</span>
+                ),
+              },
               {
                 key: "amount",
                 header: "Amount",
                 align: "right",
-                cell: (r) => <span className="numeric text-sm font-semibold">{formatINR(r.amount, { compact: true })}</span>,
+                cell: (r) => (
+                  <span className="numeric text-sm font-semibold">
+                    {formatINR(r.amount, { compact: true })}
+                  </span>
+                ),
               },
             ]}
           />
