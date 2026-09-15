@@ -36,10 +36,10 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { notifications } from "@/lib/mock-data";
 import { getSession, signOut } from "@/lib/auth";
 import { useCreateFabBlocked } from "@/lib/fab-visibility";
 import { BrandLogo } from "@/components/brand";
+import { useData } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -467,6 +467,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 function TopBar() {
+  const { notifications } = useData();
   const unread = notifications.filter((n) => n.unread).length;
   return (
     <header className="glass sticky top-0 z-30 hidden h-16 shrink-0 items-center gap-2 px-4 pt-[env(safe-area-inset-top)] sm:gap-4 sm:px-6 lg:flex">
@@ -642,7 +643,11 @@ function MobileFab() {
             open ? "bg-surface-c text-foreground" : "gradient-primary text-primary-foreground",
           )}
         >
-          {open ? <X className="h-6 w-6" strokeWidth={2.2} /> : <Plus className="h-7 w-7" strokeWidth={2.4} />}
+          {open ? (
+            <X className="h-6 w-6" strokeWidth={2.2} />
+          ) : (
+            <Plus className="h-7 w-7" strokeWidth={2.4} />
+          )}
         </button>
       </div>
     </>,

@@ -14,22 +14,37 @@ import {
 } from "react";
 import {
   agents as seedAgents,
+  appUsers as seedUsers,
+  auditLog as seedAudit,
   bookings as seedBookings,
   customers as seedCustomers,
+  documents as seedDocuments,
+  notifications as seedNotifications,
+  payments as seedPayments,
   plots as seedPlots,
   projects as seedProjects,
+  registrations as seedRegistrations,
   reservations as seedReservations,
   siteVisits as seedSiteVisits,
   type Agent,
+  type AppUser,
+  type AuditEntry,
   type Booking,
   type Customer,
+  type DocumentRecord,
+  type NotificationItem,
+  type Payment,
   type Plot,
   type Project,
+  type Registration,
   type Reservation,
   type SiteVisit,
 } from "@/lib/mock-data";
+import { defaultCompanySettings, type CompanySettings } from "@/lib/company";
+import { getSession } from "@/lib/auth";
+import { canChangeRole, canDemoteFounder, canRemoveMember } from "@/lib/permissions";
 
-const KEY = "bhairava.admin.v3";
+const KEY = "bhairava.admin.v4";
 
 interface Persisted {
   projects?: Project[];
@@ -39,6 +54,13 @@ interface Persisted {
   extraBookings?: Booking[];
   extraReservations?: Reservation[];
   extraVisits?: SiteVisit[];
+  workspaceUsers?: AppUser[];
+  auditEntries?: AuditEntry[];
+  companySettings?: CompanySettings;
+  documents?: DocumentRecord[];
+  payments?: Payment[];
+  registrations?: Registration[];
+  notifications?: NotificationItem[];
 }
 
 interface Data {
@@ -51,7 +73,25 @@ interface Data {
   siteVisits: SiteVisit[];
 }
 
+export type LogAuditInput = {
+  actor?: string;
+  action: string;
+  object: string;
+  before?: string;
+  after?: string;
+  timestamp?: string;
+};
+
 interface Ctx extends Data {
+  workspaceUsers: AppUser[];
+  auditEntries: AuditEntry[];
+  companySettings: CompanySettings;
+  documents: DocumentRecord[];
+  payments: Payment[];
+  registrations: Registration[];
+  notifications: NotificationItem[];
+  currentUser: AppUser | null;
+
   saveProject: (p: Project) => void;
   removeProject: (id: string) => void;
   saveCustomer: (c: Customer) => void;
@@ -67,7 +107,32 @@ interface Ctx extends Data {
   saveVisit: (v: SiteVisit) => void;
   saveSiteVisit: (v: SiteVisit) => void;
   removeSiteVisit: (id: string) => void;
+
+  saveUser: (u: AppUser) => void;
+  updateUserRole: (id: string, role: AppUser["role"]) => { ok: boolean; error?: string };
+  updateUserStatus: (id: string, status: AppUser["status"]) => { ok: boolean; error?: string };
+  removeUser: (id: string) => { ok: boolean; error?: string };
+  inviteUser: (
+    email: string,
+    role: AppUser["role"],
+  ) => { ok: boolean; error?: string; user?: AppUser };
+  resendInvitation: (id: string) => { ok: boolean; error?: string };
+  revokeInvitation: (id: string) => { ok: boolean; error?: string };
+
+  logAudit: (entry: LogAuditInput) => void;
+  saveCompanySettings: (s: CompanySettings) => void;
+  saveDocument: (d: DocumentRecord) => void;
+  removeDocument: (id: string) => void;
+  savePayment: (p: Payment) => void;
+  removePayment: (id: string) => void;
+  saveRegistration: (r: Registration) => void;
+  removeRegistration: (id: string) => void;
+  saveNotification: (n: NotificationItem) => void;
+  markAllNotificationsRead: () => void;
+  markNotificationRead: (id: string) => void;
+
   reset: () => void;
+  deleteWorkspace: () => void;
   nextId: (prefix: string, list: { id: string }[]) => string;
 }
 
@@ -79,15 +144,31 @@ const mergeById = <T extends { id: string }>(seed: T[], extra: T[] = []): T[] =>
   return [...created, ...mergedSeed];
 };
 
-const seed = (): Data => ({
-  projects: seedProjects,
-  customers: seedCustomers,
-  agents: seedAgents,
-  plots: seedPlots,
-  bookings: seedBookings,
-  reservations: seedReservations,
-  siteVisits: seedSiteVisits,
-});
+const resolveCurrentUser = (users: AppUser[]): AppUser | null => {
+  const session = getSession();
+  if (!session) return users.find((u) => u.role === "Founder" && u.status === "Active") ?? null;
+  return (
+    users.find((u) => u.email.toLowerCase() === session.email.toLowerCase()) ??
+    users.find((u) => u.name === session.name) ??
+    users.find((u) => u.role === "Founder" && u.status === "Active") ??
+    null
+  );
+};
+
+const nowStamp = () => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const emailName = (email: string) => {
+  const local = email.split("@")[0] ?? "Member";
+  return local
+    .split(/[._-]/)
+    .filter(Boolean)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
+};
 
 const DataContext = createContext<Ctx | null>(null);
 
@@ -106,6 +187,27 @@ export function defaultPlotPolygon(index: number): [number, number][] {
   ];
 }
 
+/** Pure helpers exported for unit tests (no React). */
+export function validateInvite(
+  email: string,
+  role: AppUser["role"],
+  users: AppUser[],
+): { ok: true; email: string } | { ok: false; error: string } {
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed) return { ok: false, error: "Email is required." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed))
+    return { ok: false, error: "Enter a valid email address." };
+  if (!role) return { ok: false, error: "Role is required." };
+  const existing = users.find((u) => u.email.toLowerCase() === trimmed);
+  if (existing?.status === "Invited") {
+    return { ok: false, error: "An invitation is already pending for this email." };
+  }
+  if (existing) {
+    return { ok: false, error: "This email already belongs to a workspace member." };
+  }
+  return { ok: true, email: trimmed };
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const [core, setCore] = useState({
     projects: seedProjects,
@@ -116,6 +218,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [extraBookings, setExtraBookings] = useState<Booking[]>([]);
   const [extraReservations, setExtraReservations] = useState<Reservation[]>([]);
   const [extraVisits, setExtraVisits] = useState<SiteVisit[]>([]);
+  const [workspaceUsers, setWorkspaceUsers] = useState<AppUser[]>(() => [...seedUsers]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>(() => [...seedAudit]);
+  const [companySettings, setCompanySettings] = useState<CompanySettings>(() =>
+    defaultCompanySettings(),
+  );
+  const [documents, setDocuments] = useState<DocumentRecord[]>(() => [...seedDocuments]);
+  const [payments, setPayments] = useState<Payment[]>(() => [...seedPayments]);
+  const [registrations, setRegistrations] = useState<Registration[]>(() => [...seedRegistrations]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => [
+    ...seedNotifications,
+  ]);
 
   useEffect(() => {
     try {
@@ -133,6 +246,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (parsed.extraBookings) setExtraBookings(parsed.extraBookings);
       if (parsed.extraReservations) setExtraReservations(parsed.extraReservations);
       if (parsed.extraVisits) setExtraVisits(parsed.extraVisits);
+      if (parsed.workspaceUsers?.length) setWorkspaceUsers(parsed.workspaceUsers);
+      if (parsed.auditEntries?.length) setAuditEntries(parsed.auditEntries);
+      if (parsed.companySettings)
+        setCompanySettings({ ...defaultCompanySettings(), ...parsed.companySettings });
+      if (parsed.documents) setDocuments(parsed.documents);
+      if (parsed.payments) setPayments(parsed.payments);
+      if (parsed.registrations) setRegistrations(parsed.registrations);
+      if (parsed.notifications) setNotifications(parsed.notifications);
     } catch {
       /* ignore corrupt storage */
     }
@@ -147,6 +268,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       extraBookings: Booking[];
       extraReservations: Reservation[];
       extraVisits: SiteVisit[];
+      workspaceUsers: AppUser[];
+      auditEntries: AuditEntry[];
+      companySettings: CompanySettings;
+      documents: DocumentRecord[];
+      payments: Payment[];
+      registrations: Registration[];
+      notifications: NotificationItem[];
     }) => {
       try {
         const payload: Persisted = {
@@ -157,6 +285,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
           extraBookings: next.extraBookings,
           extraReservations: next.extraReservations,
           extraVisits: next.extraVisits,
+          workspaceUsers: next.workspaceUsers,
+          auditEntries: next.auditEntries,
+          companySettings: next.companySettings,
+          documents: next.documents,
+          payments: next.payments,
+          registrations: next.registrations,
+          notifications: next.notifications,
         };
         localStorage.setItem(KEY, JSON.stringify(payload));
       } catch {
@@ -166,18 +301,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  type SnapshotPatch = Partial<{
+    projects: Project[];
+    customers: Customer[];
+    agents: Agent[];
+    extraPlots: Plot[];
+    extraBookings: Booking[];
+    extraReservations: Reservation[];
+    extraVisits: SiteVisit[];
+    workspaceUsers: AppUser[];
+    auditEntries: AuditEntry[];
+    companySettings: CompanySettings;
+    documents: DocumentRecord[];
+    payments: Payment[];
+    registrations: Registration[];
+    notifications: NotificationItem[];
+  }>;
+
   const snapshot = useCallback(
-    (
-      patch: Partial<{
-        projects: Project[];
-        customers: Customer[];
-        agents: Agent[];
-        extraPlots: Plot[];
-        extraBookings: Booking[];
-        extraReservations: Reservation[];
-        extraVisits: SiteVisit[];
-      }>,
-    ) => {
+    (patch: SnapshotPatch) => {
       const next = {
         projects: patch.projects ?? core.projects,
         customers: patch.customers ?? core.customers,
@@ -186,43 +328,136 @@ export function DataProvider({ children }: { children: ReactNode }) {
         extraBookings: patch.extraBookings ?? extraBookings,
         extraReservations: patch.extraReservations ?? extraReservations,
         extraVisits: patch.extraVisits ?? extraVisits,
+        workspaceUsers: patch.workspaceUsers ?? workspaceUsers,
+        auditEntries: patch.auditEntries ?? auditEntries,
+        companySettings: patch.companySettings ?? companySettings,
+        documents: patch.documents ?? documents,
+        payments: patch.payments ?? payments,
+        registrations: patch.registrations ?? registrations,
+        notifications: patch.notifications ?? notifications,
       };
       persist(next);
     },
-    [core, extraPlots, extraBookings, extraReservations, extraVisits, persist],
+    [
+      core,
+      extraPlots,
+      extraBookings,
+      extraReservations,
+      extraVisits,
+      workspaceUsers,
+      auditEntries,
+      companySettings,
+      documents,
+      payments,
+      registrations,
+      notifications,
+      persist,
+    ],
+  );
+
+  const appendAudit = useCallback(
+    (entry: LogAuditInput, users: AppUser[], prevEntries: AuditEntry[]) => {
+      const actor =
+        entry.actor ?? resolveCurrentUser(users)?.name ?? getSession()?.name ?? "System";
+      const id = `AUD-${String(9000 + prevEntries.length + Math.floor(Math.random() * 1000))}`;
+      const next: AuditEntry = {
+        id,
+        time: entry.timestamp ?? nowStamp(),
+        actor,
+        action: entry.action,
+        object: entry.object,
+        before: entry.before ?? "—",
+        after: entry.after ?? "—",
+      };
+      return [next, ...prevEntries];
+    },
+    [],
+  );
+
+  const logAudit = useCallback(
+    (entry: LogAuditInput) => {
+      setAuditEntries((prev) => {
+        const next = appendAudit(entry, workspaceUsers, prev);
+        snapshot({ auditEntries: next });
+        return next;
+      });
+    },
+    [appendAudit, snapshot, workspaceUsers],
   );
 
   const upsertCore = useCallback(
-    <K extends "projects" | "customers" | "agents">(key: K, item: Data[K][number]) => {
+    <K extends "projects" | "customers" | "agents">(
+      key: K,
+      item: Data[K][number],
+      audit?: LogAuditInput,
+    ) => {
       setCore((prev) => {
         const list = prev[key] as { id: string }[];
         const exists = list.some((x) => x.id === item.id);
         const nextList = exists ? list.map((x) => (x.id === item.id ? item : x)) : [item, ...list];
         const next = { ...prev, [key]: nextList };
-        snapshot({ [key]: nextList } as never);
+        if (audit) {
+          setAuditEntries((ae) => {
+            const entries = appendAudit(audit, workspaceUsers, ae);
+            snapshot({ [key]: nextList, auditEntries: entries } as never);
+            return entries;
+          });
+        } else {
+          snapshot({ [key]: nextList } as never);
+        }
         return next;
       });
     },
-    [snapshot],
+    [appendAudit, snapshot, workspaceUsers],
   );
 
   const removeCore = useCallback(
-    (key: "projects" | "customers" | "agents", id: string) => {
+    (key: "projects" | "customers" | "agents", id: string, audit?: LogAuditInput) => {
       setCore((prev) => {
         const next = {
           ...prev,
           [key]: (prev[key] as { id: string }[]).filter((x) => x.id !== id),
         };
-        snapshot({ [key]: next[key] } as never);
+        if (audit) {
+          setAuditEntries((ae) => {
+            const entries = appendAudit(audit, workspaceUsers, ae);
+            snapshot({ [key]: next[key], auditEntries: entries } as never);
+            return entries;
+          });
+        } else {
+          snapshot({ [key]: next[key] } as never);
+        }
         return next;
       });
     },
-    [snapshot],
+    [appendAudit, snapshot, workspaceUsers],
   );
 
   const upsertExtra = useCallback(<T extends { id: string }>(list: T[], item: T) => {
     const exists = list.some((x) => x.id === item.id);
     return exists ? list.map((x) => (x.id === item.id ? item : x)) : [item, ...list];
+  }, []);
+
+  const hardReset = useCallback(() => {
+    try {
+      localStorage.removeItem(KEY);
+      // Also clear legacy keys
+      localStorage.removeItem("bhairava.admin.v3");
+    } catch {
+      /* ignore */
+    }
+    setCore({ projects: seedProjects, customers: seedCustomers, agents: seedAgents });
+    setExtraPlots([]);
+    setExtraBookings([]);
+    setExtraReservations([]);
+    setExtraVisits([]);
+    setWorkspaceUsers([...seedUsers]);
+    setAuditEntries([...seedAudit]);
+    setCompanySettings(defaultCompanySettings());
+    setDocuments([...seedDocuments]);
+    setPayments([...seedPayments]);
+    setRegistrations([...seedRegistrations]);
+    setNotifications([...seedNotifications]);
   }, []);
 
   const value = useMemo<Ctx>(
@@ -234,87 +469,586 @@ export function DataProvider({ children }: { children: ReactNode }) {
       bookings: mergeById(seedBookings, extraBookings),
       reservations: mergeById(seedReservations, extraReservations),
       siteVisits: mergeById(seedSiteVisits, extraVisits),
-      saveProject: (p) => upsertCore("projects", p),
-      removeProject: (id) => removeCore("projects", id),
-      saveCustomer: (c) => upsertCore("customers", c),
-      removeCustomer: (id) => removeCore("customers", id),
-      saveAgent: (a) => upsertCore("agents", a),
-      removeAgent: (id) => removeCore("agents", id),
+      workspaceUsers,
+      auditEntries,
+      companySettings,
+      documents,
+      payments,
+      registrations,
+      notifications,
+      currentUser: resolveCurrentUser(workspaceUsers),
+
+      saveProject: (p) => {
+        const exists = core.projects.some((x) => x.id === p.id);
+        upsertCore("projects", p, {
+          action: exists ? "edited project" : "created project",
+          object: p.id,
+          before: exists ? "previous" : "—",
+          after: p.status,
+        });
+      },
+      removeProject: (id) =>
+        removeCore("projects", id, {
+          action: "deleted project",
+          object: id,
+          before: "exists",
+          after: "deleted",
+        }),
+      saveCustomer: (c) => {
+        const exists = core.customers.some((x) => x.id === c.id);
+        upsertCore("customers", c, {
+          action: exists ? "edited customer" : "created customer",
+          object: c.id,
+          before: exists ? "previous" : "—",
+          after: c.stage,
+        });
+      },
+      removeCustomer: (id) =>
+        removeCore("customers", id, {
+          action: "deleted customer",
+          object: id,
+          before: "exists",
+          after: "deleted",
+        }),
+      saveAgent: (a) => {
+        const exists = core.agents.some((x) => x.id === a.id);
+        upsertCore("agents", a, {
+          action: exists ? "edited agent" : "created agent",
+          object: a.id,
+          before: exists ? "previous" : "—",
+          after: a.status ?? "Active",
+        });
+      },
+      removeAgent: (id) =>
+        removeCore("agents", id, {
+          action: "deleted agent",
+          object: id,
+          before: "exists",
+          after: "deleted",
+        }),
       savePlot: (p) => {
         setExtraPlots((prev) => {
+          const exists = mergeById(seedPlots, prev).some((x) => x.id === p.id);
           const next = upsertExtra(prev, p);
-          snapshot({ extraPlots: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists ? "edited plot" : "created plot",
+                object: p.id,
+                before: exists ? "previous" : "—",
+                after: p.status,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraPlots: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       removePlot: (id) => {
         setExtraPlots((prev) => {
           const next = prev.filter((x) => x.id !== id);
-          snapshot({ extraPlots: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              { action: "deleted plot", object: id, before: "exists", after: "deleted" },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraPlots: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       saveBooking: (b) => {
         setExtraBookings((prev) => {
+          const exists = mergeById(seedBookings, prev).some((x) => x.id === b.id);
           const next = upsertExtra(prev, b);
-          snapshot({ extraBookings: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists ? "updated booking stage" : "created booking",
+                object: b.id,
+                before: exists ? "previous" : "—",
+                after: b.stage,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraBookings: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       removeBooking: (id) => {
         setExtraBookings((prev) => {
           const next = prev.filter((x) => x.id !== id);
-          snapshot({ extraBookings: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              { action: "cancelled booking", object: id, before: "exists", after: "cancelled" },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraBookings: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       saveReservation: (r) => {
         setExtraReservations((prev) => {
+          const exists = mergeById(seedReservations, prev).some((x) => x.id === r.id);
           const next = upsertExtra(prev, r);
-          snapshot({ extraReservations: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists ? "updated reservation" : "created reservation",
+                object: r.id,
+                before: exists ? "previous" : "—",
+                after: r.state,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraReservations: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       removeReservation: (id) => {
         setExtraReservations((prev) => {
           const next = prev.filter((x) => x.id !== id);
-          snapshot({ extraReservations: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              { action: "cancelled reservation", object: id, before: "exists", after: "cancelled" },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraReservations: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       saveVisit: (v) => {
         setExtraVisits((prev) => {
+          const exists = mergeById(seedSiteVisits, prev).some((x) => x.id === v.id);
           const next = upsertExtra(prev, v);
-          snapshot({ extraVisits: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists ? "updated site visit" : "created site visit",
+                object: v.id,
+                before: exists ? "previous" : "—",
+                after: v.status,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraVisits: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       saveSiteVisit: (v) => {
         setExtraVisits((prev) => {
+          const exists = mergeById(seedSiteVisits, prev).some((x) => x.id === v.id);
           const next = upsertExtra(prev, v);
-          snapshot({ extraVisits: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists ? "updated site visit" : "created site visit",
+                object: v.id,
+                before: exists ? "previous" : "—",
+                after: v.status,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraVisits: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
       removeSiteVisit: (id) => {
         setExtraVisits((prev) => {
           const next = prev.filter((x) => x.id !== id);
-          snapshot({ extraVisits: next });
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              { action: "cancelled site visit", object: id, before: "exists", after: "cancelled" },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ extraVisits: next, auditEntries: entries });
+            return entries;
+          });
           return next;
         });
       },
-      reset: () => {
-        try {
-          localStorage.removeItem(KEY);
-        } catch {
-          /* ignore */
+
+      saveUser: (u) => {
+        setWorkspaceUsers((prev) => {
+          const next = upsertExtra(prev, u);
+          snapshot({ workspaceUsers: next });
+          return next;
+        });
+      },
+
+      updateUserRole: (id, role) => {
+        const actor = resolveCurrentUser(workspaceUsers);
+        const target = workspaceUsers.find((u) => u.id === id);
+        if (!target) return { ok: false, error: "Member not found." };
+        const check = canDemoteFounder(actor, target, role, workspaceUsers);
+        if (!check.ok) return { ok: false, error: check.reason ?? "Not allowed." };
+        if (target.role === role) return { ok: true };
+
+        const nextUsers = workspaceUsers.map((u) => (u.id === id ? { ...u, role } : u));
+        const nextAudit = appendAudit(
+          {
+            action: "changed member role",
+            object: id,
+            before: target.role,
+            after: role,
+          },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
+        return { ok: true };
+      },
+
+      updateUserStatus: (id, status) => {
+        const actor = resolveCurrentUser(workspaceUsers);
+        const target = workspaceUsers.find((u) => u.id === id);
+        if (!target) return { ok: false, error: "Member not found." };
+        if (actor?.id === id && status === "Suspended") {
+          return { ok: false, error: "You cannot suspend yourself." };
         }
+        if (target.role === "Founder" && status === "Suspended") {
+          const founders = workspaceUsers.filter(
+            (u) => u.role === "Founder" && u.status === "Active",
+          );
+          if (founders.length <= 1) {
+            return { ok: false, error: "Cannot suspend the final Founder." };
+          }
+        }
+        const roleGate = canChangeRole(actor, target, target.role);
+        if (!roleGate.ok) return { ok: false, error: roleGate.reason ?? "Not allowed." };
+
+        const action =
+          status === "Suspended"
+            ? "suspended member"
+            : status === "Active" && target.status === "Suspended"
+              ? "reactivated member"
+              : "updated member status";
+
+        const nextUsers = workspaceUsers.map((u) => (u.id === id ? { ...u, status } : u));
+        const nextAudit = appendAudit(
+          { action, object: id, before: target.status, after: status },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
+        return { ok: true };
+      },
+
+      removeUser: (id) => {
+        const actor = resolveCurrentUser(workspaceUsers);
+        const target = workspaceUsers.find((u) => u.id === id);
+        if (!target) return { ok: false, error: "Member not found." };
+        const check = canRemoveMember(actor, target, workspaceUsers);
+        if (!check.ok) return { ok: false, error: check.reason ?? "Not allowed." };
+
+        const nextUsers = workspaceUsers.filter((u) => u.id !== id);
+        const nextAudit = appendAudit(
+          {
+            action: target.status === "Invited" ? "revoked invitation" : "removed member",
+            object: id,
+            before: target.status,
+            after: "removed",
+          },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
+        return { ok: true };
+      },
+
+      inviteUser: (email, role) => {
+        const actor = resolveCurrentUser(workspaceUsers);
+        if (!actor || (actor.role !== "Founder" && actor.role !== "Administrator")) {
+          return { ok: false, error: "You do not have permission to invite members." };
+        }
+        if (actor.role === "Administrator" && (role === "Founder" || role === "Administrator")) {
+          return { ok: false, error: "Administrators cannot invite Founders or Administrators." };
+        }
+        const valid = validateInvite(email, role, workspaceUsers);
+        if (!valid.ok) return { ok: false, error: valid.error ?? "Not allowed." };
+
+        let max = 0;
+        for (const u of workspaceUsers) {
+          const m = /^USR-(\d+)$/.exec(u.id);
+          if (m?.[1]) max = Math.max(max, Number(m[1]));
+        }
+        const user: AppUser = {
+          id: `USR-${String(max + 1).padStart(2, "0")}`,
+          name: emailName(valid.email),
+          email: valid.email,
+          role,
+          status: "Invited",
+          lastActive: "—",
+        };
+
+        const nextUsers = [user, ...workspaceUsers];
+        const nextAudit = appendAudit(
+          { action: "invited user", object: user.id, before: "—", after: role },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
+        return { ok: true, user };
+      },
+
+      resendInvitation: (id) => {
+        const target = workspaceUsers.find((u) => u.id === id);
+        if (!target || target.status !== "Invited") {
+          return { ok: false, error: "No pending invitation for this member." };
+        }
+        const nextAudit = appendAudit(
+          { action: "resent invitation", object: id, before: "Invited", after: "Invited" },
+          workspaceUsers,
+          auditEntries,
+        );
+        setAuditEntries(nextAudit);
+        snapshot({ auditEntries: nextAudit });
+        return { ok: true };
+      },
+
+      revokeInvitation: (id) => {
+        const actor = resolveCurrentUser(workspaceUsers);
+        const target = workspaceUsers.find((u) => u.id === id);
+        if (!target || target.status !== "Invited") {
+          return { ok: false, error: "No pending invitation for this member." };
+        }
+        const check = canRemoveMember(actor, target, workspaceUsers);
+        if (!check.ok) return { ok: false, error: check.reason ?? "Not allowed." };
+        const nextUsers = workspaceUsers.filter((u) => u.id !== id);
+        const nextAudit = appendAudit(
+          { action: "revoked invitation", object: id, before: "Invited", after: "removed" },
+          workspaceUsers,
+          auditEntries,
+        );
+        setWorkspaceUsers(nextUsers);
+        setAuditEntries(nextAudit);
+        snapshot({ workspaceUsers: nextUsers, auditEntries: nextAudit });
+        return { ok: true };
+      },
+
+      logAudit,
+
+      saveCompanySettings: (s) => {
+        const nextAudit = appendAudit(
+          {
+            action: "changed company settings",
+            object: "company",
+            before: companySettings.companyName,
+            after: s.companyName,
+          },
+          workspaceUsers,
+          auditEntries,
+        );
+        setCompanySettings(s);
+        setAuditEntries(nextAudit);
+        snapshot({ companySettings: s, auditEntries: nextAudit });
+      },
+
+      saveDocument: (d) => {
+        setDocuments((prev) => {
+          const exists = prev.some((x) => x.id === d.id);
+          const next = upsertExtra(prev, d);
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists
+                  ? d.verified === "Verified"
+                    ? "verified document"
+                    : d.verified === "Rejected"
+                      ? "rejected document"
+                      : "updated document"
+                  : "uploaded document",
+                object: d.id,
+                before: exists ? "previous" : "—",
+                after: d.verified,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ documents: next, auditEntries: entries });
+            return entries;
+          });
+          return next;
+        });
+      },
+      removeDocument: (id) => {
+        setDocuments((prev) => {
+          const next = prev.filter((x) => x.id !== id);
+          snapshot({ documents: next });
+          return next;
+        });
+      },
+
+      savePayment: (p) => {
+        setPayments((prev) => {
+          const exists = prev.some((x) => x.id === p.id);
+          const next = upsertExtra(prev, p);
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action:
+                  p.status === "Refunded"
+                    ? "refunded payment"
+                    : p.status === "Failed"
+                      ? "failed payment"
+                      : exists
+                        ? "updated payment"
+                        : "created payment",
+                object: p.id,
+                before: exists ? "previous" : "—",
+                after: p.status,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ payments: next, auditEntries: entries });
+            return entries;
+          });
+          return next;
+        });
+      },
+      removePayment: (id) => {
+        setPayments((prev) => {
+          const next = prev.filter((x) => x.id !== id);
+          snapshot({ payments: next });
+          return next;
+        });
+      },
+
+      saveRegistration: (r) => {
+        setRegistrations((prev) => {
+          const exists = prev.some((x) => x.id === r.id);
+          const next = upsertExtra(prev, r);
+          setAuditEntries((ae) => {
+            const entries = appendAudit(
+              {
+                action: exists ? "updated registration" : "created registration",
+                object: r.id,
+                before: exists ? "previous" : "—",
+                after: r.stage,
+              },
+              workspaceUsers,
+              ae,
+            );
+            snapshot({ registrations: next, auditEntries: entries });
+            return entries;
+          });
+          return next;
+        });
+      },
+      removeRegistration: (id) => {
+        setRegistrations((prev) => {
+          const next = prev.filter((x) => x.id !== id);
+          snapshot({ registrations: next });
+          return next;
+        });
+      },
+
+      saveNotification: (n) => {
+        setNotifications((prev) => {
+          const next = upsertExtra(prev, n);
+          snapshot({ notifications: next });
+          return next;
+        });
+      },
+      markAllNotificationsRead: () => {
+        setNotifications((prev) => {
+          const next = prev.map((n) => ({ ...n, unread: false }));
+          snapshot({ notifications: next });
+          return next;
+        });
+      },
+      markNotificationRead: (id) => {
+        setNotifications((prev) => {
+          const next = prev.map((n) => (n.id === id ? { ...n, unread: false } : n));
+          snapshot({ notifications: next });
+          return next;
+        });
+      },
+
+      reset: hardReset,
+      deleteWorkspace: () => {
+        hardReset();
+        setAuditEntries((ae) => {
+          const entries = appendAudit(
+            {
+              action: "deleted workspace",
+              object: "workspace",
+              before: "active",
+              after: "reset",
+            },
+            workspaceUsers,
+            ae,
+          );
+          // Persist the reset seed + this audit note
+          try {
+            const payload: Persisted = {
+              projects: seedProjects,
+              customers: seedCustomers,
+              agents: seedAgents,
+              extraPlots: [],
+              extraBookings: [],
+              extraReservations: [],
+              extraVisits: [],
+              workspaceUsers: seedUsers,
+              auditEntries: entries,
+              companySettings: defaultCompanySettings(),
+              documents: seedDocuments,
+              payments: seedPayments,
+              registrations: seedRegistrations,
+              notifications: seedNotifications,
+            };
+            localStorage.setItem(KEY, JSON.stringify(payload));
+          } catch {
+            /* ignore */
+          }
+          return entries;
+        });
+        setWorkspaceUsers([...seedUsers]);
+        setCompanySettings(defaultCompanySettings());
+        setDocuments([...seedDocuments]);
+        setPayments([...seedPayments]);
+        setRegistrations([...seedRegistrations]);
+        setNotifications([...seedNotifications]);
         setCore({ projects: seedProjects, customers: seedCustomers, agents: seedAgents });
         setExtraPlots([]);
         setExtraBookings([]);
         setExtraReservations([]);
         setExtraVisits([]);
       },
+
       nextId: (prefix, list) => {
         let max = 0;
         let pad = prefix === "Br" ? 6 : prefix === "brag" ? 4 : 2;
@@ -334,10 +1068,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
       extraBookings,
       extraReservations,
       extraVisits,
+      workspaceUsers,
+      auditEntries,
+      companySettings,
+      documents,
+      payments,
+      registrations,
+      notifications,
       upsertCore,
       removeCore,
       upsertExtra,
       snapshot,
+      appendAudit,
+      logAudit,
+      hardReset,
     ],
   );
 

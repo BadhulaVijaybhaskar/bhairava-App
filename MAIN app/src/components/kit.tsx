@@ -1,7 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, SlidersHorizontal, Search, Download, Plus } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import { plotStatusFill, plotStatusFromLabel, plotStatusInk, plotStatusSolid } from "@/lib/plot-status-colors";
+import { toast } from "sonner";
+import {
+  plotStatusFill,
+  plotStatusFromLabel,
+  plotStatusInk,
+  plotStatusSolid,
+} from "@/lib/plot-status-colors";
 import { cn } from "@/lib/utils";
 import { ScrollTabs } from "@/components/scroll-tabs";
 
@@ -165,15 +171,9 @@ const chipDots: Record<string, string> = {
 export function toneFor(value: string): keyof typeof chipTones {
   const v = value.toLowerCase();
   if (
-    [
-      "available",
-      "succeeded",
-      "verified",
-      "completed",
-      "active",
-      "converted",
-      "sold out",
-    ].includes(v)
+    ["available", "succeeded", "verified", "completed", "active", "converted", "sold out"].includes(
+      v,
+    )
   )
     return "positive";
   if (["booked", "confirmed", "scheduled", "ready", "agreement", "invited"].includes(v))
@@ -235,6 +235,8 @@ export function FilterBar({
   placeholder = "Search…",
   query,
   onQuery,
+  onExport,
+  onFilters,
 }: {
   views?: string[];
   active?: string;
@@ -243,6 +245,8 @@ export function FilterBar({
   placeholder?: string;
   query?: string;
   onQuery?: (v: string) => void;
+  onExport?: () => void;
+  onFilters?: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2.5 pb-4 md:flex-row md:flex-wrap md:items-center">
@@ -283,6 +287,10 @@ export function FilterBar({
         </label>
         <button
           type="button"
+          onClick={() => {
+            if (onFilters) onFilters();
+            else toast.message("Use the view tabs or search to refine this list.");
+          }}
           className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-surface-low px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-c hover:text-foreground md:h-9"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -290,6 +298,10 @@ export function FilterBar({
         </button>
         <button
           type="button"
+          onClick={() => {
+            if (onExport) onExport();
+            else toast.message("Export is available on Payments, Documents and Audit.");
+          }}
           className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-surface-low px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-c hover:text-foreground md:h-9"
         >
           <Download className="h-3.5 w-3.5" />
@@ -330,36 +342,39 @@ export function DataTable<T extends { id: string }>({
         {renderMobileCard
           ? rows.map((row) => <Fragment key={row.id}>{renderMobileCard(row)}</Fragment>)
           : rows.map((row) => (
-          <div key={row.id} className="panel p-3.5 transition-transform duration-200 active:scale-[0.995]">
-            {first && (
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-                <div className="min-w-0 text-sm font-medium">{first.cell(row)}</div>
-                {linkTo && (
-                  <Link
-                    to={linkTo}
-                    params={params?.(row) as never}
-                    aria-label="Open record"
-                    className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground active:bg-surface-low"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
+              <div
+                key={row.id}
+                className="panel p-3.5 transition-transform duration-200 active:scale-[0.995]"
+              >
+                {first && (
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="min-w-0 text-sm font-medium">{first.cell(row)}</div>
+                    {linkTo && (
+                      <Link
+                        to={linkTo}
+                        params={params?.(row) as never}
+                        aria-label="Open record"
+                        className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground active:bg-surface-low"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </div>
+                )}
+                {rest.length > 0 && (
+                  <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2">
+                    {rest.map((c) => (
+                      <div key={c.key} className="min-w-0">
+                        <dt className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                          {c.header}
+                        </dt>
+                        <dd className="min-w-0 pt-0.5 text-sm">{c.cell(row)}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 )}
               </div>
-            )}
-            {rest.length > 0 && (
-              <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2">
-                {rest.map((c) => (
-                  <div key={c.key} className="min-w-0">
-                    <dt className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-                      {c.header}
-                    </dt>
-                    <dd className="min-w-0 pt-0.5 text-sm">{c.cell(row)}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
-        ))}
+            ))}
 
         {rows.length === 0 && (
           <div className="panel p-8 text-center text-sm text-muted-foreground">
@@ -498,22 +513,31 @@ export function Btn({
   variant = "ghost",
   onClick,
   className,
+  disabled,
+  title,
+  type = "button",
 }: {
   children: ReactNode;
   variant?: "primary" | "ghost" | "tonal";
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
+  title?: string;
+  type?: "button" | "submit" | "reset";
 }) {
   return (
     <button
-      type="button"
+      type={type}
       onClick={onClick}
+      disabled={disabled}
+      title={title}
       className={cn(
         "inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.97]",
         variant === "primary" &&
           "gradient-primary text-primary-foreground shadow-ambient hover:shadow-glow",
         variant === "tonal" && "bg-surface-c text-foreground hover:bg-surface-high",
         variant === "ghost" && "text-muted-foreground hover:bg-surface-low hover:text-foreground",
+        disabled && "pointer-events-none opacity-50",
         className,
       )}
     >

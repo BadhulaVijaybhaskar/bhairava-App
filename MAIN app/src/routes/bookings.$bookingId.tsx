@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Panel, SectionTitle, Timeline } from "@/components/kit";
-import { byId, documents, formatINR, payments } from "@/lib/mock-data";
+import { byId, formatINR } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/bookings/$bookingId")({
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/bookings/$bookingId")({
 
 function BookingDetail() {
   const { bookingId } = Route.useParams();
-  const { bookings, customers, plots, projects, agents } = useData();
+  const { bookings, customers, plots, projects, agents, documents, payments } = useData();
   const booking = byId(bookings, bookingId);
 
   if (!booking) {

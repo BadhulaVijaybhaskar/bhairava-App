@@ -14,13 +14,13 @@ import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, Panel, RecordHeader, SectionTitle, Timeline } from "@/components/kit";
 import { ScrollTabs } from "@/components/scroll-tabs";
 import { BookingCard } from "@/components/booking-card";
-import { byId, documents, formatINR, projects, salesTrend } from "@/lib/mock-data";
+import { byId, formatINR, projects as seedProjects, salesTrend } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 import { ProjectEditor } from "@/components/record-editors";
 
 export const Route = createFileRoute("/projects/$projectId")({
   head: ({ params }) => {
-    const project = byId(projects, params.projectId);
+    const project = byId(seedProjects, params.projectId);
     const title = project ? `${project.name} — Project record` : "Project not found";
     return {
       meta: [
@@ -52,7 +52,7 @@ type Tab = (typeof tabs)[number];
 
 function ProjectRecord() {
   const { projectId } = Route.useParams();
-  const { projects: projectList, plots, bookings, customers } = useData();
+  const { projects: projectList, plots, bookings, customers, documents } = useData();
   const project = byId(projectList, projectId);
   const [tab, setTab] = useState<Tab>("Overview");
 
@@ -158,7 +158,10 @@ function ProjectRecord() {
         }
       />
 
-      <ScrollTabs activeKey={tab} className="mt-6 rounded-xl bg-surface-low p-1 lg:overflow-x-visible">
+      <ScrollTabs
+        activeKey={tab}
+        className="mt-6 rounded-xl bg-surface-low p-1 lg:overflow-x-visible"
+      >
         {tabs.map((t) => (
           <button
             key={t}

@@ -45,9 +45,11 @@ function CreateBooking() {
     plots,
     agents,
     bookings,
+    payments,
     saveBooking,
     savePlot,
     saveCustomer,
+    savePayment,
     nextId,
   } = useData();
 
@@ -285,6 +287,19 @@ function CreateBooking() {
     };
     saveBooking(booking);
     savePlot({ ...plot, status: "booked", customerId: f.customerId, agentId: f.agentId });
+    if (f.paid > 0) {
+      const payment: Payment = {
+        id: nextId("PAY-", payments),
+        bookingId: id,
+        customerId: f.customerId,
+        amount: f.paid,
+        mode: f.paymentMode,
+        reference: f.reference.trim() || `ADV-${id}`,
+        date: f.date,
+        status: "Succeeded",
+      };
+      savePayment(payment);
+    }
     if (customer) {
       saveCustomer({
         ...customer,

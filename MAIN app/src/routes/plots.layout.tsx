@@ -236,9 +236,21 @@ function PlotsLayoutPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Btn variant="primary">Reserve</Btn>
-              <Btn variant="tonal">Book</Btn>
-              <Btn variant="ghost">Open record</Btn>
+              <Link to="/onboarding/reservation" search={{ plotId: selected.id }} className="block">
+                <Btn variant="primary" className="w-full justify-center">
+                  Reserve
+                </Btn>
+              </Link>
+              <Link to="/onboarding/booking" search={{ plotId: selected.id }} className="block">
+                <Btn variant="tonal" className="w-full justify-center">
+                  Book
+                </Btn>
+              </Link>
+              <Link to="/plots" className="block">
+                <Btn variant="ghost" className="w-full justify-center">
+                  Open record
+                </Btn>
+              </Link>
             </div>
           </aside>
         )}

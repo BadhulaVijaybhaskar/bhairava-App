@@ -2,15 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, DataTable, FilterBar, Metric, PageHeader } from "@/components/kit";
-import { byId, customers, formatINR, plots, projects, type Plot } from "@/lib/mock-data";
+import { byId, formatINR, type Plot } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 
 export const Route = createFileRoute("/resale")({
   head: () => ({
     meta: [
       { title: "Resale Inventory — Bhairava" },
-      { name: "description", content: "Track resale-listed plots, expected uplift and buyer interest across projects." },
+      {
+        name: "description",
+        content: "Track resale-listed plots, expected uplift and buyer interest across projects.",
+      },
       { property: "og:title", content: "Resale Inventory — Bhairava" },
-      { property: "og:description", content: "Track resale-listed plots, expected uplift and buyer interest across projects." },
+      {
+        property: "og:description",
+        content: "Track resale-listed plots, expected uplift and buyer interest across projects.",
+      },
     ],
   }),
   component: ResalePage,
@@ -27,9 +34,12 @@ interface ResaleRow {
   interest: number;
 }
 
-function buildRows(): ResaleRow[] {
+function buildRows(plots: Plot[]): ResaleRow[] {
   const resale = plots.filter((p) => p.status === "resale");
-  const pool = resale.length >= 8 ? resale : plots.filter((p) => p.status === "booked" || p.status === "registered");
+  const pool =
+    resale.length >= 8
+      ? resale
+      : plots.filter((p) => p.status === "booked" || p.status === "registered");
   return pool.slice(0, 30).map((p, i) => {
     const originalValue = p.areaSqYd * p.pricePerSqYd;
     const upliftPct = 8 + (i % 11);
@@ -45,9 +55,10 @@ function buildRows(): ResaleRow[] {
 }
 
 function ResalePage() {
+  const { plots, projects, customers } = useData();
   const [active, setActive] = useState("All");
   const [query, setQuery] = useState("");
-  const rows = useMemo(buildRows, []);
+  const rows = useMemo(() => buildRows(plots), [plots]);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -62,7 +73,8 @@ function ResalePage() {
 
   const totalResaleValue = rows.reduce((a, r) => a + r.resaleValue, 0);
   const avgUplift =
-    rows.reduce((a, r) => a + (r.resaleValue - r.originalValue) / r.originalValue, 0) / (rows.length || 1);
+    rows.reduce((a, r) => a + (r.resaleValue - r.originalValue) / r.originalValue, 0) /
+    (rows.length || 1);
   const totalInterest = rows.reduce((a, r) => a + r.interest, 0);
 
   return (
@@ -76,11 +88,22 @@ function ResalePage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Metric label="Resale listings" value={String(rows.length)} hint="active" />
         <Metric label="Total resale value" value={formatINR(totalResaleValue, { compact: true })} />
-        <Metric label="Avg expected uplift" value={`+${Math.round(avgUplift * 100)}%`} hint="over original value" />
+        <Metric
+          label="Avg expected uplift"
+          value={`+${Math.round(avgUplift * 100)}%`}
+          hint="over original value"
+        />
       </div>
 
       <div className="pt-6">
-        <FilterBar views={views} active={active} onSelect={setActive} query={query} onQuery={setQuery} placeholder="Search plot, project, owner…" />
+        <FilterBar
+          views={views}
+          active={active}
+          onSelect={setActive}
+          query={query}
+          onQuery={setQuery}
+          placeholder="Search plot, project, owner…"
+        />
 
         <DataTable
           rows={filtered}
@@ -104,7 +127,9 @@ function ResalePage() {
               key: "original",
               header: "Original value",
               align: "right",
-              cell: (r) => <span className="numeric">{formatINR(r.originalValue, { compact: true })}</span>,
+              cell: (r) => (
+                <span className="numeric">{formatINR(r.originalValue, { compact: true })}</span>
+              ),
             },
             {
               key: "resale",

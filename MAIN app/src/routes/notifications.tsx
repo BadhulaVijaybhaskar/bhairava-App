@@ -3,16 +3,23 @@ import { useMemo, useState } from "react";
 import { Receipt, Wallet, Clock, FileText, Settings2, CheckCheck } from "lucide-react";
 import { PageHeader, Btn } from "@/components/kit";
 import { AppShell } from "@/components/app-shell";
-import { notifications as seedNotifications, type NotificationItem } from "@/lib/mock-data";
+import type { NotificationItem } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
       { title: "Notifications — Bhairava" },
-      { name: "description", content: "Chronological inbox of bookings, payments and system events." },
+      {
+        name: "description",
+        content: "Chronological inbox of bookings, payments and system events.",
+      },
       { property: "og:title", content: "Notifications — Bhairava" },
-      { property: "og:description", content: "Chronological inbox of bookings, payments and system events." },
+      {
+        property: "og:description",
+        content: "Chronological inbox of bookings, payments and system events.",
+      },
     ],
   }),
   component: NotificationsPage,
@@ -36,19 +43,19 @@ const tabToKind: Partial<Record<Tab, NotificationItem["kind"]>> = {
 };
 
 function NotificationsPage() {
+  const { notifications, markAllNotificationsRead, markNotificationRead } = useData();
   const [tab, setTab] = useState<Tab>("All");
-  const [items, setItems] = useState<NotificationItem[]>(seedNotifications);
 
   const filtered = useMemo(() => {
-    return items.filter((n) => {
+    return notifications.filter((n) => {
       if (tab === "Unread") return n.unread;
       const kind = tabToKind[tab];
       if (kind) return n.kind === kind;
       return true;
     });
-  }, [items, tab]);
+  }, [notifications, tab]);
 
-  const unreadCount = items.filter((n) => n.unread).length;
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
     <AppShell>
@@ -57,7 +64,7 @@ function NotificationsPage() {
         title="Notifications"
         description="Every booking, payment and system event across the org, newest first."
         actions={
-          <Btn variant="tonal" onClick={() => setItems((prev) => prev.map((n) => ({ ...n, unread: false })))}>
+          <Btn variant="tonal" onClick={() => markAllNotificationsRead()}>
             <CheckCheck className="h-4 w-4" /> Mark all read
           </Btn>
         }
@@ -67,10 +74,13 @@ function NotificationsPage() {
         {tabs.map((t) => (
           <button
             key={t}
+            type="button"
             onClick={() => setTab(t)}
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-              t === tab ? "bg-surface-lowest text-foreground shadow-ambient" : "text-muted-foreground hover:bg-surface-c",
+              t === tab
+                ? "bg-surface-lowest text-foreground shadow-ambient"
+                : "text-muted-foreground hover:bg-surface-c",
             )}
           >
             {t}
@@ -89,9 +99,8 @@ function NotificationsPage() {
           return (
             <button
               key={n.id}
-              onClick={() =>
-                setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, unread: false } : x)))
-              }
+              type="button"
+              onClick={() => markNotificationRead(n.id)}
               className={cn(
                 "flex w-full items-start gap-4 px-6 py-4 text-left transition-colors hover:bg-surface-low",
                 n.unread && "bg-surface-c/70",
@@ -103,13 +112,20 @@ function NotificationsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   {n.unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
-                  <p className={cn("truncate text-sm", n.unread ? "font-semibold" : "font-medium text-foreground/90")}>
+                  <p
+                    className={cn(
+                      "truncate text-sm",
+                      n.unread ? "font-semibold" : "font-medium text-foreground/90",
+                    )}
+                  >
                     {n.title}
                   </p>
                 </div>
                 <p className="truncate pt-0.5 text-xs text-muted-foreground">{n.detail}</p>
               </div>
-              <span className="numeric shrink-0 pt-0.5 text-[11px] text-muted-foreground">{n.time}</span>
+              <span className="numeric shrink-0 pt-0.5 text-[11px] text-muted-foreground">
+                {n.time}
+              </span>
             </button>
           );
         })}
