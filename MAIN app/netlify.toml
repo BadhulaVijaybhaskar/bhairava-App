@@ -1,0 +1,17 @@
+# Bhairava MAIN app — Netlify site config
+#
+# Monorepo: set Base directory = "MAIN app" in Netlify Site settings
+# (or run CLI commands from this folder).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Pin Nitro to Netlify (otherwise local builds default to Cloudflare).
+  NITRO_PRESET = "netlify"
+
+# Nitro emits SSR into .netlify/functions-internal/server with path "/*"
+# and preferStatic=true — Netlify CLI / Build picks that up automatically.
+# Do not add a catch-all redirect here; it would fight the SSR function.
