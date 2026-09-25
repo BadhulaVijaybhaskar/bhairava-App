@@ -1,0 +1,15 @@
+﻿FROM node:24-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+COPY packages ./packages
+COPY services/worker ./services/worker
+RUN npm install --workspace=@bhairava/worker --workspace=@bhairava/database --workspace=@bhairava/domain
+
+FROM deps AS build
+RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
+RUN npm run build -w @bhairava/worker || npx tsc -p services/worker/tsconfig.json
+
+FROM node:24-alpine
+WORKDIR /app
+COPY --from=build /app /app
+CMD ["node", "services/worker/dist/main.js"]

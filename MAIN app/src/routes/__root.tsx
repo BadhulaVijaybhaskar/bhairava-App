@@ -17,6 +17,7 @@ import { AuthGate } from "@/components/auth-gate";
 import { isAuthenticated } from "@/lib/auth";
 import { FabVisibilityProvider } from "@/lib/fab-visibility";
 import { DataProvider } from "@/lib/store";
+import { ManagementProvider } from "@/lib/management-store";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -157,6 +158,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <DataProvider>
+            <ManagementProvider>
         {isLogin ? (
           <>
             <Outlet />
@@ -170,7 +172,8 @@ function RootComponent() {
             <Toaster position="top-center" richColors />
           </FabVisibilityProvider>
         )}
-      </DataProvider>
+      </ManagementProvider>
+          </DataProvider>
     </QueryClientProvider>
   );
 }

@@ -1,0 +1,992 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// â”€â”€â”€ Canonical enums (locked domain) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+enum PlotStatus {
+  AVAILABLE
+  RESERVED
+  BOOKED
+  UNDER_DOCUMENTATION
+  SOLD
+  REGISTERED
+  RESALE_AVAILABLE
+  BLOCKED
+  CANCELLED
+}
+
+enum ProjectLifecycle {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum RoleCode {
+  FOUNDER
+  ADMINISTRATOR
+  FINANCE
+  VIEWER
+  AGENT
+  CUSTOMER
+}
+
+enum DocumentVisibility {
+  INTERNAL
+  AGENT_VISIBLE
+  CUSTOMER_PROFILE_RELATED
+}
+
+enum UserAccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum StatusChangeSource {
+  SALES_FLOW
+  ADMIN_MANUAL
+  SYSTEM
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  SITE_VISIT_PLANNED
+  SITE_VISIT_COMPLETED
+  INTERESTED
+  NEGOTIATION
+  RESERVED
+  BOOKED
+  LOST
+}
+
+enum SiteVisitStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ReservationState {
+  ACTIVE
+  EXPIRING_TODAY
+  EXPIRED
+  CONVERTED
+  RELEASED
+  CANCEL_REQUESTED
+  CANCELLED
+}
+
+enum BookingState {
+  ACTIVE
+  UNDER_DOCUMENTATION
+  COMPLETED
+  CANCEL_REQUESTED
+  CANCELLED
+}
+
+enum CancelRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  UPI
+  CHEQUE
+  CARD
+  OTHER
+}
+
+enum InstallmentStatus {
+  UPCOMING
+  DUE
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+enum ReconciliationStatus {
+  UNRECONCILED
+  RECONCILED
+  MISMATCH
+  REVERSED
+  ADJUSTED
+}
+
+enum CommissionStatus {
+  PENDING
+  EARNED
+  APPROVED
+  PAID
+}
+
+enum Facing {
+  NORTH
+  SOUTH
+  EAST
+  WEST
+}
+
+enum CornerCode {
+  NONE
+  NE
+  NW
+  SE
+  SW
+}
+
+enum RegistrationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+enum ResaleListingStatus {
+  DRAFT
+  LISTED
+  UNDER_OFFER
+  SOLD
+  WITHDRAWN
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum AmenityStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+// â”€â”€â”€ Core identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Organization {
+  id             String   @id @default(cuid())
+  name           String
+  code           String   @unique
+  /** Monotonic org-scoped counter for RCP-* receipt numbers (atomic allocate). */
+  receiptCounter Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  users              User[]
+  roles              Role[]
+  projects           Project[]
+  customers          Customer[]
+  agents             AgentProfile[]
+  leads              Lead[]
+  siteVisits         SiteVisit[]
+  reservations       Reservation[]
+  bookings           Booking[]
+  paymentSchedules   PaymentScheduleItem[]
+  payments           Payment[]
+  receipts           Receipt[]
+  commissions        Commission[]
+  documents          Document[]
+  registrations      Registration[]
+  resaleListings     ResaleListing[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  companySettings    CompanySettings?
+  refreshTokens      RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  sessions           Session[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String            @id @default(cuid())
+  organizationId String
+  email          String?
+  mobile         String?
+  passwordHash   String
+  displayName    String
+  roleCode       RoleCode
+  status         UserAccountStatus @default(ACTIVE)
+  lastLoginAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization        Organization         @relation(fields: [organizationId], references: [id])
+  agentProfile        AgentProfile?
+  customerProfile     Customer?
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  sessions            Session[]
+  auditLogs           AuditLog[]           @relation("AuditActor")
+  notifications       Notification[]
+
+  @@unique([organizationId, email])
+  @@unique([organizationId, mobile])
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Role {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           RoleCode
+  name           String
+  createdAt      DateTime @default(now())
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  permissions  RolePermission[]
+
+  @@unique([organizationId, code])
+  @@map("roles")
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  code        String @unique
+  description String?
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  tokenHash      String    @unique
+  familyId       String
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  replacedById   String?
+  userAgent      String?
+  ip             String?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([organizationId])
+  @@map("refresh_tokens")
+}
+
+model Session {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  refreshFamilyId String
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  tokenHash      String    @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// â”€â”€â”€ Projects / inventory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Project {
+  id              String           @id @default(cuid())
+  organizationId  String
+  name            String
+  code            String
+  location        String?
+  city            String?
+  state           String?
+  pincode         String?
+  country         String?          @default("IN")
+  address         String?
+  description     String?
+  reraNumber      String?
+  projectType     String?
+  lifecycleStatus ProjectLifecycle @default(DRAFT)
+  agentVisible    Boolean          @default(false)
+  customerListed  Boolean          @default(false)
+  resaleAvailable Boolean          @default(false)
+  totalArea       Decimal?         @db.Decimal(18, 4)
+  areaUnit        String?
+  launchDate      DateTime?
+  expectedCompletion DateTime?
+  coverImageKey   String?
+  brochureKey     String?
+  settingsJson    Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  phases         Phase[]
+  blocks         Block[]
+  plotTypes      PlotType[]
+  pricingRules   PricingRule?
+  amenities      Amenity[]
+  layouts        Layout[]
+  plots          Plot[]
+  leads          Lead[]
+  siteVisits     SiteVisit[]
+  reservations   Reservation[]
+  bookings       Booking[]
+  documents      Document[]
+  agentLinks     ProjectAgent[]
+  registrations  Registration[]
+  resaleListings ResaleListing[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model Phase {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String
+  name           String
+  sortOrder      Int      @default(0)
+  status         String   @default("Planned")
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  blocks  Block[]
+  plots   Plot[]
+
+  @@index([projectId])
+  @@map("phases")
+}
+
+model Block {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String
+  phaseId        String?
+  name           String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   Phase?  @relation(fields: [phaseId], references: [id])
+  plots   Plot[]
+
+  @@index([projectId])
+  @@map("blocks")
+}
+
+model PlotType {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String
+  name           String
+  code           String?
+  areaSqYd       Decimal  @db.Decimal(14, 4)
+  lengthFt       Decimal? @db.Decimal(14, 4)
+  widthFt        Decimal? @db.Decimal(14, 4)
+  category       String?
+  defaultsJson   Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  plots   Plot[]
+
+  @@index([projectId])
+  @@map("plot_types")
+}
+
+model PricingRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String   @unique
+  baseRatePerSqYd Decimal @db.Decimal(14, 4)
+  rulesJson      Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("pricing_rules")
+}
+
+model Amenity {
+  id             String        @id @default(cuid())
+  organizationId String
+  projectId      String
+  name           String
+  groupName      String?
+  description    String?
+  status         AmenityStatus @default(PLANNED)
+  completionPct  Int           @default(0)
+  visibility     DocumentVisibility @default(AGENT_VISIBLE)
+  mediaJson      Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("amenities")
+}
+
+model Layout {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String
+  name           String
+  imageKey       String?
+  widthPx        Int?
+  heightPx       Int?
+  metaJson       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  plots   Plot[]
+
+  @@index([projectId])
+  @@map("layouts")
+}
+
+model Plot {
+  id               String     @id @default(cuid())
+  organizationId   String
+  projectId        String
+  phaseId          String?
+  blockId          String?
+  plotTypeId       String?
+  layoutId         String?
+  number           String
+  areaSqYd         Decimal    @db.Decimal(14, 4)
+  lengthFt         Decimal?   @db.Decimal(14, 4)
+  widthFt          Decimal?   @db.Decimal(14, 4)
+  facing           Facing?
+  corner           CornerCode @default(NONE)
+  roadWidthFt      Decimal?   @db.Decimal(10, 2)
+  featuresJson     Json?
+  polygonJson      Json?
+  status           PlotStatus @default(AVAILABLE)
+  ratePerSqYd      Decimal?   @db.Decimal(14, 4)
+  rateOverride     Decimal?   @db.Decimal(14, 4)
+  rateOverrideReason String?
+  totalPrice       Decimal?   @db.Decimal(18, 2)
+  customerId       String?
+  agentId          String?
+  notes            String?
+  version          Int        @default(1)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase          Phase?              @relation(fields: [phaseId], references: [id])
+  block          Block?              @relation(fields: [blockId], references: [id])
+  plotType       PlotType?           @relation(fields: [plotTypeId], references: [id])
+  layout         Layout?             @relation(fields: [layoutId], references: [id])
+  customer       Customer?           @relation(fields: [customerId], references: [id])
+  agent          AgentProfile?       @relation(fields: [agentId], references: [id])
+  statusHistory  PlotStatusHistory[]
+  reservations   Reservation[]
+  bookings       Booking[]
+  resaleListings ResaleListing[]
+
+  @@unique([projectId, number])
+  @@index([organizationId, status])
+  @@index([projectId, status])
+  @@map("plots")
+}
+
+model PlotStatusHistory {
+  id         String             @id @default(cuid())
+  plotId     String
+  fromStatus PlotStatus
+  toStatus   PlotStatus
+  reason     String?
+  actorId    String?
+  source     StatusChangeSource
+  createdAt  DateTime           @default(now())
+
+  plot Plot @relation(fields: [plotId], references: [id], onDelete: Cascade)
+
+  @@index([plotId, createdAt])
+  @@map("plot_status_history")
+}
+
+// â”€â”€â”€ People â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Customer {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  userId             String?  @unique
+  name               String
+  phone              String
+  email              String?
+  city               String?
+  address            String?
+  state              String?
+  pincode            String?
+  // Encrypted at rest (app-level) â€” store ciphertext; never log plaintext
+  panEncrypted       String?
+  aadhaarEncrypted   String?
+  kycStatus          String?
+  nomineeName        String?
+  nomineeRelation    String?
+  nomineePhone       String?
+  agentId            String?
+  source             String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  user           User?           @relation(fields: [userId], references: [id])
+  agent          AgentProfile?   @relation(fields: [agentId], references: [id])
+  plots          Plot[]
+  leads          Lead[]
+  siteVisits     SiteVisit[]
+  reservations   Reservation[]
+  bookings       Booking[]
+  payments       Payment[]
+  paymentSchedules PaymentScheduleItem[]
+  registrations  Registration[]
+  resaleListings ResaleListing[]
+  documents      Document[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@map("customers")
+}
+
+model AgentProfile {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String   @unique
+  code            String
+  name            String
+  phone           String?
+  email           String?
+  region          String?
+  status          String   @default("Active")
+  allAgentsAccess Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  projects     ProjectAgent[]
+  customers    Customer[]
+  plots        Plot[]
+  leads        Lead[]
+  siteVisits   SiteVisit[]
+  reservations Reservation[]
+  bookings     Booking[]
+  commissions  Commission[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("agents")
+}
+
+model ProjectAgent {
+  projectId String
+  agentId   String
+  assignedAt DateTime @default(now())
+
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, agentId])
+  @@map("project_agents")
+}
+
+// â”€â”€â”€ Sales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Lead {
+  id             String    @id @default(cuid())
+  organizationId String
+  projectId      String
+  customerId     String?
+  agentId        String?
+  name           String
+  phone          String?
+  email          String?
+  stage          LeadStage @default(NEW)
+  source         String?
+  notes          String?
+  lostReason     String?
+  stageHistoryJson Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  project      Project       @relation(fields: [projectId], references: [id])
+  customer     Customer?     @relation(fields: [customerId], references: [id])
+  agent        AgentProfile? @relation(fields: [agentId], references: [id])
+  siteVisits   SiteVisit[]
+  reservations Reservation[]
+
+  @@index([organizationId, projectId])
+  @@index([agentId])
+  @@map("leads")
+}
+
+model SiteVisit {
+  id             String          @id @default(cuid())
+  organizationId String
+  projectId      String
+  leadId         String?
+  customerId     String?
+  agentId        String?
+  scheduledAt    DateTime
+  status         SiteVisitStatus @default(SCHEDULED)
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  project      Project       @relation(fields: [projectId], references: [id])
+  lead         Lead?         @relation(fields: [leadId], references: [id])
+  customer     Customer?     @relation(fields: [customerId], references: [id])
+  agent        AgentProfile? @relation(fields: [agentId], references: [id])
+
+  @@index([organizationId, projectId])
+  @@map("site_visits")
+}
+
+model Reservation {
+  id                  String                @id @default(cuid())
+  organizationId      String
+  projectId           String
+  plotId              String
+  customerId          String
+  agentId             String?
+  leadId              String?
+  state               ReservationState      @default(ACTIVE)
+  reservedAt          DateTime              @default(now())
+  expiresAt           DateTime
+  cancelRequestStatus CancelRequestStatus?
+  cancelReason        String?
+  amountPaise         BigInt?
+  notes               String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  project      Project       @relation(fields: [projectId], references: [id])
+  plot         Plot          @relation(fields: [plotId], references: [id])
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  agent        AgentProfile? @relation(fields: [agentId], references: [id])
+  lead         Lead?         @relation(fields: [leadId], references: [id])
+  booking      Booking?
+
+  @@index([organizationId, plotId, state])
+  @@index([expiresAt, state])
+  @@map("reservations")
+}
+
+model Booking {
+  id                  String               @id @default(cuid())
+  organizationId      String
+  projectId           String
+  plotId              String
+  customerId          String
+  agentId             String?
+  reservationId       String?              @unique
+  state               BookingState         @default(ACTIVE)
+  bookedAt            DateTime             @default(now())
+  agreementValuePaise BigInt
+  advancePaise        BigInt               @default(0)
+  cancelRequestStatus CancelRequestStatus?
+  cancelReason        String?
+  notes               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  organization     Organization          @relation(fields: [organizationId], references: [id])
+  project          Project               @relation(fields: [projectId], references: [id])
+  plot             Plot                  @relation(fields: [plotId], references: [id])
+  customer         Customer              @relation(fields: [customerId], references: [id])
+  agent            AgentProfile?         @relation(fields: [agentId], references: [id])
+  reservation      Reservation?          @relation(fields: [reservationId], references: [id])
+  paymentSchedules PaymentScheduleItem[]
+  payments         Payment[]
+  receipts         Receipt[]
+  commissions      Commission[]
+  registration     Registration?
+  documents        Document[]
+
+  @@index([organizationId, projectId])
+  @@index([plotId])
+  @@map("bookings")
+}
+
+// â”€â”€â”€ Finance (no float; BigInt paise; soft-void only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model PaymentScheduleItem {
+  id                String            @id @default(cuid())
+  organizationId    String
+  bookingId         String
+  projectId         String
+  customerId        String
+  plotId            String?
+  installmentNumber Int
+  name              String
+  dueDate           DateTime
+  amountDuePaise    BigInt
+  status            InstallmentStatus @default(UPCOMING)
+  waived            Boolean           @default(false)
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  payments     Payment[]
+
+  @@index([bookingId])
+  @@index([organizationId])
+  @@map("payment_schedule_items")
+}
+
+model Payment {
+  id                   String               @id @default(cuid())
+  organizationId       String
+  bookingId            String
+  customerId           String
+  projectId            String
+  plotId               String?
+  scheduleItemId       String?
+  amountPaise          BigInt
+  paidAt               DateTime
+  method               PaymentMethod
+  txnRef               String?
+  receiptNumber        String?
+  recordedByUserId     String?
+  reconciliationStatus ReconciliationStatus @default(UNRECONCILED)
+  notes                String?
+  voidedAt             DateTime?
+  voidReason           String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  organization Organization          @relation(fields: [organizationId], references: [id])
+  booking      Booking               @relation(fields: [bookingId], references: [id])
+  customer     Customer              @relation(fields: [customerId], references: [id])
+  scheduleItem PaymentScheduleItem?  @relation(fields: [scheduleItemId], references: [id])
+  receipt      Receipt?
+
+  @@index([organizationId, bookingId])
+  @@index([reconciliationStatus])
+  @@map("payments")
+}
+
+model Receipt {
+  id             String   @id @default(cuid())
+  organizationId String
+  paymentId      String   @unique
+  bookingId      String
+  receiptNumber  String
+  issuedAt       DateTime @default(now())
+  pdfKey         String?
+  metaJson       Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  payment      Payment      @relation(fields: [paymentId], references: [id])
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+
+  @@unique([organizationId, receiptNumber])
+  @@map("receipts")
+}
+
+model Commission {
+  id             String           @id @default(cuid())
+  organizationId String
+  bookingId      String
+  agentId        String
+  amountPaise    BigInt
+  status         CommissionStatus @default(PENDING)
+  earnedAt       DateTime?
+  approvedAt     DateTime?
+  paidAt         DateTime?
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+  agent        AgentProfile @relation(fields: [agentId], references: [id])
+
+  @@index([organizationId, agentId])
+  @@map("commissions")
+}
+
+// â”€â”€â”€ Documents / ops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model Document {
+  id             String              @id @default(cuid())
+  organizationId String
+  projectId      String?
+  bookingId      String?
+  customerId     String?
+  visibility     DocumentVisibility  @default(INTERNAL)
+  title          String
+  docType        String?
+  storageKey     String
+  mimeType       String?
+  sizeBytes      BigInt?
+  version        Int                 @default(1)
+  archivedAt     DateTime?
+  uploadedById   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project?     @relation(fields: [projectId], references: [id])
+  booking      Booking?     @relation(fields: [bookingId], references: [id])
+  customer     Customer?    @relation(fields: [customerId], references: [id])
+
+  @@index([organizationId, projectId])
+  @@index([visibility])
+  @@map("documents")
+}
+
+model Registration {
+  id             String             @id @default(cuid())
+  organizationId String
+  projectId      String
+  bookingId      String             @unique
+  customerId     String
+  status         RegistrationStatus @default(NOT_STARTED)
+  deedNumber     String?
+  registeredAt   DateTime?
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+
+  @@map("registrations")
+}
+
+model ResaleListing {
+  id             String              @id @default(cuid())
+  organizationId String
+  projectId      String
+  plotId         String
+  customerId     String
+  status         ResaleListingStatus @default(DRAFT)
+  askingPricePaise BigInt?
+  listedAt       DateTime?
+  notes          String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+  plot         Plot         @relation(fields: [plotId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+
+  @@index([organizationId, projectId])
+  @@map("resale_listings")
+}
+
+model Notification {
+  id             String              @id @default(cuid())
+  organizationId String
+  userId         String?
+  channel        NotificationChannel @default(IN_APP)
+  title          String
+  body           String
+  payloadJson    Json?
+  readAt         DateTime?
+  sentAt         DateTime?
+  createdAt      DateTime            @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, userId])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  actorId        String?
+  action         String
+  entityType     String
+  entityId       String?
+  metaJson       Json?
+  ip             String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  actor        User?        @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model CompanySettings {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  settingsJson   Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("company_settings")
+}
+
+

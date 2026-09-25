@@ -65,7 +65,7 @@ function LoginPage() {
         <div className="flex flex-col items-center pb-8">
           <BrandLogo size={64} className="rounded-2xl" />
           <h1 className="pt-6 font-display text-2xl font-semibold">Sign in to Bhairava</h1>
-          <p className="pt-2 text-center text-sm text-muted-foreground">Land Sales OS · internal access</p>
+          <p className="pt-2 text-center text-sm text-muted-foreground">Land Sales OS · demo: admin@bhairava.com / admin@2026 (also founder / finance / viewer)</p>
         </div>
 
         <form

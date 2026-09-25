@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, SlidersHorizontal, Search, Download, Plus } from "lucide-react";
-import { Fragment, type ReactNode } from "react";
+import React, { Fragment, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { plotStatusFill, plotStatusFromLabel, plotStatusInk, plotStatusSolid } from "@/lib/plot-status-colors";
 import { cn } from "@/lib/utils";
 import { ScrollTabs } from "@/components/scroll-tabs";
@@ -47,13 +47,14 @@ export function Panel({
   children,
   className,
   tonal,
+  ...rest
 }: {
   children: ReactNode;
   className?: string;
   tonal?: boolean;
-}) {
+} & React.ComponentPropsWithoutRef<"section">) {
   return (
-    <section className={cn(tonal ? "panel-tonal" : "panel", "min-w-0 p-4 sm:p-6", className)}>
+    <section {...rest} className={cn(tonal ? "panel-tonal" : "panel", "min-w-0 p-4 sm:p-6", className)}>
       {children}
     </section>
   );
@@ -498,16 +499,18 @@ export function Btn({
   variant = "ghost",
   onClick,
   className,
+  ...rest
 }: {
   children: ReactNode;
   variant?: "primary" | "ghost" | "tonal";
   onClick?: () => void;
   className?: string;
-}) {
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type="button"
       onClick={onClick}
+      {...rest}
       className={cn(
         "inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.97]",
         variant === "primary" &&

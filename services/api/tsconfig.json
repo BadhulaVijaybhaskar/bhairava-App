@@ -1,0 +1,30 @@
+﻿{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2022",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "Node10",
+    "paths": {
+      "@bhairava/domain": ["../../packages/domain/dist/index.d.ts"],
+      "@bhairava/permissions": ["../../packages/permissions/dist/index.d.ts"],
+      "@bhairava/database": ["../../packages/database/src/index.ts"],
+      "@bhairava/auth": ["../../packages/auth/src/index.ts"],
+      "@bhairava/config": ["../../packages/config/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*spec.ts", "**/__tests__/**"]
+}

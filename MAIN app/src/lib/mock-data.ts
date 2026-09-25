@@ -1,4 +1,4 @@
-// Mock operational data for Bhairava (real-estate plot sales OS).
+﻿// Mock operational data for Bhairava (real-estate plot sales OS).
 // Replace with Lovable Cloud tables when the backend is wired up.
 
 export type PlotStatus = "available" | "reserved" | "booked" | "registered" | "resale";
@@ -22,6 +22,25 @@ export interface Plot {
   widthFt?: number;
   roadWidthFt?: number;
   notes?: string;
+  /** Optional link to project.plotTypes template id */
+  typeId?: string;
+  /** Canonical or legacy corner — normalize via toCanonicalCorner */
+  corner?: string;
+  features?: string[];
+  /** Hard price override (₹/sq yd). When set, rule calc is display-only unless cleared. */
+  rateOverride?: number;
+  rateOverrideReason?: string;
+  /** Append-only status history (ADMIN_MANUAL / flows). */
+  statusHistory?: Array<{
+    fromStatus: string;
+    toStatus: string;
+    reason: string;
+    actorId: string;
+    source: string;
+    createdAt: string;
+  }>;
+  /** Denormalized canonical status for newer writers; readers use toCanonicalPlotStatus. */
+  canonicalStatus?: string;
 }
 
 export type Facing = "North" | "South" | "East" | "West";
@@ -31,11 +50,17 @@ export type CornerType = "Not corner" | "North-East" | "North-West" | "South-Eas
 export interface PlotType {
   id: string;
   name: string;
+  code?: string;
   areaSqYd: number;
+  areaUnit?: "Sq Yards" | "Sq Ft";
   lengthFt: number;
   widthFt: number;
   facingAllowed: Facing[];
   category: "Standard" | "Premium" | "Commercial" | "Irregular";
+  defaultFacing?: Facing;
+  defaultCorner?: CornerType;
+  defaultRoadWidthFt?: number;
+  defaultFeatures?: string[];
 }
 
 /** Rate card: base rate plus additive premiums per sq yd. */
@@ -43,16 +68,26 @@ export interface PricingRules {
   baseRatePerSqYd: number;
   facingPremium: Record<Facing, number>;
   cornerPremium: number;
+  /** Optional directional corner premiums (NE/NW/SE/SW). Falls back to cornerPremium. */
+  cornerPremiumByType?: Partial<Record<"NE" | "NW" | "SE" | "SW", number>>;
   featurePremium: Record<string, number>;
+  /** Optional road-width premium keyed by feet as string, e.g. "40". */
+  roadWidthPremium?: Record<string, number>;
+  otherPremiums?: { label: string; amountPerSqYd: number }[];
 }
 
 export interface ProjectAmenity {
   id: string;
   name: string;
   group: string;
+  category?: string;
+  description?: string;
   status: "Planned" | "In progress" | "Completed";
   completion: number;
   photos: number;
+  mediaUrls?: string[];
+  /** Marketing surface: internal | agent | customer */
+  visibility?: "internal" | "agent" | "customer";
   note?: string;
 }
 
@@ -75,6 +110,22 @@ export interface InventoryPlot {
   status: PlotStatus;
 }
 
+export interface ProjectPhase {
+  id: string;
+  name: string;
+  order: number;
+  status: "Planned" | "Active" | "Completed";
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface ProjectBlock {
+  id: string;
+  name: string;
+  phaseId?: string;
+  order: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -84,7 +135,14 @@ export interface Project {
   totalPlots: number;
   soldPlots: number;
   launchDate: string;
+  /** @deprecated Prefer lifecycleStatus — kept for backward-compatible list screens / localStorage. */
   status: "Draft" | "Active" | "Pre-launch" | "Sold out" | "On hold" | "Inactive";
+  /** Canonical lifecycle (Portfolio OS). Normalized on load via domain/migrate. */
+  lifecycleStatus?: "DRAFT" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
+  /** Publish flag — orthogonal to lifecycle. DRAFT forces false. */
+  agentVisible?: boolean;
+  /** Publish flag — orthogonal to lifecycle. DRAFT forces false. */
+  customerListed?: boolean;
   valueCr: number;
   collectedCr: number;
   approvals: string[];
@@ -117,6 +175,8 @@ export interface Project {
   amenities?: ProjectAmenity[];
   inventory?: InventoryPlot[];
   agents?: string[];
+  phases?: ProjectPhase[];
+  blocks?: ProjectBlock[];
   settings?: {
     reservationDays: number;
     bookingAdvancePct: number;
@@ -149,6 +209,12 @@ export interface Customer {
   nomineeRelation?: string;
   nomineePhone?: string;
   notes?: string;
+  interestedProjectIds?: string[];
+  reviewFlag?: "none" | "duplicate" | "correction";
+  reviewNote?: string;
+  reviewRequestedBy?: string;
+  reviewRequestedAt?: string;
+  documents?: { id: string; name: string; kind: string; uploadedAt: string }[];
 }
 
 export interface Agent {
@@ -165,6 +231,14 @@ export interface Agent {
   status: "Active" | "Inactive";
   email?: string;
   employeeCode?: string;
+  allAgentsAccess?: boolean;
+  assignmentHistory?: {
+    at: string;
+    actorId: string;
+    action: "assign" | "remove" | "reassign";
+    projectId?: string;
+    note?: string;
+  }[];
 }
 
 export interface Booking {
@@ -179,6 +253,17 @@ export interface Booking {
   stage: "Draft" | "Confirmed" | "Agreement" | "Registered" | "Cancelled";
   notes?: string;
   paymentMode?: Payment["mode"];
+  /** P3 sales fields (optional for legacy seed rows) */
+  bookingNumber?: string;
+  bookingAmount?: number;
+  totalPlotPrice?: number;
+  discount?: number;
+  finalAgreedAmount?: number;
+  bookingStatus?: string;
+  documentationStatus?: string;
+  registrationStatus?: string;
+  cancelRequestStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  cancelReason?: string;
 }
 
 export interface Payment {
@@ -200,8 +285,26 @@ export interface Reservation {
   amount: number;
   createdAt: string;
   expiresAt: string;
-  state: "Active" | "Expiring today" | "Expired" | "Converted";
+  state:
+    | "Active"
+    | "Expiring today"
+    | "Expired"
+    | "Converted"
+    | "Released"
+    | "CancelRequested"
+    | "Cancelled";
   notes?: string;
+  /** Alias for createdAt used by P3 UI */
+  reservedAt?: string;
+  extensionHistory?: {
+    extendedAt: string;
+    previousExpiresAt: string;
+    newExpiresAt: string;
+    actorId: string;
+    note?: string;
+  }[];
+  cancelRequestStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  cancelReason?: string;
 }
 
 export type SiteVisitStatus =
@@ -228,6 +331,13 @@ export interface SiteVisit {
   pickupLocation?: string;
   notes?: string;
   source?: string;
+  /** P3: optional lead link + visit outcome fields */
+  leadId?: string;
+  visitAt?: string;
+  attended?: boolean;
+  outcome?: string;
+  nextAction?: string;
+  followUpDate?: string;
 }
 
 const inr = (n: number) => n;
@@ -767,6 +877,146 @@ const visitShift = (days: number) => {
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 };
+
+
+/** Dedicated Lead entity (P3) — not customer-shaped. */
+export type LeadStage =
+  | "NEW"
+  | "CONTACTED"
+  | "QUALIFIED"
+  | "SITE_VISIT_PLANNED"
+  | "SITE_VISIT_COMPLETED"
+  | "INTERESTED"
+  | "NEGOTIATION"
+  | "RESERVED"
+  | "BOOKED"
+  | "LOST";
+
+export interface LeadStageHistoryEntry {
+  from: LeadStage | null;
+  to: LeadStage;
+  at: string;
+  actorId: string;
+  note?: string;
+}
+
+export interface Lead {
+  id: string;
+  leadId: string;
+  name: string;
+  mobile: string;
+  alternateMobile?: string;
+  email?: string;
+  source: string;
+  campaign?: string;
+  sourceDetail?: string;
+  assignedAgentId: string;
+  interestedProjectIds: string[];
+  preferredPlotSize?: string;
+  preferredFacing?: string;
+  preferredBudgetRange?: string;
+  preferredLocation?: string;
+  notes?: string;
+  nextFollowUp?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  stage: LeadStage;
+  stageHistory: LeadStageHistoryEntry[];
+  conversionTimestamp?: string;
+  convertedCustomerId?: string;
+  responsibleAgentId?: string;
+  reviewFlag?: "none" | "duplicate" | "correction";
+  reviewNote?: string;
+  reviewRequestedBy?: string;
+  reviewRequestedAt?: string;
+}
+
+function leadSeed(
+  id: string,
+  name: string,
+  mobile: string,
+  agentId: string,
+  projects: string[],
+  stage: LeadStage,
+  source: string,
+  extras: Partial<Lead> = {},
+): Lead {
+  const createdAt = extras.createdAt ?? "2026-09-01T10:00:00.000Z";
+  const hist: LeadStageHistoryEntry[] = [
+    { from: null, to: "NEW", at: createdAt, actorId: "admin@bhairava.com", note: "Seed" },
+  ];
+  if (stage !== "NEW") {
+    hist.push({
+      from: "NEW",
+      to: stage,
+      at: extras.updatedAt ?? "2026-09-10T10:00:00.000Z",
+      actorId: agentId,
+    });
+  }
+  return {
+    id,
+    leadId: id,
+    name,
+    mobile,
+    source,
+    assignedAgentId: agentId,
+    interestedProjectIds: projects,
+    createdBy: "admin@bhairava.com",
+    createdAt,
+    updatedAt: extras.updatedAt ?? createdAt,
+    stage,
+    stageHistory: hist,
+    ...extras,
+  };
+}
+
+/**
+ * Coherent demo pipeline across agents proving ownership / privacy:
+ * Lead → Site Visit → Customer → Reservation → Booking
+ */
+export const leads: Lead[] = [
+  leadSeed("LEAD-001", "Kiran Prasad", "+91 90000 10001", "brag0001", ["PRJ-01"], "QUALIFIED", "Referral", {
+    email: "kiran.prasad@example.com",
+    preferredPlotSize: "200-300",
+    preferredFacing: "East",
+    preferredBudgetRange: "40-60L",
+    nextFollowUp: "2026-09-26",
+    notes: "Hot lead — Greenfields east plots",
+  }),
+  leadSeed("LEAD-002", "Fatima Begum", "+91 90000 10002", "brag0002", ["PRJ-01"], "SITE_VISIT_COMPLETED", "Facebook", {
+    email: "fatima.b@example.com",
+    campaign: "FB-Sep26",
+    preferredLocation: "Shadnagar",
+    notes: "Completed visit with Arjun",
+  }),
+  leadSeed("LEAD-003", "Suresh Iyer", "+91 90000 10003", "brag0001", ["PRJ-01"], "INTERESTED", "Walk-in", {
+    email: "suresh.iyer@example.com",
+    convertedCustomerId: "Br000001",
+    conversionTimestamp: "2026-09-12T09:30:00.000Z",
+    responsibleAgentId: "brag0001",
+    notes: "Converted — linked to Br000001",
+  }),
+  leadSeed("LEAD-004", "Neha Gupta", "+91 90000 10004", "brag0002", ["PRJ-01", "PRJ-04"], "NEGOTIATION", "Google", {
+    email: "neha.g@example.com",
+    preferredBudgetRange: "50-70L",
+    nextFollowUp: "2026-09-25",
+  }),
+  leadSeed("LEAD-005", "Omar Siddiqui", "+91 90000 10005", "brag0003", ["PRJ-02"], "NEW", "Instagram", {
+    email: "omar.s@example.com",
+  }),
+  leadSeed("LEAD-006", "Lakshmi Narayan", "+91 90000 10006", "brag0001", ["PRJ-01"], "CONTACTED", "Referral", {
+    alternateMobile: "+91 90000 10066",
+    nextFollowUp: "2026-09-24",
+  }),
+  leadSeed("LEAD-007", "Priyanka Das", "+91 90000 10007", "brag0004", ["PRJ-03"], "SITE_VISIT_PLANNED", "Hoarding", {
+    nextFollowUp: "2026-09-27",
+  }),
+  leadSeed("LEAD-008", "Ajay Verma", "+91 90000 10008", "brag0002", ["PRJ-01"], "LOST", "Cold call", {
+    notes: "Budget mismatch",
+  }),
+];
+
 
 export const siteVisits: SiteVisit[] = [
   { id: "SV-001", customerId: "Br000001", projectId: "PRJ-01", agentId: "brag0001", date: visitShift(0), time: "10:30 AM", status: "Confirmed", plotInterest: ["BGF-118", "BGF-119"], visitors: 2, source: "Referral" },

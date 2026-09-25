@@ -83,11 +83,13 @@ export function NumberInput({
   onChange,
   placeholder,
   step,
+  readOnly,
 }: {
   value: number;
   onChange: (v: number) => void;
   placeholder?: string;
   step?: number;
+  readOnly?: boolean | undefined;
 }) {
   return (
     <input
@@ -95,8 +97,9 @@ export function NumberInput({
       step={step}
       value={Number.isFinite(value) ? value : ""}
       placeholder={placeholder}
+      readOnly={readOnly}
       onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-      className={cn(fieldBase, "numeric")}
+      className={cn(fieldBase, "numeric", readOnly && "text-muted-foreground")}
     />
   );
 }
@@ -108,6 +111,7 @@ export function SelectInput<T extends string>({
   placeholder,
   invalid,
   size = "md",
+  disabled,
 }: {
   value: T | "";
   onChange: (v: T) => void;
@@ -115,12 +119,14 @@ export function SelectInput<T extends string>({
   placeholder?: string;
   invalid?: boolean;
   size?: "md" | "lg";
+  disabled?: boolean | undefined;
 }) {
   const opts = options.map((o) => (typeof o === "string" ? { value: o, label: o } : o));
   return (
     <div className="relative">
       <select
         value={value}
+        disabled={disabled}
         aria-invalid={invalid || undefined}
         data-invalid={invalid || undefined}
         onChange={(e) => onChange(e.target.value as T)}
@@ -130,6 +136,7 @@ export function SelectInput<T extends string>({
           size === "lg" && "h-12",
           invalid && "ring-1 ring-destructive",
           !value && "text-muted-foreground",
+          disabled && "text-muted-foreground",
         )}
       >
         {placeholder && (
@@ -156,19 +163,26 @@ export function TextareaInput({
   onChange,
   placeholder,
   rows = 3,
+  readOnly,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
+  readOnly?: boolean | undefined;
 }) {
   return (
     <textarea
       rows={rows}
       value={value}
       placeholder={placeholder}
+      readOnly={readOnly}
       onChange={(e) => onChange(e.target.value)}
-      className={cn(fieldBase, "h-auto resize-none py-3 leading-relaxed")}
+      className={cn(
+        fieldBase,
+        "h-auto resize-none py-3 leading-relaxed",
+        readOnly && "text-muted-foreground",
+      )}
     />
   );
 }

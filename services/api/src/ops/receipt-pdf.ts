@@ -1,0 +1,150 @@
+/**
+ * Server-generated receipt PDF from persisted payment/receipt records only.
+ * Deterministic layout (A4). No client-calculated financials.
+ */
+import PDFDocument from 'pdfkit';
+
+export type ReceiptPdfInput = {
+  brandName?: string;
+  receiptNumber: string;
+  customerName: string;
+  customerPhone?: string | null;
+  customerEmail?: string | null;
+  projectName: string;
+  projectCode?: string | null;
+  plotNumber?: string | null;
+  bookingId: string;
+  amountPaise: string;
+  paymentMethod: string;
+  txnRef?: string | null;
+  paidAt: Date | string;
+  generatedAt?: Date | string;
+  authorizedBy?: string | null;
+};
+
+const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+  'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+function twoDigits(n: number): string {
+  if (n < 20) return ONES[n];
+  const t = Math.floor(n / 10);
+  const o = n % 10;
+  return (TENS[t] + (o ? ' ' + ONES[o] : '')).trim();
+}
+
+/** Indian numbering: crore / lakh / thousand. Returns null if amount too large / invalid. */
+export function amountInWordsInr(paiseStr: string): string | null {
+  try {
+    const paise = BigInt(paiseStr);
+    if (paise < 0n) return null;
+    const rupees = paise / 100n;
+    const paiseRem = Number(paise % 100n);
+    if (rupees > 999999999999n) return null;
+    const crore = Number(rupees / 10000000n);
+    const lakh = Number((rupees % 10000000n) / 100000n);
+    const thousand = Number((rupees % 100000n) / 1000n);
+    const hundred = Number((rupees % 1000n) / 100n);
+    const rest = Number(rupees % 100n);
+    const parts: string[] = [];
+    if (crore) parts.push(twoDigits(crore) + ' Crore');
+    if (lakh) parts.push(twoDigits(lakh) + ' Lakh');
+    if (thousand) parts.push(twoDigits(thousand) + ' Thousand');
+    if (hundred) parts.push(ONES[hundred] + ' Hundred');
+    if (rest) parts.push(twoDigits(rest));
+    if (!parts.length) parts.push('Zero');
+    let out = 'Rupees ' + parts.join(' ');
+    if (paiseRem) out += ' and ' + twoDigits(paiseRem) + ' Paise';
+    return out + ' Only';
+  } catch {
+    return null;
+  }
+}
+
+export function formatInrFromPaise(paiseStr: string): string {
+  const paise = BigInt(paiseStr);
+  const neg = paise < 0n;
+  const abs = neg ? -paise : paise;
+  const rupees = abs / 100n;
+  const rem = abs % 100n;
+  const whole = rupees.toString();
+  let grouped = whole;
+  if (whole.length > 3) {
+    const last3 = whole.slice(-3);
+    let head = whole.slice(0, -3);
+    const chunks: string[] = [];
+    while (head.length > 2) {
+      chunks.unshift(head.slice(-2));
+      head = head.slice(0, -2);
+    }
+    if (head) chunks.unshift(head);
+    grouped = chunks.join(',') + ',' + last3;
+  }
+  const frac = rem.toString().padStart(2, '0');
+  return (neg ? '-' : '') + 'INR ' + grouped + '.' + frac;
+}
+
+function fmtDate(d: Date | string): string {
+  const dt = typeof d === 'string' ? new Date(d) : d;
+  return dt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+}
+
+export function buildReceiptPdf(input: ReceiptPdfInput): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 50,
+      info: {
+        Title: 'Receipt ' + input.receiptNumber,
+        Author: input.brandName || 'Bhairava',
+        Subject: 'Payment receipt',
+      },
+    });
+    const chunks: Buffer[] = [];
+    doc.on('data', (c) => chunks.push(c as Buffer));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const brand = input.brandName || 'Bhairava';
+    const amount = formatInrFromPaise(input.amountPaise);
+    const words = amountInWordsInr(input.amountPaise);
+    const generatedAt = input.generatedAt || new Date();
+
+    doc.fontSize(20).fillColor('#0B1220').text(brand, { align: 'left' });
+    doc.fontSize(10).fillColor('#556').text('Payment Receipt', { align: 'left' });
+    doc.moveDown(0.5);
+    doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#0B1220').stroke();
+    doc.moveDown();
+
+    doc.fontSize(12).fillColor('#0B1220');
+    doc.text('Receipt No: ' + input.receiptNumber);
+    doc.text('Generated: ' + fmtDate(generatedAt) + ' (IST)');
+    doc.moveDown();
+
+    const rows: Array<[string, string]> = [
+      ['Customer', input.customerName + (input.customerPhone ? ' ? ' + input.customerPhone : '')],
+      ['Project', input.projectName + (input.projectCode ? ' (' + input.projectCode + ')' : '')],
+      ['Plot', input.plotNumber || '?'],
+      ['Booking ref', input.bookingId],
+      ['Amount', amount],
+      ['Amount in words', words || '?'],
+      ['Payment method', input.paymentMethod],
+      ['Transaction ref', input.txnRef || '?'],
+      ['Payment date', fmtDate(input.paidAt)],
+      ['Authorized / generated by', input.authorizedBy || 'System'],
+    ];
+
+    for (const [k, v] of rows) {
+      doc.fontSize(10).fillColor('#556').text(k, { continued: false });
+      doc.fontSize(11).fillColor('#0B1220').text(v, { indent: 12 });
+      doc.moveDown(0.35);
+    }
+
+    doc.moveDown();
+    doc.fontSize(8).fillColor('#889').text(
+      'This receipt is generated server-side from persisted payment records. Financial figures are not recalculated on the client.',
+      { align: 'left', width: 495 },
+    );
+    doc.end();
+  });
+}

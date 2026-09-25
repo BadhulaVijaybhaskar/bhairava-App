@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Bhairava Customer",
+    "slug": "bhairava-customer-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "bhairava-customer-mobile",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bhairava.customer",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.bhairava.customer",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

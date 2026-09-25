@@ -1,0 +1,15 @@
+# Manual wire notes for projects.$projectId.tsx
+#
+# 1. Add import:
+#    import { ProjectLayoutTab } from "@/components/project-workspace/layout-tab";
+#    import { layoutAccessForRole } from "@/lib/domain/project-permissions";
+#
+# 2. Near setupAccess:
+#    const layoutAccess = layoutAccessForRole(session?.role);
+#
+# 3. Replace ComingSoon for layout tab with:
+#    {tab === "layout" && (
+#      <ProjectLayoutTab project={project} plots={projectPlots} access={layoutAccess} />
+#    )}
+#
+# Variable names may be projectPlots vs plots — match existing destructure.

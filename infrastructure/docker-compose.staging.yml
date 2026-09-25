@@ -1,0 +1,122 @@
+﻿# Isolated staging stack — project name: bhairava-staging
+# Usage:
+#   docker compose -p bhairava-staging -f infrastructure/docker-compose.staging.yml --env-file .env.staging.local up -d
+name: bhairava-staging
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bhairava_stg}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-bhairava_staging}
+    ports:
+      - "15432:5432"
+    volumes:
+      - bhairava_staging_pg:/var/lib/postgresql/data
+    networks:
+      - bhairava_staging_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD required}"]
+    ports:
+      - "16379:6379"
+    volumes:
+      - bhairava_staging_redis:/data
+    networks:
+      - bhairava_staging_net
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
+    ports:
+      - "19000:9000"
+      - "19001:9001"
+    volumes:
+      - bhairava_staging_minio:/data
+    networks:
+      - bhairava_staging_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  api:
+    profiles: ["full"]
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.api
+    env_file:
+      - ../.env.staging.local
+    environment:
+      NODE_ENV: staging
+      PORT: "4000"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: bhairava-staging
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: lax
+    ports:
+      - "14000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - bhairava_staging_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  worker:
+    profiles: ["full"]
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.worker
+    env_file:
+      - ../.env.staging.local
+    environment:
+      NODE_ENV: staging
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - bhairava_staging_net
+
+volumes:
+  bhairava_staging_pg:
+  bhairava_staging_redis:
+  bhairava_staging_minio:
+
+networks:
+  bhairava_staging_net:
+    name: bhairava_staging_net

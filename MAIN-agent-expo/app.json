@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Bhairava Agent",
+    "slug": "bhairava-agent",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "android": {
+      "package": "com.bhairava.agent"
+    },
+    "ios": {
+      "bundleIdentifier": "com.bhairava.agent"
+    }
+  }
+}

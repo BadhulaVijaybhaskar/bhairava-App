@@ -1,0 +1,21 @@
+﻿FROM node:24-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+COPY packages ./packages
+COPY services/api ./services/api
+RUN npm install --workspace=@bhairava/api --workspace=@bhairava/database --workspace=@bhairava/domain --workspace=@bhairava/permissions --workspace=@bhairava/auth --workspace=@bhairava/config
+
+FROM deps AS build
+# Workspace packages that resolve from dist/ must be built before the API compiles.
+# A clean Docker context has no pre-existing dist/ artifacts.
+RUN npm run build -w @bhairava/domain
+RUN npm run build -w @bhairava/permissions
+RUN npm run generate -w @bhairava/database || npx prisma generate --schema=packages/database/prisma/schema.prisma
+RUN npm run build -w @bhairava/api || npx nest build --path services/api
+
+FROM node:24-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app /app
+EXPOSE 4000
+CMD ["node", "services/api/dist/main.js"]

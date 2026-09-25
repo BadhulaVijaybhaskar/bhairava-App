@@ -3,11 +3,28 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Btn, Chip } from "@/components/kit";
-import { PlotCanvas, statusFill, statusLabel } from "@/components/plot-canvas";
-import { byId, formatINR, type Plot, type PlotStatus } from "@/lib/mock-data";
+import { PlotCanvas } from "@/components/plot-canvas";
+import { byId, formatINR } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
+import { getSession } from "@/lib/auth";
+import {
+  PLOT_STATUSES,
+  PLOT_STATUS_LABEL,
+  type CanonicalPlotStatus,
+  toCanonicalPlotStatus,
+  countByCanonicalStatus,
+} from "@/lib/domain/plot-status";
+import { canonicalPlotStatusFill } from "@/lib/plot-status-colors";
+import {
+  projectPlotForRole,
+  customerDisplayName,
+} from "@/lib/domain/plot-pii";
 
 export const Route = createFileRoute("/plots/layout")({
+  validateSearch: (search: Record<string, unknown>): { projectId?: string } => {
+    const projectId = typeof search["projectId"] === "string" ? search["projectId"] : undefined;
+    return projectId ? { projectId } : {};
+  },
   head: () => ({
     meta: [
       { title: "Live Plot Layout — Bhairava" },
@@ -17,21 +34,17 @@ export const Route = createFileRoute("/plots/layout")({
           "Interactive live layout map of all plots across projects with status, pricing and contextual actions.",
       },
       { property: "og:title", content: "Live Plot Layout — Bhairava" },
-      {
-        property: "og:description",
-        content: "Interactive live layout map of all plots across projects.",
-      },
     ],
   }),
   component: PlotsLayoutPage,
 });
 
-const ALL_STATUSES = Object.keys(statusFill) as PlotStatus[];
-
 function PlotsLayoutPage() {
   const { plots, projects, customers, agents } = useData();
-  const [projectId, setProjectId] = useState<string>("PRJ-01");
-  const [hidden, setHidden] = useState<Set<PlotStatus>>(new Set());
+  const session = getSession();
+  const search = Route.useSearch();
+  const [projectId, setProjectId] = useState<string>(search.projectId ?? "PRJ-01");
+  const [hidden, setHidden] = useState<Set<CanonicalPlotStatus>>(new Set());
   const [showNumbers, setShowNumbers] = useState(true);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
 
@@ -40,24 +53,26 @@ function PlotsLayoutPage() {
     [projectId, plots],
   );
 
+  const layoutImageUrl =
+    projectId !== "all" ? byId(projects, projectId)?.layoutImage : undefined;
+
   const selected = byId(plots, selectedId);
   const selectedProject = selected ? byId(projects, selected.projectId) : undefined;
-  const selectedCustomer = selected?.customerId ? byId(customers, selected.customerId) : undefined;
+  const projected = selected
+    ? projectPlotForRole(selected, {
+        role: session?.role,
+        sessionEmail: session?.email,
+        customers,
+        agentEmailToId: Object.fromEntries(
+          agents.filter((a) => a.email).map((a) => [a.email!.toLowerCase(), a.id]),
+        ),
+      })
+    : null;
   const selectedAgent = selected?.agentId ? byId(agents, selected.agentId) : undefined;
 
-  const counts = useMemo(() => {
-    const map: Record<PlotStatus, number> = {
-      available: 0,
-      reserved: 0,
-      booked: 0,
-      registered: 0,
-      resale: 0,
-    };
-    for (const p of scoped) map[p.status]++;
-    return map;
-  }, [scoped]);
+  const counts = useMemo(() => countByCanonicalStatus(scoped), [scoped]);
 
-  const toggleStatus = (s: PlotStatus) => {
+  const toggleStatus = (s: CanonicalPlotStatus) => {
     setHidden((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
@@ -69,7 +84,6 @@ function PlotsLayoutPage() {
   return (
     <AppShell bleed>
       <div className="flex flex-col gap-4 p-4 pb-24 lg:h-[calc(100vh-4rem)] lg:flex-row lg:pb-4">
-        {/* left control rail */}
         <aside className="order-2 grid w-full shrink-0 gap-4 sm:grid-cols-2 lg:order-1 lg:flex lg:w-64 lg:flex-col lg:overflow-y-auto">
           <div className="panel p-4">
             <p className="pb-2 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
@@ -93,8 +107,8 @@ function PlotsLayoutPage() {
             <p className="pb-3 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
               Status layers
             </p>
-            <div className="flex flex-col gap-2">
-              {ALL_STATUSES.map((s) => (
+            <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+              {PLOT_STATUSES.map((s) => (
                 <label
                   key={s}
                   className="flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-low"
@@ -102,9 +116,9 @@ function PlotsLayoutPage() {
                   <span className="flex items-center gap-2 text-sm">
                     <span
                       className="h-2.5 w-2.5 rounded-sm"
-                      style={{ background: statusFill[s] }}
+                      style={{ background: canonicalPlotStatusFill[s] }}
                     />
-                    {statusLabel[s]}
+                    {PLOT_STATUS_LABEL[s]}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="numeric text-xs text-muted-foreground">{counts[s]}</span>
@@ -141,7 +155,6 @@ function PlotsLayoutPage() {
           </div>
         </aside>
 
-        {/* centre canvas */}
         <div className="order-1 h-[52vh] min-w-0 flex-1 lg:order-2 lg:h-auto">
           <PlotCanvas
             plots={scoped}
@@ -149,12 +162,12 @@ function PlotsLayoutPage() {
             onSelect={(p) => setSelectedId(p.id)}
             hiddenStatuses={hidden}
             showNumbers={showNumbers}
+            layoutImageUrl={layoutImageUrl ?? null}
             className="h-full w-full"
           />
         </div>
 
-        {/* right contextual panel */}
-        {selected && (
+        {selected && projected && (
           <aside className="order-3 flex w-full shrink-0 flex-col gap-4 lg:w-80 lg:overflow-y-auto">
             <div className="panel p-5">
               <div className="flex items-start justify-between gap-2">
@@ -165,6 +178,7 @@ function PlotsLayoutPage() {
                   <h2 className="numeric font-display text-2xl font-semibold">{selected.number}</h2>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setSelectedId(undefined)}
                   className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-low hover:text-foreground"
                 >
@@ -172,7 +186,7 @@ function PlotsLayoutPage() {
                 </button>
               </div>
               <div className="pt-3">
-                <Chip>{statusLabel[selected.status]}</Chip>
+                <Chip>{PLOT_STATUS_LABEL[projected.canonical]}</Chip>
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-4">
@@ -211,14 +225,28 @@ function PlotsLayoutPage() {
               <p className="pb-3 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                 Linked records
               </p>
-              {selectedCustomer ? (
-                <Link
-                  to="/customers/$customerId"
-                  params={{ customerId: selectedCustomer.id }}
-                  className="block rounded-lg px-2 py-1.5 text-sm hover:bg-surface-low"
-                >
-                  Customer: {selectedCustomer.name}
-                </Link>
+              {projected.customerView ? (
+                <div className="rounded-lg px-2 py-1.5 text-sm">
+                  <p>
+                    Customer:{" "}
+                    {projected.customerView.redacted && !projected.customerView.name ? (
+                      <span className="italic text-muted-foreground">
+                        {customerDisplayName(projected.customerView)}
+                      </span>
+                    ) : (
+                      <Link
+                        to="/customers/$customerId"
+                        params={{ customerId: projected.customerView.id }}
+                        className="font-medium hover:underline"
+                      >
+                        {customerDisplayName(projected.customerView)}
+                      </Link>
+                    )}
+                  </p>
+                  {projected.customerView.phone && (
+                    <p className="text-xs text-muted-foreground">{projected.customerView.phone}</p>
+                  )}
+                </div>
               ) : (
                 <p className="px-2 py-1.5 text-sm text-muted-foreground">No customer linked</p>
               )}
