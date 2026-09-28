@@ -1,16 +1,78 @@
 {
   "name": "bhairava-workspace",
   "private": true,
-  "description": "Current product: MAIN app. Older Admin / Agent / Customer portals are in archive/.",
+  "version": "0.1.0",
+  "description": "Bhairava production platform monorepo. SoT: apps/* services/* packages/*. MAIN* is DEPRECATED reference only (not in workspaces).",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "npm run dev --prefix \"MAIN app\"",
-    "dev:admin": "npm run dev --prefix archive/bhairava-app",
-    "dev:agent": "npm run dev --prefix archive/bhairava-agent",
-    "dev:customer": "npm run dev --prefix archive/bhairava-customer",
-    "dev:all": "npx concurrently -n admin,agent,customer -c blue,green,magenta \"npm run dev:admin\" \"npm run dev:agent\" \"npm run dev:customer\"",
-    "db:generate": "npm run db:generate --prefix archive/bhairava-app && node scripts/sync-prisma-client.cjs"
+    "dev": "npm run dev:prod-stack",
+    "dev:main": "npm run dev --prefix \"MAIN app\" -- --host 0.0.0.0 --port 3000",
+    "dev:main-agent": "npm run dev --prefix MAIN-agent -- --host 0.0.0.0",
+    "dev:main-customer": "npm run dev --prefix MAIN-customer -- --host 0.0.0.0",
+    "dev:client": "npx concurrently -n main,agent,customer -c blue,green,magenta \"npm run dev:main\" \"npm run dev:main-agent\" \"npm run dev:main-customer\"",
+    "dev:agent-expo": "npm start --prefix MAIN-agent-expo",
+    "dev:customer-expo": "npm start --prefix MAIN-customer-expo",
+    "dev:api": "npm run start:dev -w @bhairava/api",
+    "dev:worker": "npm run start:dev -w @bhairava/worker",
+    "build:api": "npm run build -w @bhairava/api",
+    "build:worker": "npm run build -w @bhairava/worker",
+    "db:generate": "npm run generate -w @bhairava/database",
+    "db:migrate": "npm run migrate:dev -w @bhairava/database",
+    "db:migrate:deploy": "npm run migrate:deploy -w @bhairava/database",
+    "db:seed": "npm run seed -w @bhairava/database",
+    "db:validate": "npm run validate -w @bhairava/database",
+    "test": "npm run test -w @bhairava/domain && npm run test -w @bhairava/api-client && npm run test -w @bhairava/api",
+    "test:domain": "npm run test -w @bhairava/domain",
+    "test:api": "npm run test -w @bhairava/api",
+    "test:api-client": "npm run test -w @bhairava/api-client",
+    "docker:up": "docker compose -f infrastructure/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker-compose.yml down",
+    "docker:logs": "docker compose -f infrastructure/docker-compose.yml logs -f",
+    "test:agent": "npm test --prefix MAIN-agent",
+    "test:customer": "npm test --prefix MAIN-customer",
+    "typecheck:agent": "npm run typecheck --prefix MAIN-agent",
+    "typecheck:customer": "npm run typecheck --prefix MAIN-customer",
+    "dev:admin-web": "npm run dev -w @bhairava/admin-web",
+    "dev:agent-web": "npm run dev -w @bhairava/agent-web",
+    "dev:customer-web": "npm run dev -w @bhairava/customer-web",
+    "dev:agent-mobile": "npm start -w @bhairava/agent-mobile",
+    "dev:customer-mobile": "npm start -w @bhairava/customer-mobile",
+    "db:bootstrap": "npm run bootstrap -w @bhairava/database",
+    "test:e2e:api": "node scripts/e2e/production-flow.mjs",
+    "scan:secrets": "node scripts/security/secret-scan.cjs",
+    "dev:prod-stack": "npx concurrently -n api,admin,agent,customer -c blue,cyan,green,magenta \"npm run dev:api\" \"npm run dev:admin-web\" \"npm run dev:agent-web\" \"npm run dev:customer-web\"",
+    "dev:legacy-main": "npm run dev --prefix \"MAIN app\"",
+    "db:seed:staging": "npm run seed -w @bhairava/database",
+    "test:privacy": "npm run test -w @bhairava/api -- --testPathPatterns=privacy"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "scheduler": "0.25.0"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4"
+    "concurrently": "^10.0.4",
+    "typescript": "^5.9.2"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "prisma@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "argon2@0.44.0": true,
+    "esbuild@0.28.2": true
+  },
+  "overrides": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "react": "$react",
+    "react-dom": "$react-dom",
+    "scheduler": "$scheduler"
   }
 }

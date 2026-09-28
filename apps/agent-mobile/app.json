@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Bhairava Agent",
+    "slug": "bhairava-agent-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "bhairava-agent-mobile",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bhairava.agent",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.bhairava.agent",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

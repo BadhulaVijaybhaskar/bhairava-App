@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Shield, ScrollText, Building2 } from "lucide-react";
+﻿import { Link, useRouterState } from "@tanstack/react-router";
+import { Shield, ScrollText, Building2, CreditCard, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollTabs } from "@/components/scroll-tabs";
 
@@ -7,6 +7,8 @@ const items = [
   { to: "/settings/users", label: "Members & roles", icon: Shield },
   { to: "/settings/audit", label: "Audit logs", icon: ScrollText },
   { to: "/settings/company", label: "Company", icon: Building2 },
+  { to: "/settings/billing", label: "Billing", icon: CreditCard },
+  { to: "/settings/danger", label: "Danger zone", icon: AlertTriangle },
 ];
 
 export function SettingsNav() {
@@ -38,3 +40,4 @@ export function SettingsNav() {
     </ScrollTabs>
   );
 }
+

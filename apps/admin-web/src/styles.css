@@ -1,0 +1,164 @@
+﻿@import "@bhairava/ui-web/styles.css";
+
+/* App-specific: plot canvas host + A4 receipt print */
+.plot-canvas-host,
+.plot-canvas {
+  position: relative;
+  height: min(70vh, 640px);
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  background: var(--surface-low);
+  user-select: none;
+}
+.plot-canvas-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.plot-canvas-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 1;
+  color: var(--muted-foreground);
+}
+.plot-canvas-legend {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  max-width: min(100%, 34rem);
+  background: color-mix(in oklab, var(--surface-lowest) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 0.55rem 0.75rem;
+  z-index: 2;
+  box-shadow: var(--shadow-ambient);
+}
+.plot-canvas-legend .k {
+  margin: 0;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+.plot-canvas-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  padding-top: 0.35rem;
+}
+.plot-canvas-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+}
+.plot-canvas-legend-item .swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.plot-canvas-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: color-mix(in oklab, var(--surface-lowest) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 0.35rem;
+  z-index: 2;
+  box-shadow: var(--shadow-ambient);
+}
+.plot-canvas-hover {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: color-mix(in oklab, var(--surface-lowest) 94%, transparent);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: var(--shadow-ambient);
+}
+.plot-canvas-hover p {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.receipt-sheet {
+  max-width: 210mm;
+  margin: 0 auto;
+}
+.receipt-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 1rem;
+}
+.receipt-brand {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.receipt-meta .k,
+.receipt-grid .k {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+.receipt-meta .v,
+.receipt-grid .v {
+  font-weight: 600;
+  margin: 0.2rem 0;
+}
+.receipt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  background: var(--surface-low);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.receipt-foot {
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  display: grid;
+  gap: 0.35rem;
+}
+@media print {
+  .app-shell aside,
+  .app-shell-column > header,
+  .mobile-bottom-nav,
+  .mobile-fab,
+  .no-print {
+    display: none !important;
+  }
+  .app-shell-main {
+    padding: 0 !important;
+  }
+  .receipt-sheet {
+    box-shadow: none;
+    border: 0;
+    max-width: 100%;
+  }
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+}

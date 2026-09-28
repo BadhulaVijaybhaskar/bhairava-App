@@ -1,60 +1,80 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { Chip, DataTable, Panel, RecordHeader, SectionTitle, Timeline } from "@/components/kit";
+import { Chip, Panel, RecordHeader } from "@/components/kit";
 import { ScrollTabs } from "@/components/scroll-tabs";
-import { BookingCard } from "@/components/booking-card";
-import { byId, documents, formatINR, projects, salesTrend } from "@/lib/mock-data";
-import { useData } from "@/lib/store";
 import { ProjectEditor } from "@/components/record-editors";
+import { ProjectOverviewTab } from "@/components/project-workspace/overview-tab";
+import { ProjectSetupTab } from "@/components/project-workspace/setup-tab";
+import { ProjectLayoutTab } from "@/components/project-workspace/layout-tab";
+import { ComingSoonPanel } from "@/components/project-workspace/coming-soon-panel";
+import { ProjectSalesTab } from "@/components/project-workspace/sales-tab";
+import { ProjectFinanceTab } from "@/components/project-workspace/finance-tab";
+import { ProjectDocumentsTab } from "@/components/project-workspace/documents-tab";
+import { byId, projects as seedProjects } from "@/lib/mock-data";
+import { useData } from "@/lib/store";
+import { getSession } from "@/lib/auth";
+import {
+  deriveInventoryFunnel,
+  evaluateProjectReadiness,
+  projectLifecycleOf,
+} from "@/lib/domain/overview-metrics";
+import { LIFECYCLE_LABEL } from "@/lib/domain/lifecycle";
+import { setupAccessForRole, layoutAccessForRole } from "@/lib/domain/project-permissions";
+
+const TABS = [
+  { key: "overview", label: "Overview" },
+  { key: "setup", label: "Setup" },
+  { key: "layout", label: "Layout & Plots" },
+  { key: "sales", label: "Sales" },
+  { key: "finance", label: "Finance" },
+  { key: "documents", label: "Documents" },
+  { key: "team", label: "Team" },
+  { key: "activity", label: "Activity" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
+type Search = { tab?: TabKey };
+
+function parseTab(raw: unknown): TabKey {
+  const v = typeof raw === "string" ? raw.toLowerCase() : "";
+  const hit = TABS.find((t) => t.key === v);
+  return hit?.key ?? "overview";
+}
 
 export const Route = createFileRoute("/projects/$projectId")({
+  validateSearch: (search: Record<string, unknown>): Search => {
+    const tab = parseTab(search["tab"]);
+    return tab === "overview" ? {} : { tab };
+  },
   head: ({ params }) => {
-    const project = byId(projects, params.projectId);
-    const title = project ? `${project.name} — Project record` : "Project not found";
+    const project = byId(seedProjects, params.projectId);
+    const title = project ? `${project.name} — Project workspace` : "Project not found";
     return {
       meta: [
         { title: `${title} — Bhairava` },
         {
           name: "description",
-          content: `Record details, plots, customers and documents for ${project?.name ?? "this project"}.`,
+          content: `Portfolio OS workspace for ${project?.name ?? "this project"}.`,
         },
         { property: "og:title", content: `${title} — Bhairava` },
-        {
-          property: "og:description",
-          content: `Record details, plots, customers and documents for ${project?.name ?? "this project"}.`,
-        },
       ],
     };
   },
-  component: ProjectRecord,
+  component: ProjectWorkspace,
 });
 
-const chartAxis = {
-  stroke: "var(--outline-variant)",
-  tickLine: false,
-  axisLine: false,
-  tick: { fill: "var(--muted-foreground)", fontSize: 11 },
-};
-
-const tabs = ["Overview", "Plots", "Customers", "Bookings", "Documents"] as const;
-type Tab = (typeof tabs)[number];
-
-function ProjectRecord() {
+function ProjectWorkspace() {
   const { projectId } = Route.useParams();
-  const { projects: projectList, plots, bookings, customers } = useData();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const tab = parseTab(search.tab);
+  const { projects: projectList, plots, bookings, saveProject } = useData();
   const project = byId(projectList, projectId);
-  const [tab, setTab] = useState<Tab>("Overview");
+  const session = getSession();
+  const setupAccess = setupAccessForRole(session?.role);
+  const layoutAccess = layoutAccessForRole(session?.role);
 
   if (!project) {
     return (
@@ -73,34 +93,20 @@ function ProjectRecord() {
   }
 
   const projectPlots = plots.filter((p) => p.projectId === project.id);
-  const projectCustomers = customers.filter((c) =>
-    c.plots.some((pid) => byId(plots, pid)?.projectId === project.id),
-  );
   const projectBookings = bookings.filter((b) => b.projectId === project.id);
-  const projectDocuments = documents.filter((d) => d.projectId === project.id);
+  const lifecycle = projectLifecycleOf(project);
+  const funnel = deriveInventoryFunnel(projectPlots);
+  const readiness = evaluateProjectReadiness(
+    project as unknown as Record<string, unknown>,
+    projectPlots as unknown as Array<Record<string, unknown>>,
+  );
 
-  const trend = salesTrend.map((s, i) => ({
-    month: s.month,
-    absorption: Math.min(
-      100,
-      Math.round(((project.soldPlots * (i + 1)) / salesTrend.length / project.totalPlots) * 100),
-    ),
-  }));
-
-  const activity = [
-    {
-      time: "2h ago",
-      title: "Payment received",
-      detail: `${projectCustomers[0]?.name ?? "Customer"} · installment`,
-    },
-    {
-      time: "1d ago",
-      title: "Plot registered",
-      detail: `${projectPlots.find((p) => p.status === "registered")?.number ?? "—"}`,
-    },
-    { time: "3d ago", title: "New booking confirmed", detail: `${projectBookings[0]?.id ?? "—"}` },
-    { time: "6d ago", title: "Layout approval updated", detail: project.approvals.join(", ") },
-  ];
+  const setTab = (next: TabKey) => {
+    void navigate({
+      search: next === "overview" ? {} : { tab: next },
+      replace: true,
+    });
+  };
 
   return (
     <AppShell>
@@ -111,8 +117,22 @@ function ProjectRecord() {
           <div className="flex flex-wrap items-center gap-2">
             <span>
               {project.location}, {project.city}
+              {project.state ? `, ${project.state}` : ""}
             </span>
-            <Chip>{project.status}</Chip>
+            <Chip tone="info">{LIFECYCLE_LABEL[lifecycle]}</Chip>
+            {project.agentVisible ? (
+              <Chip tone="positive">Agent visible</Chip>
+            ) : (
+              <Chip>Agent hidden</Chip>
+            )}
+            {project.customerListed ? (
+              <Chip tone="positive">Customer listed</Chip>
+            ) : (
+              <Chip>Not listed</Chip>
+            )}
+            <Chip tone={readiness.blockers.length ? "warning" : "positive"}>
+              {`Readiness ${readiness.percent}%`}
+            </Chip>
             {project.approvals.map((a) => (
               <Chip key={a} tone="info">
                 {a}
@@ -121,32 +141,39 @@ function ProjectRecord() {
           </div>
         }
         facts={[
-          { label: "Total plots", value: project.totalPlots },
+          { label: "Total plots", value: funnel.total || project.totalPlots },
           {
-            label: "Sold",
-            value: `${project.soldPlots} (${Math.round((project.soldPlots / project.totalPlots) * 100)}%)`,
+            label: "Available",
+            value: funnel.total ? funnel.counts.AVAILABLE : "—",
           },
-          { label: "Value", value: formatINR(project.valueCr * 1e7, { compact: true }) },
-          { label: "Collected", value: formatINR(project.collectedCr * 1e7, { compact: true }) },
-          { label: "Launch date", value: project.launchDate },
-          { label: "Manager", value: project.manager },
+          {
+            label: "Reserved",
+            value: funnel.total ? funnel.counts.RESERVED : "—",
+          },
+          {
+            label: "Booked",
+            value: funnel.total ? funnel.counts.BOOKED : "—",
+          },
+          {
+            label: "Sold / Registered",
+            value: funnel.total
+              ? `${funnel.counts.SOLD} / ${funnel.counts.REGISTERED}`
+              : "—",
+          },
+          {
+            label: "Errors / Warnings",
+            value: `${readiness.blockers.length} / ${readiness.warnings.length}`,
+          },
         ]}
         actions={
           <>
-            <ProjectEditor project={project} />
+            {setupAccess === "full" && <ProjectEditor project={project} />}
             <Link
               to="/onboarding/plot"
               search={{ projectId: project.id }}
               className="inline-flex items-center gap-1.5 rounded-lg bg-surface-c px-3 py-2 text-sm font-medium"
             >
               Add plot
-            </Link>
-            <Link
-              to="/onboarding/visit"
-              search={{ projectId: project.id }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-surface-c px-3 py-2 text-sm font-medium"
-            >
-              Site visit
             </Link>
             <Link
               to="/plots/layout"
@@ -159,179 +186,60 @@ function ProjectRecord() {
       />
 
       <ScrollTabs activeKey={tab} className="mt-6 rounded-xl bg-surface-low p-1 lg:overflow-x-visible">
-        {tabs.map((t) => (
+        {TABS.map((t) => (
           <button
-            key={t}
-            data-active={tab === t ? "true" : undefined}
-            onClick={() => setTab(t)}
+            key={t.key}
+            type="button"
+            data-active={tab === t.key ? "true" : undefined}
+            onClick={() => setTab(t.key)}
             className={`flex-none whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors lg:flex-1 ${
-              tab === t
+              tab === t.key
                 ? "bg-surface-lowest text-foreground shadow-ambient"
                 : "text-muted-foreground hover:bg-surface-c"
             }`}
           >
-            {t}
+            {t.label}
           </button>
         ))}
       </ScrollTabs>
 
       <div className="pt-6">
-        {tab === "Overview" && (
-          <div className="grid gap-4 lg:grid-cols-12">
-            <Panel className="lg:col-span-7">
-              <SectionTitle aside="Derived from monthly sales trend">Absorption trend</SectionTitle>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trend} margin={{ left: -20, right: 4, top: 8 }}>
-                    <defs>
-                      <linearGradient id="absorption" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      stroke="var(--outline-variant)"
-                      strokeOpacity={0.18}
-                      vertical={false}
-                    />
-                    <XAxis dataKey="month" {...chartAxis} />
-                    <YAxis {...chartAxis} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "var(--surface-lowest)",
-                        border: "none",
-                        borderRadius: 12,
-                        boxShadow: "var(--shadow-float)",
-                        fontSize: 12,
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="absorption"
-                      stroke="var(--primary)"
-                      strokeWidth={2}
-                      fill="url(#absorption)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </Panel>
-            <Panel className="lg:col-span-5" tonal>
-              <SectionTitle>Recent activity</SectionTitle>
-              <Timeline items={activity} />
-            </Panel>
-          </div>
-        )}
-
-        {tab === "Plots" && (
-          <div>
-            <div className="flex items-center justify-end gap-3 pb-3">
-              <Link
-                to="/onboarding/plot"
-                search={{ projectId: project.id }}
-                className="text-sm font-medium text-primary"
-              >
-                Add plot
-              </Link>
-              <Link to="/plots/layout" className="text-sm font-medium text-primary">
-                Open live plot layout →
-              </Link>
-            </div>
-            <DataTable
-              rows={projectPlots}
-              columns={[
-                {
-                  key: "number",
-                  header: "Plot",
-                  cell: (r) => <span className="numeric">{r.number}</span>,
-                },
-                {
-                  key: "area",
-                  header: "Area (sq.yd)",
-                  cell: (r) => <span className="numeric">{r.areaSqYd}</span>,
-                },
-                { key: "facing", header: "Facing", cell: (r) => r.facing },
-                {
-                  key: "price",
-                  header: "Price/sq.yd",
-                  align: "right",
-                  cell: (r) => <span className="numeric">{formatINR(r.pricePerSqYd)}</span>,
-                },
-                { key: "status", header: "Status", cell: (r) => <Chip>{r.status}</Chip> },
-              ]}
-            />
-          </div>
-        )}
-
-        {tab === "Customers" && (
-          <DataTable
-            rows={projectCustomers}
-            linkTo="/customers/$customerId"
-            params={(r) => ({ customerId: r.id })}
-            columns={[
-              { key: "name", header: "Customer", cell: (r) => r.name },
-              {
-                key: "phone",
-                header: "Phone",
-                cell: (r) => <span className="numeric">{r.phone}</span>,
-              },
-              { key: "stage", header: "Stage", cell: (r) => <Chip>{r.stage}</Chip> },
-              {
-                key: "value",
-                header: "Value",
-                align: "right",
-                cell: (r) => (
-                  <span className="numeric">{formatINR(r.totalValue, { compact: true })}</span>
-                ),
-              },
-            ]}
+        {tab === "overview" && (
+          <ProjectOverviewTab
+            project={project}
+            plots={projectPlots}
+            bookings={projectBookings}
           />
         )}
-
-        {tab === "Bookings" && (
-          <DataTable
-            rows={projectBookings}
-            linkTo="/bookings/$bookingId"
-            params={(r) => ({ bookingId: r.id })}
-            renderMobileCard={(r) => <BookingCard booking={r} />}
-            columns={[
-              {
-                key: "id",
-                header: "Booking",
-                cell: (r) => <span className="numeric">{r.id}</span>,
-              },
-              {
-                key: "cust",
-                header: "Customer",
-                cell: (r) => byId(customers, r.customerId)?.name ?? "—",
-              },
-              {
-                key: "amount",
-                header: "Amount",
-                align: "right",
-                cell: (r) => (
-                  <span className="numeric">{formatINR(r.amount, { compact: true })}</span>
-                ),
-              },
-              { key: "stage", header: "Stage", cell: (r) => <Chip>{r.stage}</Chip> },
-            ]}
+        {tab === "setup" && (
+          <ProjectSetupTab
+            project={project}
+            plots={projectPlots}
+            access={setupAccess}
+            onSave={saveProject}
           />
         )}
-
-        {tab === "Documents" && (
-          <DataTable
-            rows={projectDocuments}
-            columns={[
-              { key: "name", header: "Document", cell: (r) => r.name },
-              { key: "type", header: "Type", cell: (r) => r.type },
-              {
-                key: "modified",
-                header: "Modified",
-                cell: (r) => <span className="numeric">{r.modified}</span>,
-              },
-              { key: "verified", header: "Status", cell: (r) => <Chip>{r.verified}</Chip> },
-            ]}
+        {tab === "layout" && (
+          <ProjectLayoutTab
+            project={project}
+            plots={projectPlots}
+            access={layoutAccess}
           />
+        )}
+        {tab === "sales" && (
+          <ProjectSalesTab project={project} plots={projectPlots} />
+        )}
+      {tab === "finance" && (
+        <ProjectFinanceTab project={project} />
+      )}
+        {tab === "documents" && (
+          <ProjectDocumentsTab project={project} />
+        )}
+        {tab === "team" && (
+          <ComingSoonPanel title="Team" description="Agent assignment for this project ships in P5." />
+        )}
+        {tab === "activity" && (
+          <ComingSoonPanel title="Activity" description="Filterable project audit ships in P5. Overview shows a recent slice when available." />
         )}
       </div>
     </AppShell>

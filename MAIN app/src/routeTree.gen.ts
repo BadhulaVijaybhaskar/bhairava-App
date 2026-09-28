@@ -21,8 +21,10 @@ import { Route as AgentsIndexRouteImport } from './routes/agents.index'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents.$agentId'
 import { Route as BookingsIndexRouteImport } from './routes/bookings.index'
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings.$bookingId'
+import { Route as CommissionsIndexRouteImport } from './routes/commissions.index'
 import { Route as CustomersIndexRouteImport } from './routes/customers.index'
 import { Route as CustomersCustomerIdRouteImport } from './routes/customers.$customerId'
+import { Route as LeadsIndexRouteImport } from './routes/leads.index'
 import { Route as OnboardingAgentRouteImport } from './routes/onboarding.agent'
 import { Route as OnboardingBookingRouteImport } from './routes/onboarding.booking'
 import { Route as OnboardingCustomerRouteImport } from './routes/onboarding.customer'
@@ -37,14 +39,20 @@ import { Route as PlotsEditorRouteImport } from './routes/plots.editor'
 import { Route as PlotsLayoutRouteImport } from './routes/plots.layout'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
+import { Route as ReceiptsIndexRouteImport } from './routes/receipts.index'
 import { Route as ReceiptsPaymentIdRouteImport } from './routes/receipts.$paymentId'
 import { Route as ReportsAgentsRouteImport } from './routes/reports.agents'
 import { Route as ReportsCollectionsRouteImport } from './routes/reports.collections'
+import { Route as ReportsCustomersRouteImport } from './routes/reports.customers'
 import { Route as ReportsInventoryRouteImport } from './routes/reports.inventory'
+import { Route as ReportsRegistrationsRouteImport } from './routes/reports.registrations'
+import { Route as ReportsResaleRouteImport } from './routes/reports.resale'
 import { Route as ReportsSalesRouteImport } from './routes/reports.sales'
 import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
 import { Route as SettingsAuditRouteImport } from './routes/settings.audit'
+import { Route as SettingsBillingRouteImport } from './routes/settings.billing'
 import { Route as SettingsCompanyRouteImport } from './routes/settings.company'
+import { Route as SettingsDangerRouteImport } from './routes/settings.danger'
 import { Route as SettingsUsersRouteImport } from './routes/settings.users'
 import { Route as SiteVisitsIndexRouteImport } from './routes/site-visits.index'
 import { Route as SiteVisitsNewRouteImport } from './routes/site-visits.new'
@@ -109,6 +117,11 @@ const BookingsBookingIdRoute = BookingsBookingIdRouteImport.update({
   path: '/bookings/$bookingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommissionsIndexRoute = CommissionsIndexRouteImport.update({
+  id: '/commissions/',
+  path: '/commissions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomersIndexRoute = CustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -117,6 +130,11 @@ const CustomersIndexRoute = CustomersIndexRouteImport.update({
 const CustomersCustomerIdRoute = CustomersCustomerIdRouteImport.update({
   id: '/customers/$customerId',
   path: '/customers/$customerId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsIndexRoute = LeadsIndexRouteImport.update({
+  id: '/leads/',
+  path: '/leads/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingAgentRoute = OnboardingAgentRouteImport.update({
@@ -189,6 +207,11 @@ const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
   path: '/projects/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReceiptsIndexRoute = ReceiptsIndexRouteImport.update({
+  id: '/receipts/',
+  path: '/receipts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReceiptsPaymentIdRoute = ReceiptsPaymentIdRouteImport.update({
   id: '/receipts/$paymentId',
   path: '/receipts/$paymentId',
@@ -204,9 +227,24 @@ const ReportsCollectionsRoute = ReportsCollectionsRouteImport.update({
   path: '/reports/collections',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsCustomersRoute = ReportsCustomersRouteImport.update({
+  id: '/reports/customers',
+  path: '/reports/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsInventoryRoute = ReportsInventoryRouteImport.update({
   id: '/reports/inventory',
   path: '/reports/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRegistrationsRoute = ReportsRegistrationsRouteImport.update({
+  id: '/reports/registrations',
+  path: '/reports/registrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsResaleRoute = ReportsResaleRouteImport.update({
+  id: '/reports/resale',
+  path: '/reports/resale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsSalesRoute = ReportsSalesRouteImport.update({
@@ -224,9 +262,19 @@ const SettingsAuditRoute = SettingsAuditRouteImport.update({
   path: '/settings/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsBillingRoute = SettingsBillingRouteImport.update({
+  id: '/settings/billing',
+  path: '/settings/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsCompanyRoute = SettingsCompanyRouteImport.update({
   id: '/settings/company',
   path: '/settings/company',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsDangerRoute = SettingsDangerRouteImport.update({
+  id: '/settings/danger',
+  path: '/settings/danger',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsUsersRoute = SettingsUsersRouteImport.update({
@@ -271,18 +319,26 @@ export interface FileRoutesByFullPath {
   '/receipts/$paymentId': typeof ReceiptsPaymentIdRoute
   '/reports/agents': typeof ReportsAgentsRoute
   '/reports/collections': typeof ReportsCollectionsRoute
+  '/reports/customers': typeof ReportsCustomersRoute
   '/reports/inventory': typeof ReportsInventoryRoute
+  '/reports/registrations': typeof ReportsRegistrationsRoute
+  '/reports/resale': typeof ReportsResaleRoute
   '/reports/sales': typeof ReportsSalesRoute
   '/settings/audit': typeof SettingsAuditRoute
+  '/settings/billing': typeof SettingsBillingRoute
   '/settings/company': typeof SettingsCompanyRoute
+  '/settings/danger': typeof SettingsDangerRoute
   '/settings/users': typeof SettingsUsersRoute
   '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents/': typeof AgentsIndexRoute
   '/bookings/': typeof BookingsIndexRoute
+  '/commissions/': typeof CommissionsIndexRoute
   '/customers/': typeof CustomersIndexRoute
+  '/leads/': typeof LeadsIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/receipts/': typeof ReceiptsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
   '/site-visits/': typeof SiteVisitsIndexRoute
 }
@@ -312,18 +368,26 @@ export interface FileRoutesByTo {
   '/receipts/$paymentId': typeof ReceiptsPaymentIdRoute
   '/reports/agents': typeof ReportsAgentsRoute
   '/reports/collections': typeof ReportsCollectionsRoute
+  '/reports/customers': typeof ReportsCustomersRoute
   '/reports/inventory': typeof ReportsInventoryRoute
+  '/reports/registrations': typeof ReportsRegistrationsRoute
+  '/reports/resale': typeof ReportsResaleRoute
   '/reports/sales': typeof ReportsSalesRoute
   '/settings/audit': typeof SettingsAuditRoute
+  '/settings/billing': typeof SettingsBillingRoute
   '/settings/company': typeof SettingsCompanyRoute
+  '/settings/danger': typeof SettingsDangerRoute
   '/settings/users': typeof SettingsUsersRoute
   '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents': typeof AgentsIndexRoute
   '/bookings': typeof BookingsIndexRoute
+  '/commissions': typeof CommissionsIndexRoute
   '/customers': typeof CustomersIndexRoute
+  '/leads': typeof LeadsIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/plots': typeof PlotsIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/receipts': typeof ReceiptsIndexRoute
   '/reservations': typeof ReservationsIndexRoute
   '/site-visits': typeof SiteVisitsIndexRoute
 }
@@ -354,18 +418,26 @@ export interface FileRoutesById {
   '/receipts/$paymentId': typeof ReceiptsPaymentIdRoute
   '/reports/agents': typeof ReportsAgentsRoute
   '/reports/collections': typeof ReportsCollectionsRoute
+  '/reports/customers': typeof ReportsCustomersRoute
   '/reports/inventory': typeof ReportsInventoryRoute
+  '/reports/registrations': typeof ReportsRegistrationsRoute
+  '/reports/resale': typeof ReportsResaleRoute
   '/reports/sales': typeof ReportsSalesRoute
   '/settings/audit': typeof SettingsAuditRoute
+  '/settings/billing': typeof SettingsBillingRoute
   '/settings/company': typeof SettingsCompanyRoute
+  '/settings/danger': typeof SettingsDangerRoute
   '/settings/users': typeof SettingsUsersRoute
   '/site-visits/new': typeof SiteVisitsNewRoute
   '/agents/': typeof AgentsIndexRoute
   '/bookings/': typeof BookingsIndexRoute
+  '/commissions/': typeof CommissionsIndexRoute
   '/customers/': typeof CustomersIndexRoute
+  '/leads/': typeof LeadsIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plots/': typeof PlotsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/receipts/': typeof ReceiptsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
   '/site-visits/': typeof SiteVisitsIndexRoute
 }
@@ -397,18 +469,26 @@ export interface FileRouteTypes {
     | '/receipts/$paymentId'
     | '/reports/agents'
     | '/reports/collections'
+    | '/reports/customers'
     | '/reports/inventory'
+    | '/reports/registrations'
+    | '/reports/resale'
     | '/reports/sales'
     | '/settings/audit'
+    | '/settings/billing'
     | '/settings/company'
+    | '/settings/danger'
     | '/settings/users'
     | '/site-visits/new'
     | '/agents/'
     | '/bookings/'
+    | '/commissions/'
     | '/customers/'
+    | '/leads/'
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/receipts/'
     | '/reservations/'
     | '/site-visits/'
   fileRoutesByTo: FileRoutesByTo
@@ -438,18 +518,26 @@ export interface FileRouteTypes {
     | '/receipts/$paymentId'
     | '/reports/agents'
     | '/reports/collections'
+    | '/reports/customers'
     | '/reports/inventory'
+    | '/reports/registrations'
+    | '/reports/resale'
     | '/reports/sales'
     | '/settings/audit'
+    | '/settings/billing'
     | '/settings/company'
+    | '/settings/danger'
     | '/settings/users'
     | '/site-visits/new'
     | '/agents'
     | '/bookings'
+    | '/commissions'
     | '/customers'
+    | '/leads'
     | '/payments'
     | '/plots'
     | '/projects'
+    | '/receipts'
     | '/reservations'
     | '/site-visits'
   id:
@@ -479,18 +567,26 @@ export interface FileRouteTypes {
     | '/receipts/$paymentId'
     | '/reports/agents'
     | '/reports/collections'
+    | '/reports/customers'
     | '/reports/inventory'
+    | '/reports/registrations'
+    | '/reports/resale'
     | '/reports/sales'
     | '/settings/audit'
+    | '/settings/billing'
     | '/settings/company'
+    | '/settings/danger'
     | '/settings/users'
     | '/site-visits/new'
     | '/agents/'
     | '/bookings/'
+    | '/commissions/'
     | '/customers/'
+    | '/leads/'
     | '/payments/'
     | '/plots/'
     | '/projects/'
+    | '/receipts/'
     | '/reservations/'
     | '/site-visits/'
   fileRoutesById: FileRoutesById
@@ -521,18 +617,26 @@ export interface RootRouteChildren {
   ReceiptsPaymentIdRoute: typeof ReceiptsPaymentIdRoute
   ReportsAgentsRoute: typeof ReportsAgentsRoute
   ReportsCollectionsRoute: typeof ReportsCollectionsRoute
+  ReportsCustomersRoute: typeof ReportsCustomersRoute
   ReportsInventoryRoute: typeof ReportsInventoryRoute
+  ReportsRegistrationsRoute: typeof ReportsRegistrationsRoute
+  ReportsResaleRoute: typeof ReportsResaleRoute
   ReportsSalesRoute: typeof ReportsSalesRoute
   SettingsAuditRoute: typeof SettingsAuditRoute
+  SettingsBillingRoute: typeof SettingsBillingRoute
   SettingsCompanyRoute: typeof SettingsCompanyRoute
+  SettingsDangerRoute: typeof SettingsDangerRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
   SiteVisitsNewRoute: typeof SiteVisitsNewRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
   BookingsIndexRoute: typeof BookingsIndexRoute
+  CommissionsIndexRoute: typeof CommissionsIndexRoute
   CustomersIndexRoute: typeof CustomersIndexRoute
+  LeadsIndexRoute: typeof LeadsIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   PlotsIndexRoute: typeof PlotsIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  ReceiptsIndexRoute: typeof ReceiptsIndexRoute
   ReservationsIndexRoute: typeof ReservationsIndexRoute
   SiteVisitsIndexRoute: typeof SiteVisitsIndexRoute
 }
@@ -623,6 +727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingsBookingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/commissions/': {
+      id: '/commissions/'
+      path: '/commissions'
+      fullPath: '/commissions/'
+      preLoaderRoute: typeof CommissionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/customers/': {
       id: '/customers/'
       path: '/customers'
@@ -635,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/customers/$customerId'
       fullPath: '/customers/$customerId'
       preLoaderRoute: typeof CustomersCustomerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads/': {
+      id: '/leads/'
+      path: '/leads'
+      fullPath: '/leads/'
+      preLoaderRoute: typeof LeadsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding/agent': {
@@ -735,6 +853,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/receipts/': {
+      id: '/receipts/'
+      path: '/receipts'
+      fullPath: '/receipts/'
+      preLoaderRoute: typeof ReceiptsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/receipts/$paymentId': {
       id: '/receipts/$paymentId'
       path: '/receipts/$paymentId'
@@ -756,11 +881,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsCollectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/customers': {
+      id: '/reports/customers'
+      path: '/reports/customers'
+      fullPath: '/reports/customers'
+      preLoaderRoute: typeof ReportsCustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports/inventory': {
       id: '/reports/inventory'
       path: '/reports/inventory'
       fullPath: '/reports/inventory'
       preLoaderRoute: typeof ReportsInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/registrations': {
+      id: '/reports/registrations'
+      path: '/reports/registrations'
+      fullPath: '/reports/registrations'
+      preLoaderRoute: typeof ReportsRegistrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/resale': {
+      id: '/reports/resale'
+      path: '/reports/resale'
+      fullPath: '/reports/resale'
+      preLoaderRoute: typeof ReportsResaleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports/sales': {
@@ -784,11 +930,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/billing': {
+      id: '/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof SettingsBillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/company': {
       id: '/settings/company'
       path: '/settings/company'
       fullPath: '/settings/company'
       preLoaderRoute: typeof SettingsCompanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/danger': {
+      id: '/settings/danger'
+      path: '/settings/danger'
+      fullPath: '/settings/danger'
+      preLoaderRoute: typeof SettingsDangerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/users': {
@@ -841,18 +1001,26 @@ const rootRouteChildren: RootRouteChildren = {
   ReceiptsPaymentIdRoute: ReceiptsPaymentIdRoute,
   ReportsAgentsRoute: ReportsAgentsRoute,
   ReportsCollectionsRoute: ReportsCollectionsRoute,
+  ReportsCustomersRoute: ReportsCustomersRoute,
   ReportsInventoryRoute: ReportsInventoryRoute,
+  ReportsRegistrationsRoute: ReportsRegistrationsRoute,
+  ReportsResaleRoute: ReportsResaleRoute,
   ReportsSalesRoute: ReportsSalesRoute,
   SettingsAuditRoute: SettingsAuditRoute,
+  SettingsBillingRoute: SettingsBillingRoute,
   SettingsCompanyRoute: SettingsCompanyRoute,
+  SettingsDangerRoute: SettingsDangerRoute,
   SettingsUsersRoute: SettingsUsersRoute,
   SiteVisitsNewRoute: SiteVisitsNewRoute,
   AgentsIndexRoute: AgentsIndexRoute,
   BookingsIndexRoute: BookingsIndexRoute,
+  CommissionsIndexRoute: CommissionsIndexRoute,
   CustomersIndexRoute: CustomersIndexRoute,
+  LeadsIndexRoute: LeadsIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   PlotsIndexRoute: PlotsIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  ReceiptsIndexRoute: ReceiptsIndexRoute,
   ReservationsIndexRoute: ReservationsIndexRoute,
   SiteVisitsIndexRoute: SiteVisitsIndexRoute,
 }

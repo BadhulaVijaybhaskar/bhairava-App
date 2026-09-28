@@ -1,0 +1,67 @@
+{
+  "agent": {
+    "agent1": {
+      "name": "Kavya Agent",
+      "plot102": "PII hidden",
+      "plot103": "Ananya Rao",
+      "customers": "NameDetailAnanya Rao9000000001",
+      "docs": "Agent brochure AGENT_VISIBLEBooking acknowledgment — Ananya CUSTOMER_PROFILE_RELATED"
+    },
+    "agent2": {
+      "name": "Arjun Agent",
+      "plot102": "Rahul Mehta",
+      "plot103": "PII hidden",
+      "customers": "NameDetailRahul Mehta9000000002Sneha Iyer9000000003"
+    },
+    "privacy": {
+      "agent1HidesRahul": true,
+      "agent1SeesAnanya": true,
+      "agent2SeesRahul": true,
+      "agent2HidesAnanya": true,
+      "agentDocsNoInternal": true
+    }
+  },
+  "customer": {
+    "customer1": {
+      "name": "Ananya Rao",
+      "bookings": "BookingPlotAmountStatusBK-01A-103Rs 51,00,000Confirmed",
+      "payments": "PaymentAmountStatusDuePAY-01Rs 5,10,000Paid2026-08-01PAY-02Rs 10,20,000Due2026-10-01",
+      "docs": "Booking acknowledgment — Ananya"
+    },
+    "customer2": {
+      "name": "Rahul Mehta",
+      "bookings": "BookingPlotAmountStatusNo bookings",
+      "docs": "Reservation letter — Rahul",
+      "properties": "A-102 · RESERVED"
+    },
+    "privacy": {
+      "noOtherBuyerInExplore": true,
+      "reservedNoBuyerPii": true,
+      "c1HasBk01": true,
+      "c2NoBk01": true,
+      "c1OwnDoc": true,
+      "c2OwnDoc": true,
+      "c1NoVault": true,
+      "c2NoVault": true
+    }
+  },
+  "admin": {
+    "accounts": [
+      {
+        "email": "admin@bhairava.com",
+        "ok": true,
+        "url": "http://localhost:3000/"
+      },
+      {
+        "email": "finance@bhairava.com",
+        "ok": true,
+        "url": "http://localhost:3000/"
+      },
+      {
+        "email": "viewer@bhairava.com",
+        "ok": true,
+        "url": "http://localhost:3000/"
+      }
+    ]
+  }
+}

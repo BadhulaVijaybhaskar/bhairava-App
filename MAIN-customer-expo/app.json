@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Bhairava Customer",
+    "slug": "bhairava-customer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "android": {
+      "package": "com.bhairava.customer"
+    },
+    "ios": {
+      "bundleIdentifier": "com.bhairava.customer"
+    }
+  }
+}

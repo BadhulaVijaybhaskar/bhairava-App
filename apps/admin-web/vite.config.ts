@@ -1,0 +1,20 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
+
+export default defineConfig({
+  base: '/',
+  plugins: [react(), tailwindcss()],
+  resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+  server: { proxy: { '/api': { target: 'http://127.0.0.1:14000', changeOrigin: true } } },
+  optimizeDeps: {
+    include: ['@bhairava/domain', '@bhairava/api-client'],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/packages\/domain/, /packages\/api-client/, /node_modules/],
+      transformMixedEsModules: true,
+    },
+  },
+});

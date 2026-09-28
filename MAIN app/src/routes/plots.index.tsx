@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Columns3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Chip, FilterBar, NewRecordButton, PageHeader, Panel } from "@/components/kit";
-import { statusLabel } from "@/components/plot-canvas";
+import { labelForPlotStatus } from "@/lib/plot-status-colors";
 import { byId, formatINR, type Plot, type PlotStatus } from "@/lib/mock-data";
 import { useData } from "@/lib/store";
 
@@ -310,7 +310,7 @@ function PlotsIndexPage() {
                   )}
                   {visibleCols.status && (
                     <td className="px-4 py-2.5">
-                      <Chip>{statusLabel[p.status]}</Chip>
+                      <Chip>{labelForPlotStatus(p.canonicalStatus ?? p.status)}</Chip>
                     </td>
                   )}
                   {visibleCols.customer && (
